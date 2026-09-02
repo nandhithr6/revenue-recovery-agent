@@ -311,3 +311,58 @@ declines.
 runs on real rails. It did that, but the more useful outcome was finding three
 places where our model of Razorpay came from documentation rather than from
 Razorpay. That is the difference between an integration and a claim.
+
+---
+
+## 11. The LLM policy lost, and the first result that said otherwise was an artefact
+
+**What happened.** The LLM arm had never actually run. Two reasons stacked: the
+client reads `process.env`, which never saw our `.env`; and once that was
+bridged, the configured model id no longer existed on Groq, so all 203 requests
+404'd. The policy fell back to the rules agent for every case and printed
+numbers identical to it — which is the fallback working exactly as designed, and
+also why nobody noticed it had never worked.
+
+**The first real number was misleading.** With the model id fixed, the LLM agent
+posted ₹4.34L against the rules agent's ₹3.97L, and for a few minutes we thought
+the LLM was winning. It was not. 108 of 203 requests were being rejected on
+rate limits, so the cache held only 90 decisions and the policy was falling back
+to rules for **more than half its cases**. We were mostly measuring the rules
+agent and crediting the LLM for it.
+
+**With the model actually deciding:**
+
+| | Rules agent | LLM agent |
+|---|---|---|
+| Net after annoyance | **₹3.97L** | ₹3.40L |
+| Recovery rate | **49.2%** | 47.4% |
+| Retries per recovery | **2.56** | 2.91 |
+| Annoyance points | **806** | 1,225 |
+
+The LLM is worse on every axis, and worst on restraint: 52% more customer
+annoyance for less recovered revenue. It reaches for a message where the rules
+agent has already worked out the expected value does not justify one.
+
+**Why this is the better outcome.** Razorpay asks for "the right tool in the
+right place, and where you chose *not* to use one". ADR 0003 argued the
+classification and bounding work belongs in deterministic code. This is that
+argument with a measurement attached rather than an assertion — and it is a
+measurement that went against the fashionable answer.
+
+The LLM arm stays in the repo. It is genuinely useful for messy or unseen reason
+codes the taxonomy has no entry for, and it demonstrates that the guardrails hold
+identically whichever policy proposes the action: **zero compliance violations on
+the LLM run too.** What it is not is a reason to put a language model on the
+critical path of a decision a lookup table makes better and for free.
+
+**Two smaller things this shook out.**
+
+Pacing the pre-warm dropped transport failures from 108 of 203 to 7. And 11
+responses were rejected by schema validation — that is the validation layer doing
+its job, not a fault: those are exactly the malformed outputs that would
+otherwise have reached the guardrail stack.
+
+The cache also defeated its own purpose at first. `prewarm` skipped duplicate
+situations *within* a run but not ones already restored from disk, so a warm run
+re-fetched all 203 decisions at the rate-limit gap and took as long as a cold
+one. Seven minutes became seventy seconds once it checked.

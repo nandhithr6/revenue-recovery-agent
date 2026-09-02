@@ -66,3 +66,31 @@ was refused.
 For a payments company, a system that is boring in the right places is the point.
 We would rather be asked why we used *so little* AI than explain why an LLM was
 permitted to decide whether contacting a DND-registered customer was acceptable.
+
+
+---
+
+## Postscript: measured, 2026-09-02
+
+This ADR argued from first principles that classification and bounding belong in
+deterministic code. The LLM policy has since been run properly against a live
+model, and the argument now has a number behind it.
+
+| | Rules agent | LLM agent |
+|---|---|---|
+| Net after annoyance | **Rs 3.97L** | Rs 3.40L |
+| Recovery rate | **49.2%** | 47.4% |
+| Retries per recovery | **2.56** | 2.91 |
+| Annoyance points | **806** | 1,225 |
+
+The model is worse on every axis and worst on restraint: 52% more customer
+annoyance for less revenue. It reaches for a message where the rules agent has
+already worked out the expected value does not justify one.
+
+Compliance violations on the LLM run: **zero**. That is the load-bearing part of
+ADR 0002 — the guardrails hold identically whichever policy proposes the action.
+
+The LLM arm stays, for reason codes the taxonomy has no entry for and as a
+demonstration that the layering is real. It does not go on the critical path of a
+decision a lookup table makes better and for free. See engineering log entry 11,
+including how an earlier run appeared to show the opposite.
