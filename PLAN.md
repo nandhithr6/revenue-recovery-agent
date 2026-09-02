@@ -1,5 +1,11 @@
 # Revenue Recovery Agent — Build Plan
 
+> **Phase 1 is complete.** Current work is tracked in
+> [docs/PLAN-PHASE-2.md](docs/PLAN-PHASE-2.md) — robustness across seeds,
+> sensitivity of the annoyance price, tests for the loss-type layer, and a
+> dashboard rebuilt to show its working rather than ask to be believed.
+> **Read that file first when resuming.**
+
 **Track:** AI Revenue Recovery (Razorpay AI Buildathon)
 **Deadline:** 5 Sept 2026 — direct submission: public repo + 5-min video + architecture doc
 **Stack:** TypeScript / Node 22, end to end
