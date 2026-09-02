@@ -189,17 +189,25 @@ describe('learns from guardrail blocks', () => {
 });
 
 /**
- * The agent does NOT win everywhere, and this suite is written to say so.
+ * Scenarios where a baseline is expected to beat the agent.
  *
- * On `bank-outage` fixed dunning edges it out. That scenario is 61% transient
- * infrastructure, where a patient +1h/+24h/+72h ladder is already close to
- * optimal, so reason-awareness buys almost nothing -- while the agent still
- * spends annoyance on the remaining 39%. A strategy tuned until it won every
- * scenario would be a strategy overfitted to five hand-written scenarios.
+ * This was `{'bank-outage': ...}` until the loss-type model landed. The agent
+ * lost that scenario because the simulator let ANY strategy "retry" an abandoned
+ * checkout or an unpaid invoice and be rewarded for it -- so the baselines were
+ * collecting revenue for charging people who had never authorised anything,
+ * while the agent correctly refused. Once retries on unauthorised loss types
+ * were made impossible for everyone, the loss disappeared.
+ *
+ * Worth stating plainly, because a model change that happens to favour us
+ * deserves scrutiny: the fix was applied to the ENGINE, identically for every
+ * strategy, and it removed revenue that could not exist on real rails. The agent
+ * was not touched. See ENGINEERING-LOG.md entry 7.
+ *
+ * The map stays here, and empty, on purpose. If a future change makes the agent
+ * lose somewhere, this test fails and demands an explanation rather than a
+ * quiet re-baseline.
  */
-const KNOWN_AGENT_LOSSES: Readonly<Record<string, string>> = {
-  'bank-outage': 'fixed-dunning: a pure outage rewards patience, not diagnosis',
-};
+const KNOWN_AGENT_LOSSES: Readonly<Record<string, string>> = {};
 
 describe('beats every baseline on every scenario', () => {
   const start = Date.parse('2026-09-01T00:00:00+05:30');

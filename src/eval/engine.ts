@@ -17,7 +17,7 @@ import {
 } from '../guardrails/index.js';
 import { Ledger } from '../ledger/ledger.js';
 import type { CaseContext, HistoryEntry, Strategy } from '../policies/types.js';
-import { NUDGE_EFFECTIVENESS, recoveryOdds } from '../sim/recovery-model.js';
+import { NUDGE_EFFECTIVENESS, recoversViaLink, recoveryOdds } from '../sim/recovery-model.js';
 import { Rng } from '../sim/rng.js';
 import type { CostModel } from '../sim/scenario.js';
 
@@ -56,6 +56,8 @@ export interface CaseResult {
   readonly blockedActions: number;
   /** Actions a guardrail postponed rather than dropped. */
   readonly deferrals: number;
+  /** Network fees and auth-rate damage from retrying hard declines. */
+  readonly issuerPenaltyPaise: Paise;
   readonly history: readonly HistoryEntry[];
   /** Ground-truth class, for reporting only. Never shown to a policy. */
   readonly recoveryClass: RecoveryClass | 'UNKNOWN';
@@ -87,6 +89,7 @@ export function runCase(
   let spamPoints = 0;
   let blockedActions = 0;
   let deferrals = 0;
+  let issuerPenaltyPaise = 0;
   let customerActed = false;
   let recovered = false;
   let stoppedReason = 'engine step limit reached';
@@ -207,13 +210,24 @@ export function runCase(
     switch (action.kind) {
       case 'retry_payment': {
         const elapsed = now - event.occurredAt;
+        // Ground truth, applied identically to every strategy: where nothing was
+        // ever authorised, re-attempting the charge cannot succeed. An abandoned
+        // checkout has no mandate behind it and an invoice is not an instrument.
+        // A strategy that retries them anyway pays the cost and gets nothing,
+        // which is exactly what would happen on real rails.
         const odds =
-          recoveryClass === 'UNKNOWN'
+          recoveryClass === 'UNKNOWN' || recoversViaLink(event.lossType)
             ? { probability: 0 }
             : recoveryOdds(recoveryClass, elapsed, retries, customerActed);
         succeeded = rng.chance(odds.probability);
         retries += 1;
         actionCost = costs.retryCostPaise;
+        // Retrying an instrument the issuer refused with prejudice is not merely
+        // futile, it is billed. See CostModel.hardDeclineRetryPenaltyPaise.
+        if (recoveryClass === 'HARD_DECLINE') {
+          actionCost += costs.hardDeclineRetryPenaltyPaise;
+          issuerPenaltyPaise += costs.hardDeclineRetryPenaltyPaise;
+        }
         actionSpam = RETRY_SPAM_POINTS;
         if (succeeded) recovered = true;
         break;
@@ -227,12 +241,21 @@ export function runCase(
         actionSpam = SPAM_POINTS[channel];
         if (!channelsUsed.includes(channel)) channelsUsed.push(channel);
 
-        // A nudge never recovers money directly. It may persuade the customer
-        // to fix their instrument, which unlocks a later retry.
+        // A nudge may persuade the customer to act. For loss types with an
+        // instrument to fix, that unlocks a later retry; for link-recoverable
+        // ones, acting IS the payment.
         const effectiveness = NUDGE_EFFECTIVENESS[channel] ?? 0;
         if (event.customer.respondsToNudge && rng.chance(effectiveness)) {
           customerActed = true;
           succeeded = true;
+
+          // Where there is no charge to re-attempt, acting on the nudge IS the
+          // payment: the customer follows the link and pays. The class curve
+          // still decides whether that payment goes through.
+          if (recoversViaLink(event.lossType) && recoveryClass !== 'UNKNOWN') {
+            const odds = recoveryOdds(recoveryClass, now - event.occurredAt, retries, true);
+            if (rng.chance(odds.probability)) recovered = true;
+          }
         }
         break;
       }
@@ -286,6 +309,7 @@ export function runCase(
     spamPoints,
     blockedActions,
     deferrals,
+    issuerPenaltyPaise,
     history,
     recoveryClass,
     stoppedReason,

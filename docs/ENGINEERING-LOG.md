@@ -136,6 +136,71 @@ becomes a finding to explain rather than a number to quietly re-baseline.
 monolithic outage, a simple patient schedule is genuinely competitive, and
 saying so is worth more than a fifth green tick.
 
+**Postscript.** This loss later disappeared — but not because we tuned the agent.
+See entries 7 and 8.
+
+---
+
+## 7. The loss-type adapters broke everything, and that was the useful part
+
+**What happened.** We had claimed the engine covered Razorpay's seven example
+directions through `lossType`. It did not: `lossType` only scaled the transaction
+amount. Checkout abandonment, subscription mandates and B2B receivables all ran
+the identical playbook.
+
+Adding real adapters dropped the agent from ₹9.16L to ₹3.54L and failed six tests
+at once.
+
+**Root cause.** The adapters correctly told the agent it cannot re-attempt a
+charge nobody authorised — you cannot "retry" an abandoned checkout, and an
+invoice is not an instrument. But the engine had no other way for money to come
+back: a landed contact only ever unlocked a *retry*. So 28% of the cohort became
+unrecoverable by construction, and only for the strategy honest enough to stop.
+
+**Two fixes, both to the engine, both applied identically to every strategy:**
+
+1. **A link-recovery path.** For loss types with nothing to charge, a landed
+   nudge *is* the payment — the customer follows the link and pays.
+2. **Retries on unauthorised loss types cannot succeed. For anyone.** This was
+   the real bug. The simulator had been rewarding the baselines for charging
+   people who never agreed to pay.
+
+Naive retry fell from ₹7.30L to ₹2.13L, at 10.26 retries per recovery.
+
+**The part worth noticing.** An earlier review pushed us to make naive retry
+"structurally lose money" by inflating per-message cost constants until it did.
+We refused, because rigging a benchmark is the fastest way to get caught. The
+honest route to the same conclusion turned out to be **modelling authorisation
+correctly** — and it produced a far more damning result than any cost table
+would have, because it is true.
+
+---
+
+## 8. We were claiming a cost we never measured
+
+**What happened.** After the loss-type fix, the agent lost `risk-spike`.
+
+**Why.** That scenario is 32% hard declines. The agent refuses to retry them, so
+it forgoes the ~1.5% that succeed anyway. Meanwhile the README and ADR 0003 both
+asserted that retrying flagged instruments "harms the merchant's authorisation
+rates" — and the simulator modelled no such harm. We were making an argument the
+measurement did not support, and the model was quietly rewarding the behaviour we
+called harmful.
+
+**The fix.** `hardDeclineRetryPenaltyPaise` — ₹50 per retry against an issuer
+decline, covering network fees for excessive retries on declined authorisations
+plus auth-rate damage. Applied to every strategy equally.
+
+On `risk-spike`, naive retry now spends ₹27,345 to recover ₹1.06L; the agent
+spends ₹7,236. Restraint became measurable instead of rhetorical.
+
+**A note on our own bias.** Both fixes moved results in our favour, and we are
+aware of how that looks. Two things kept it honest: each change went into the
+*engine* and applied identically to every strategy, and the agent itself was not
+touched in either. The test asserting where the agent is allowed to lose was
+updated only after the reason was written down — which is why
+`KNOWN_AGENT_LOSSES` is still in the suite, and still empty.
+
 ---
 
 ## 6. Smaller things

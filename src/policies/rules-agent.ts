@@ -1,5 +1,5 @@
 import { lookupReason, type RecoveryClass } from '../domain/failure-taxonomy.js';
-import type { Action, Channel, Timestamp } from '../domain/types.js';
+import { DAY, HOUR, type Action, type Channel, type Timestamp } from '../domain/types.js';
 import { SPAM_POINTS } from '../guardrails/compliance.js';
 import type { CostModel } from '../sim/scenario.js';
 import {
@@ -8,6 +8,7 @@ import {
   worthContacting,
   type Playbook,
 } from './playbook.js';
+import { LOSS_PROFILES, type LossProfile } from './loss-profiles.js';
 import { STOP, type CaseContext, type HistoryEntry, type Strategy } from './types.js';
 
 /**
@@ -81,15 +82,54 @@ function retriedSince(history: readonly HistoryEntry[], since: Timestamp): boole
 /**
  * Next channel on the ladder that is consented to, not already used, and not
  * already blocked.
+ *
+ * The ladder is the recovery class's, extended by the loss type's: a receivable
+ * chase needs channels a card retry never would.
  */
 function nextChannel(
   playbook: Playbook,
+  profile: LossProfile,
   ctx: CaseContext,
   blocked: Set<Channel>,
 ): Channel | undefined {
-  return playbook.channelLadder.find(
+  const ladder = [
+    ...playbook.channelLadder,
+    ...profile.extraChannels.filter((c) => !playbook.channelLadder.includes(c)),
+  ];
+  return ladder.find(
     (c) => ctx.event.customer.consent[c] && !ctx.channelsUsed.includes(c) && !blocked.has(c),
   );
+}
+
+/**
+ * Promise-to-pay tracking, for receivables only.
+ *
+ * When an accounts-payable contact lands, we treat it as a commitment to pay
+ * within the promise window. Chasing them again inside that window is both
+ * rude and counterproductive; chasing them the moment it lapses is the entire
+ * job of a receivables collector.
+ */
+interface PromiseState {
+  readonly madeAt: Timestamp;
+  readonly dueBy: Timestamp;
+  readonly broken: boolean;
+}
+
+function promiseState(
+  profile: LossProfile,
+  history: readonly HistoryEntry[],
+  now: Timestamp,
+): PromiseState | undefined {
+  if (!profile.tracksPromiseToPay) return undefined;
+
+  const landed = history.filter(
+    (h) => h.action.kind === 'contact_customer' && h.blockedBy === undefined && h.succeeded,
+  );
+  const last = landed.at(-1);
+  if (!last) return undefined;
+
+  const dueBy = last.at + profile.promiseWindowMs;
+  return { madeAt: last.at, dueBy, broken: now >= dueBy };
 }
 
 function classify(ctx: CaseContext): RecoveryClass | undefined {
@@ -111,19 +151,34 @@ export function createRulesAgent(costs: CostModel): Strategy {
       }
 
       const playbook = PLAYBOOKS[recoveryClass];
+      const profile = LOSS_PROFILES[ctx.event.lossType];
       const { amountPaise } = ctx.event;
       const elapsed = ctx.now - ctx.event.occurredAt;
       const blockedChans = blockedChannels(ctx.history);
       const rules = blockedRules(ctx.history);
+
+      // The loss type decides what is even permitted. You cannot re-attempt a
+      // charge nobody authorised, and you cannot "retry" an invoice.
+      const retrySchedule = profile.canRetryCharge
+        ? [
+            ...playbook.retrySchedule,
+            // A standing mandate earns extra attempts on a longer horizon.
+            ...Array.from(
+              { length: profile.extraRetries },
+              (_, i) =>
+                (playbook.retrySchedule.at(-1) ?? 24 * HOUR) * (2 + i) * profile.retryDelayScale,
+            ),
+          ].map((d) => d * profile.retryDelayScale)
+        : [];
 
       // ---- 1. Stop classes. -------------------------------------------
       //
       // Doing nothing is an active decision here, not an omission. Retrying a
       // fraud-flagged instrument cannot succeed and can damage the merchant's
       // authorisation rate with the issuer.
-      if (playbook.retrySchedule.length === 0 && playbook.channelLadder.length === 0) {
+      if (retrySchedule.length === 0 && playbook.channelLadder.length === 0 && profile.extraChannels.length === 0) {
         if (
-          amountPaise >= HUMAN_ESCALATION_FLOOR_PAISE &&
+          amountPaise >= Math.min(HUMAN_ESCALATION_FLOOR_PAISE, profile.humanFloorPaise) &&
           ctx.history.every((h) => h.action.kind !== 'escalate_human')
         ) {
           return {
@@ -135,9 +190,21 @@ export function createRulesAgent(costs: CostModel): Strategy {
         return STOP(`${recoveryClass}: ${playbook.reasoning}`);
       }
 
-      // ---- 2. A nudge landed: strike while the instrument is fixed. -----
+      // ---- 2. Promise to pay, for receivables. -------------------------
+      //
+      // An accounts-payable contact that landed is a commitment, not a
+      // recovery. Chasing inside the promise window is rude and ineffective;
+      // chasing the moment it lapses is the whole job.
+      const promise = promiseState(profile, ctx.history, ctx.now);
+      if (promise && !promise.broken) {
+        return STOP(
+          `receivable: commitment to pay recorded, honouring the ${profile.promiseWindowMs / DAY}-day window before chasing again`,
+        );
+      }
+
+      // ---- 3. A nudge landed: strike while the instrument is fixed. -----
       const landed = nudgeLandedAt(ctx.history);
-      if (landed !== undefined && !retriedSince(ctx.history, landed)) {
+      if (profile.canRetryCharge && landed !== undefined && !retriedSince(ctx.history, landed)) {
         return {
           kind: 'retry_payment',
           delayMs: 5 * 60_000,
@@ -146,27 +213,27 @@ export function createRulesAgent(costs: CostModel): Strategy {
         };
       }
 
-      // ---- 3. Scheduled retries, if this class has any. -----------------
+      // ---- 4. Scheduled retries, if this class and loss type allow any. --
       //
       // The schedule is expressed as offsets from the ORIGINAL failure, so the
       // agent targets an absolute moment rather than drifting later each time
       // a guardrail defers it.
       const retriesDone = executed(ctx.history, 'retry_payment').length;
       const retryBudgetLeft =
-        retriesDone < playbook.retrySchedule.length && !rules.has('MAX_RETRIES');
+        retriesDone < retrySchedule.length && !rules.has('MAX_RETRIES');
 
       if (retryBudgetLeft && !playbook.nudgeIsThePath) {
-        const target = playbook.retrySchedule[retriesDone]!;
+        const target = retrySchedule[retriesDone]!;
         const delayMs = Math.max(0, target - elapsed);
         return {
           kind: 'retry_payment',
           delayMs,
-          rationale: `${recoveryClass}: retry ${retriesDone + 1} of ${playbook.retrySchedule.length} at +${(target / 3_600_000).toFixed(1)}h -- ${playbook.reasoning}`,
+          rationale: `${recoveryClass} / ${profile.label}: retry ${retriesDone + 1} of ${retrySchedule.length} at +${(target / HOUR).toFixed(1)}h -- ${playbook.reasoning}`,
         };
       }
 
-      // ---- 4. Escalate to a customer, if the value justifies it. --------
-      const channel = nextChannel(playbook, ctx, blockedChans);
+      // ---- 5. Escalate to a customer, if the value justifies it. --------
+      const channel = nextChannel(playbook, profile, ctx, blockedChans);
       if (channel && !rules.has('MAX_CONTACTS') && !rules.has('WEEKLY_CONTACT_CAP')) {
         const cost = costs.contactCostPaise[channel];
         // Counting annoyance as a real cost is what keeps the agent quiet on
@@ -200,7 +267,7 @@ export function createRulesAgent(costs: CostModel): Strategy {
 
       // ---- 5. Human, only for cases large enough to deserve one. --------
       if (
-        amountPaise >= HUMAN_ESCALATION_FLOOR_PAISE &&
+        amountPaise >= profile.humanFloorPaise &&
         ctx.history.every((h) => h.action.kind !== 'escalate_human') &&
         !rules.has('MAX_HUMAN_ESCALATIONS')
       ) {
@@ -213,7 +280,7 @@ export function createRulesAgent(costs: CostModel): Strategy {
 
       // ---- 6. Stop, and say why. ---------------------------------------
       const why = rules.size > 0 ? `guardrails exhausted (${[...rules].join(', ')})` : 'playbook exhausted';
-      return STOP(`${recoveryClass}: ${why}`);
+      return STOP(`${recoveryClass} / ${profile.label}: ${why}`);
     },
   };
 }

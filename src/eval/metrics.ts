@@ -65,6 +65,8 @@ export interface Metrics {
   readonly blockedActions: number;
   /** Actions postponed to a compliant window instead of being dropped. */
   readonly deferrals: number;
+  /** Network fees and auth-rate damage incurred by retrying hard declines. */
+  readonly issuerPenaltyPaise: Paise;
   /** Which guardrail rules fired, and how often. */
   readonly ruleTally: Readonly<Record<string, number>>;
 
@@ -87,6 +89,7 @@ export function score(run: RunResult): Metrics {
   let spamPoints = 0;
   let blockedActions = 0;
   let deferrals = 0;
+  let issuerPenaltyPaise = 0;
 
   for (const c of run.cases) {
     atRiskPaise += c.amountPaise;
@@ -99,6 +102,7 @@ export function score(run: RunResult): Metrics {
     spamPoints += c.spamPoints;
     blockedActions += c.blockedActions;
     deferrals += c.deferrals;
+    issuerPenaltyPaise += c.issuerPenaltyPaise;
   }
 
   // Every executed contact carried an `allow` verdict, so a violation here would
@@ -137,6 +141,7 @@ export function score(run: RunResult): Metrics {
       recoveredPaise - costPaise - spamPoints * SPAM_POINT_PRICE_PAISE,
     blockedActions,
     deferrals,
+    issuerPenaltyPaise,
     ruleTally: run.ledger.ruleTally(),
     complianceViolations,
   };

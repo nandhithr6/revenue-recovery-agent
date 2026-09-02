@@ -50,6 +50,19 @@ export interface CostModel {
   readonly contactCostPaise: Readonly<Record<Channel, Paise>>;
   /** Cost of putting a case in front of a human. */
   readonly humanReviewCostPaise: Paise;
+  /**
+   * Penalty for re-attempting a payment the issuer declined with prejudice.
+   *
+   * Card networks charge fees for excessive retries against declined
+   * authorisations, and a merchant who keeps hammering flagged instruments sees
+   * their overall authorisation rate suffer. We assert in ADR 0003 and the
+   * README that this cost exists; modelling it is the difference between an
+   * argument and a measurement.
+   *
+   * Applied identically to every strategy, so it advantages no one -- it simply
+   * stops the simulation rewarding behaviour we describe as harmful.
+   */
+  readonly hardDeclineRetryPenaltyPaise: Paise;
 }
 
 export const DEFAULT_COSTS: CostModel = {
@@ -61,6 +74,7 @@ export const DEFAULT_COSTS: CostModel = {
     voice: 1500, // Rs 15.00 - telephony plus a real goodwill cost
   },
   humanReviewCostPaise: 5000, // Rs 50.00 of an agent's time
+  hardDeclineRetryPenaltyPaise: 5000, // Rs 50.00 of network fee and auth-rate damage
 };
 
 /**

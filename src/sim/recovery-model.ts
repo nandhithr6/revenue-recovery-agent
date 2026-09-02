@@ -175,9 +175,9 @@ export function recoveryOdds(
 }
 
 /**
- * Probability that a nudge on a channel persuades the customer to fix their
- * instrument. Voice is most effective and most intrusive, which is exactly the
- * tension the escalation ladder has to manage.
+ * Probability that a nudge on a channel persuades the customer to act. Voice is
+ * most effective and most intrusive, which is exactly the tension the escalation
+ * ladder has to manage.
  */
 export const NUDGE_EFFECTIVENESS: Readonly<Record<string, number>> = {
   email: 0.18,
@@ -185,3 +185,22 @@ export const NUDGE_EFFECTIVENESS: Readonly<Record<string, number>> = {
   whatsapp: 0.38,
   voice: 0.55,
 };
+
+/**
+ * Loss types with no charge to re-attempt, where money comes back through a
+ * payment link rather than a retry.
+ *
+ * Nobody authorised an abandoned checkout, and an invoice is not an instrument.
+ * For these, a landed nudge is not a step towards recovery -- it IS the
+ * recovery path: the customer follows the link and pays. Modelling them as
+ * retryable would have the system silently charging people who never agreed to
+ * pay, which is the sort of thing that ends a payments integration.
+ */
+const LINK_RECOVERABLE: ReadonlySet<string> = new Set([
+  'checkout_abandonment',
+  'receivable',
+]);
+
+export function recoversViaLink(lossType: string): boolean {
+  return LINK_RECOVERABLE.has(lossType);
+}
