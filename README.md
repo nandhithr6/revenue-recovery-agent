@@ -130,11 +130,34 @@ recovery rate, and claiming otherwise would be the fastest way to lose a
 technical panel. The statistics come from the seeded simulator; this shows the
 same policy driving real API calls.
 
-**What is seeded, plainly:** the initial failure reason. Producing a genuine
-decline needs Razorpay's hosted checkout driven in a browser with a failure test
-card, which is not a server-side operation. So each case starts from a real
-documented reason code, the test card that reproduces it is recorded alongside,
-and every recovery *action* after that is a real API call.
+### A genuine decline, end to end
+
+`npm run decline:create` makes a real payment link; pay it at Razorpay's hosted
+checkout with one of their failure test cards; `npm run decline:capture` reads
+the failed payment back and runs the unmodified agent on it.
+
+What came back from the API, Razorpay-authored:
+
+```
+error_code         BAD_REQUEST_ERROR
+error_description  Payment failed
+error_source       gateway
+error_step         payment_authorization
+error_reason       payment_failed
+
+-> taxonomy recognised it: payment_failed maps to HARD_DECLINE
+-> agent decided: stop. Retrying cannot succeed and repeated attempts risk
+   the merchant authorisation rates.
+```
+
+That run also found three places where our model of Razorpay came from the docs
+rather than from Razorpay — including a documented test card that produces a
+different error than documented, and payment links whose `payments` array omits
+failed attempts entirely. See [engineering log entry 10](docs/ENGINEERING-LOG.md).
+
+In `npm run live` the failure reasons are still seeded, because driving a browser
+per case is not automatable here; every recovery *action* in that run is a real
+API call.
 
 ```bash
 npm run live

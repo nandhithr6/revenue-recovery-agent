@@ -137,7 +137,7 @@ export const PLAYBOOKS: Readonly<Record<RecoveryClass, Playbook>> = {
     believedPeakOdds: 0.02,
     nudgeIsThePath: false,
     reasoning:
-      'Fraud flag or blocked instrument. Retrying cannot succeed and repeated attempts risk the merchant’s authorisation rates. Stop, and route to risk review if the amount warrants a human.',
+      'The issuer refused with prejudice — a fraud flag, a blocked instrument, or a decline with no stated cause. Retrying cannot succeed and repeated attempts risk the merchant’s authorisation rates. Stop, and route to risk review if the amount warrants a human.',
   },
 };
 

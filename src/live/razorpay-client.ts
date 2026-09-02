@@ -37,6 +37,8 @@ export interface RazorpayPaymentLink {
   readonly currency: string;
   readonly status: string;
   readonly description?: string;
+  /** Attempts made against this link, successful or not. */
+  readonly payments?: readonly { readonly payment_id: string; readonly status: string }[];
 }
 
 export interface RazorpayPayment {
@@ -174,5 +176,41 @@ export class RazorpayClient {
 
   async fetchPaymentLink(id: string): Promise<RazorpayPaymentLink> {
     return this.request<RazorpayPaymentLink>('GET', `/payment_links/${id}`);
+  }
+
+  /**
+   * Recent payments on the account, newest first.
+   *
+   * Needed because a payment link's own `payments` array lists only successful
+   * attempts -- a failed one never appears there. Since the failures are the
+   * entire point of this project, they have to be read from the payments
+   * collection instead.
+   */
+  async recentPayments(count = 10): Promise<RazorpayPayment[]> {
+    const res = await this.request<{ items: RazorpayPayment[] }>(
+      'GET',
+      `/payments?count=${count}`,
+    );
+    return res.items;
+  }
+
+  /** One payment, with its full error fields. */
+  async fetchPayment(id: string): Promise<RazorpayPayment> {
+    return this.request<RazorpayPayment>('GET', `/payments/${id}`);
+  }
+
+  /**
+   * Every attempt made against a payment link, each fetched individually.
+   *
+   * The link object lists attempt ids but not their error fields, and the error
+   * fields are the entire point here -- they are what Razorpay actually says
+   * went wrong, as opposed to what we assumed from the documentation.
+   */
+  async paymentsForPaymentLink(linkId: string): Promise<RazorpayPayment[]> {
+    const link = await this.fetchPaymentLink(linkId);
+    const ids = (link.payments ?? []).map((p) => p.payment_id).filter(Boolean);
+    const out: RazorpayPayment[] = [];
+    for (const id of ids) out.push(await this.fetchPayment(id));
+    return out;
   }
 }

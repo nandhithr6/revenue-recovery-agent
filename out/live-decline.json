@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-09-02T13:54:53.872Z",
+  "mode": "razorpay_test",
+  "note": "A genuine decline produced by paying a real Razorpay payment link with one of their documented failure test cards. The error fields below are Razorpay-authored, not ours.",
+  "paymentLinkId": "plink_TXBvRRx1hxk2Sv",
+  "razorpayError": {
+    "payment_id": "pay_TXBwRVib5sS3jj",
+    "status": "failed",
+    "method": "card",
+    "error_code": "BAD_REQUEST_ERROR",
+    "error_description": "Payment failed",
+    "error_source": "gateway",
+    "error_step": "payment_authorization",
+    "error_reason": "payment_failed"
+  },
+  "taxonomyRecognised": true,
+  "recoveryClass": "HARD_DECLINE",
+  "agentDecisions": [
+    {
+      "step": 0,
+      "kind": "stop",
+      "rationale": "HARD_DECLINE: Fraud flag or blocked instrument. Retrying cannot succeed and repeated attempts risk the merchant’s authorisation rates. Stop, and route to risk review if the amount warrants a human."
+    }
+  ]
+}

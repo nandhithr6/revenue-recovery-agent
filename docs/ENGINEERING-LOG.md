@@ -257,3 +257,57 @@ caught it: the result was non-monotonic when theory said it could not be, and
 we already had an independent estimate of the noise floor from Part A to compare
 against. Build the variance measurement first; it tells you which of your other
 results you are allowed to read.
+
+---
+
+## 10. What the real API says, versus what the docs say
+
+We built the failure taxonomy from Razorpay's published error documentation.
+Then we drove an actual decline through their hosted checkout with one of their
+failure test cards and read the payment back through the API. Three things came
+out of it that reading documentation could not have told us.
+
+**1. A payment link's `payments` array does not contain failed attempts.**
+
+The first capture attempt reported "no payment attempts recorded yet" against a
+link that had just been declined. The link object lists successful attempts
+only. Since failures are the entire subject of this project, the decline had to
+be read from the account's payments collection and matched on amount instead.
+An obvious-in-hindsight API shape that no amount of doc-reading surfaced.
+
+**2. The documented test card did not produce its documented error.**
+
+Razorpay's test-card page lists `4100 2800 0002 0007` as producing
+`gateway_technical_error`. What actually came back was:
+
+```
+error_code         BAD_REQUEST_ERROR
+error_description  Payment failed
+error_source       gateway
+error_step         payment_authorization
+error_reason       payment_failed
+```
+
+`payment_failed`, not `gateway_technical_error`. Our taxonomy recognised it
+anyway — `payment_failed` is in the table and maps to `HARD_DECLINE` — so the
+agent classified the real failure correctly and stopped, which is the right call
+for a bank decline with no stated cause.
+
+But the card-to-error mapping in the docs is not something to rely on. We had
+already noticed the docs contradicting themselves elsewhere (`insufficient_fund`
+on the test-card page, `insufficient_funds` on the error-code page). This is the
+same class of problem, and it is the argument for having called the API at all
+rather than trusting the documentation as a specification.
+
+**3. A source mismatch we are recording rather than "fixing".**
+
+Our taxonomy lists `payment_failed` with `source: 'bank'`. The API returned
+`source: 'gateway'`. One observation is not enough to re-key the table — the
+source plausibly varies with what actually failed — so this is noted here rather
+than silently patched to match a single sample. Worth revisiting with more real
+declines.
+
+**Why this entry exists.** The live path was built to demonstrate that the agent
+runs on real rails. It did that, but the more useful outcome was finding three
+places where our model of Razorpay came from documentation rather than from
+Razorpay. That is the difference between an integration and a claim.
