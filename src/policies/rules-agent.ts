@@ -8,6 +8,7 @@ import {
   worthContacting,
   type Playbook,
 } from './playbook.js';
+import { DEFAULT_LIMITS } from '../guardrails/limits.js';
 import { LOSS_PROFILES, type LossProfile } from './loss-profiles.js';
 import { STOP, type CaseContext, type HistoryEntry, type Strategy } from './types.js';
 
@@ -35,6 +36,20 @@ import { STOP, type CaseContext, type HistoryEntry, type Strategy } from './type
  * It never reads the simulator's ground truth. See the integrity note in
  * playbook.ts.
  */
+
+/**
+ * Guardrail rules that end a case rather than merely refusing one action.
+ * Once one of these has fired, every further proposal is refused identically,
+ * so the agent stops instead of filling the ledger with the same block.
+ */
+const TERMINAL_RULES: ReadonlySet<string> = new Set([
+  'CASE_AGE_LIMIT',
+  'KILL_SWITCH',
+  'MAX_HUMAN_ESCALATIONS',
+]);
+
+/** Never schedule an attempt the case-age limit would refuse on arrival. */
+const MAX_USEFUL_CASE_AGE_MS = DEFAULT_LIMITS.maxCaseAgeMs;
 
 /** Executed (not blocked) entries of a given kind. */
 function executed(history: readonly HistoryEntry[], kind: string): HistoryEntry[] {
@@ -157,18 +172,30 @@ export function createRulesAgent(costs: CostModel): Strategy {
       const blockedChans = blockedChannels(ctx.history);
       const rules = blockedRules(ctx.history);
 
+      // Some guardrail rules close a case for good. Continuing to propose work
+      // after one has fired is exactly the loop fixed dunning falls into, and
+      // the agent should not repeat it: it burns steps and fills the ledger with
+      // identical refusals.
+      const terminal = [...TERMINAL_RULES].filter((r) => rules.has(r));
+      if (terminal.length > 0) {
+        return STOP(`case closed by ${terminal.join(', ')}; no further action is permitted`);
+      }
+
       // The loss type decides what is even permitted. You cannot re-attempt a
       // charge nobody authorised, and you cannot "retry" an invoice.
+      const scaled = playbook.retrySchedule.map((d) => d * profile.retryDelayScale);
+      const lastScheduled = scaled.at(-1) ?? DAY;
       const retrySchedule = profile.canRetryCharge
         ? [
-            ...playbook.retrySchedule,
-            // A standing mandate earns extra attempts on a longer horizon.
+            ...scaled,
+            // A standing mandate earns extra attempts, spaced out rather than
+            // multiplied: compounding the scale pushed the last attempt past
+            // three weeks, well beyond the case-age limit that would refuse it.
             ...Array.from(
               { length: profile.extraRetries },
-              (_, i) =>
-                (playbook.retrySchedule.at(-1) ?? 24 * HOUR) * (2 + i) * profile.retryDelayScale,
+              (_, i) => lastScheduled + (i + 1) * 1.5 * DAY,
             ),
-          ].map((d) => d * profile.retryDelayScale)
+          ].filter((d) => d < MAX_USEFUL_CASE_AGE_MS)
         : [];
 
       // ---- 1. Stop classes. -------------------------------------------

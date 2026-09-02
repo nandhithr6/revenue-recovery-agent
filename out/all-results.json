@@ -1,0 +1,3060 @@
+{
+  "generatedAt": "2026-09-02T08:47:37.604Z",
+  "costModel": {
+    "retryCostPaise": 250,
+    "contactCostPaise": {
+      "email": 20,
+      "sms": 100,
+      "whatsapp": 80,
+      "voice": 1500
+    },
+    "humanReviewCostPaise": 5000,
+    "hardDeclineRetryPenaltyPaise": 5000
+  },
+  "playbooks": {
+    "TRANSIENT_INFRA": {
+      "retryOffsetsHours": [
+        0.5,
+        2,
+        6
+      ],
+      "channelLadder": [],
+      "nudgeIsThePath": false,
+      "reasoning": "Infrastructure failure, not a customer problem. Retry silently once the outage has had time to clear; contacting the customer would only add doubt."
+    },
+    "TRANSIENT_FUNDS": {
+      "retryOffsetsHours": [
+        20,
+        44,
+        72
+      ],
+      "channelLadder": [
+        "email",
+        "whatsapp"
+      ],
+      "nudgeIsThePath": false,
+      "reasoning": "Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands."
+    },
+    "CUSTOMER_ACTION_REQUIRED": {
+      "retryOffsetsHours": [],
+      "channelLadder": [
+        "email",
+        "whatsapp",
+        "sms"
+      ],
+      "nudgeIsThePath": true,
+      "reasoning": "The instrument itself is dead. No retry can succeed until the customer replaces it, so spend nothing on attempts and everything on a clear nudge."
+    },
+    "ABANDONMENT": {
+      "retryOffsetsHours": [
+        0.03333333333333333,
+        0.75
+      ],
+      "channelLadder": [
+        "email",
+        "whatsapp"
+      ],
+      "nudgeIsThePath": false,
+      "reasoning": "Purchase intent decays by the hour. Re-engage while they are still in the moment; a reminder tomorrow is a reminder they already moved on."
+    },
+    "AUTH_FAILURE": {
+      "retryOffsetsHours": [
+        0.2,
+        4,
+        20
+      ],
+      "channelLadder": [
+        "email",
+        "whatsapp"
+      ],
+      "nudgeIsThePath": false,
+      "reasoning": "A corrected attempt works, but not in the same second. Give them a beat, then prompt if it is still unpaid."
+    },
+    "HARD_DECLINE": {
+      "retryOffsetsHours": [],
+      "channelLadder": [],
+      "nudgeIsThePath": false,
+      "reasoning": "Fraud flag or blocked instrument. Retrying cannot succeed and repeated attempts risk the merchant’s authorisation rates. Stop, and route to risk review if the amount warrants a human."
+    }
+  },
+  "lossProfiles": {
+    "payment_failure": {
+      "label": "Payment failure",
+      "canRetryCharge": true,
+      "tracksPromiseToPay": false,
+      "reasoning": "The customer authorised this charge, so re-attempting it is legitimate."
+    },
+    "checkout_abandonment": {
+      "label": "Checkout drop-off",
+      "canRetryCharge": false,
+      "tracksPromiseToPay": false,
+      "reasoning": "Nothing was authorised, so there is no charge to retry. Recovery means bringing the customer back, quickly, before the intent goes."
+    },
+    "subscription_mandate": {
+      "label": "Subscription / mandate",
+      "canRetryCharge": true,
+      "tracksPromiseToPay": false,
+      "reasoning": "A standing mandate authorises repeated attempts, and an ongoing subscriber is worth patience rather than pressure."
+    },
+    "receivable": {
+      "label": "B2B receivable",
+      "canRetryCharge": false,
+      "tracksPromiseToPay": true,
+      "reasoning": "An invoice, not a charge. Nothing can be retried; recovery is a chase, and a commitment to pay is worth tracking and following up."
+    }
+  },
+  "scenarios": [
+    {
+      "id": "baseline-week",
+      "name": "Baseline week",
+      "description": "An ordinary trading week. UPI-heavy, with insufficient funds and bank downtime as the leading failure reasons.",
+      "seed": 42,
+      "cohort": {
+        "count": 500,
+        "totalAtRiskPaise": 148668206,
+        "byRecoveryClass": {
+          "CUSTOMER_ACTION_REQUIRED": 22,
+          "TRANSIENT_INFRA": 137,
+          "ABANDONMENT": 186,
+          "TRANSIENT_FUNDS": 118,
+          "AUTH_FAILURE": 8,
+          "HARD_DECLINE": 29
+        },
+        "byLossType": {
+          "subscription_mandate": 77,
+          "payment_failure": 303,
+          "checkout_abandonment": 80,
+          "receivable": 40
+        },
+        "byMethod": {
+          "upi": 338,
+          "card": 162
+        }
+      },
+      "strategies": [
+        {
+          "id": "do-nothing",
+          "name": "Do nothing",
+          "description": "Write off every failed payment immediately. The floor: zero recovered, zero spent.",
+          "metrics": {
+            "strategyId": "do-nothing",
+            "strategyName": "Do nothing",
+            "casesTotal": 500,
+            "casesRecovered": 0,
+            "recoveryRate": 0,
+            "atRiskPaise": 148668206,
+            "recoveredPaise": 0,
+            "costPaise": 0,
+            "netValuePaise": 0,
+            "recoveryRateByValue": 0,
+            "totalRetries": 0,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": null,
+            "contactsPerRecovery": null,
+            "returnOnSpend": null,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 0,
+            "blockedActions": 0,
+            "deferrals": 0,
+            "issuerPenaltyPaise": 0,
+            "ruleTally": {},
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 22,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 137,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 186,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 118,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 8,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 29,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            }
+          ]
+        },
+        {
+          "id": "naive-retry",
+          "name": "Naive retry",
+          "description": "Retry three times in quick succession, ignoring the failure reason. The obvious implementation.",
+          "metrics": {
+            "strategyId": "naive-retry",
+            "strategyName": "Naive retry",
+            "casesTotal": 500,
+            "casesRecovered": 133,
+            "recoveryRate": 0.266,
+            "atRiskPaise": 148668206,
+            "recoveredPaise": 21648975,
+            "costPaise": 771250,
+            "netValuePaise": 20877725,
+            "recoveryRateByValue": 0.14561940029060416,
+            "totalRetries": 1365,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 10.263157894736842,
+            "contactsPerRecovery": 0,
+            "returnOnSpend": 28.06998379254457,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 20877725,
+            "blockedActions": 0,
+            "deferrals": 865,
+            "issuerPenaltyPaise": 430000,
+            "ruleTally": {
+              "RETRY_COOLDOWN": 865
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 137,
+              "recovered": 62,
+              "recoveryRate": 0.45255474452554745,
+              "retries": 374,
+              "costPaise": 93500,
+              "recoveredPaise": 11263789,
+              "netValuePaise": 11170289
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 186,
+              "recovered": 63,
+              "recoveryRate": 0.3387096774193548,
+              "retries": 465,
+              "costPaise": 116250,
+              "recoveredPaise": 9394577,
+              "netValuePaise": 9278327
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 8,
+              "recovered": 5,
+              "recoveryRate": 0.625,
+              "retries": 22,
+              "costPaise": 5500,
+              "recoveredPaise": 719599,
+              "netValuePaise": 714099
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 118,
+              "recovered": 2,
+              "recoveryRate": 0.01694915254237288,
+              "retries": 352,
+              "costPaise": 88000,
+              "recoveredPaise": 117361,
+              "netValuePaise": 29361
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 22,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 66,
+              "costPaise": 16500,
+              "recoveredPaise": 0,
+              "netValuePaise": -16500
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 29,
+              "recovered": 1,
+              "recoveryRate": 0.034482758620689655,
+              "retries": 86,
+              "costPaise": 451500,
+              "recoveredPaise": 153649,
+              "netValuePaise": -297851
+            }
+          ]
+        },
+        {
+          "id": "fixed-dunning",
+          "name": "Fixed dunning",
+          "description": "Retry on a fixed +1h / +24h / +72h ladder regardless of failure reason, then send a single email.",
+          "metrics": {
+            "strategyId": "fixed-dunning",
+            "strategyName": "Fixed dunning",
+            "casesTotal": 500,
+            "casesRecovered": 206,
+            "recoveryRate": 0.412,
+            "atRiskPaise": 148668206,
+            "recoveredPaise": 29490409,
+            "costPaise": 715050,
+            "netValuePaise": 28775359,
+            "recoveryRateByValue": 0.19836392590894653,
+            "totalRetries": 1179,
+            "totalContacts": 265,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 5.723300970873787,
+            "contactsPerRecovery": 1.2864077669902914,
+            "returnOnSpend": 41.2424431857912,
+            "spamPoints": 265,
+            "spamPerLakhRecovered": 89.85972354605187,
+            "netValueAfterAnnoyancePaise": 28245359,
+            "blockedActions": 0,
+            "deferrals": 127,
+            "issuerPenaltyPaise": 415000,
+            "ruleTally": {
+              "QUIET_HOURS": 127
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 137,
+              "recovered": 111,
+              "recoveryRate": 0.8102189781021898,
+              "retries": 217,
+              "costPaise": 54650,
+              "recoveredPaise": 16078495,
+              "netValuePaise": 16023845
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 118,
+              "recovered": 45,
+              "recoveryRate": 0.3813559322033898,
+              "retries": 323,
+              "costPaise": 82110,
+              "recoveredPaise": 6194445,
+              "netValuePaise": 6112335
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 186,
+              "recovered": 40,
+              "recoveryRate": 0.21505376344086022,
+              "retries": 479,
+              "costPaise": 122430,
+              "recoveredPaise": 3924728,
+              "netValuePaise": 3802298
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 22,
+              "recovered": 1,
+              "recoveryRate": 0.045454545454545456,
+              "retries": 64,
+              "costPaise": 16360,
+              "recoveredPaise": 1629610,
+              "netValuePaise": 1613250
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 8,
+              "recovered": 6,
+              "recoveryRate": 0.75,
+              "retries": 13,
+              "costPaise": 3290,
+              "recoveredPaise": 869689,
+              "netValuePaise": 866399
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 29,
+              "recovered": 3,
+              "recoveryRate": 0.10344827586206896,
+              "retries": 83,
+              "costPaise": 436210,
+              "recoveredPaise": 793442,
+              "netValuePaise": 357232
+            }
+          ]
+        },
+        {
+          "id": "agent-rules",
+          "name": "Reason-aware agent",
+          "description": "Classifies each failure by Razorpay reason code and runs a per-class playbook: fast on abandonment, patient on funds, zero retries on hopeless classes, and value-weighted escalation.",
+          "metrics": {
+            "strategyId": "agent-rules",
+            "strategyName": "Reason-aware agent",
+            "casesTotal": 500,
+            "casesRecovered": 247,
+            "recoveryRate": 0.494,
+            "atRiskPaise": 148668206,
+            "recoveredPaise": 41865411,
+            "costPaise": 424940,
+            "netValuePaise": 41440471,
+            "recoveryRateByValue": 0.28160298779686627,
+            "totalRetries": 634,
+            "totalContacts": 162,
+            "totalHumanEscalations": 44,
+            "retriesPerRecovery": 2.5668016194331984,
+            "contactsPerRecovery": 0.6558704453441295,
+            "returnOnSpend": 98.52075822469054,
+            "spamPoints": 798,
+            "spamPerLakhRecovered": 190.6108123481697,
+            "netValueAfterAnnoyancePaise": 39844471,
+            "blockedActions": 7,
+            "deferrals": 104,
+            "issuerPenaltyPaise": 40000,
+            "ruleTally": {
+              "QUIET_HOURS": 52,
+              "CONTACT_COOLDOWN": 46,
+              "DND_REGISTERED": 7,
+              "DAILY_CONTACT_CAP": 6
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 137,
+              "recovered": 109,
+              "recoveryRate": 0.7956204379562044,
+              "retries": 203,
+              "costPaise": 106710,
+              "recoveredPaise": 19631323,
+              "netValuePaise": 19524613
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 186,
+              "recovered": 60,
+              "recoveryRate": 0.3225806451612903,
+              "retries": 162,
+              "costPaise": 118760,
+              "recoveredPaise": 11181833,
+              "netValuePaise": 11063073
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 118,
+              "recovered": 73,
+              "recoveryRate": 0.6186440677966102,
+              "retries": 241,
+              "costPaise": 111870,
+              "recoveredPaise": 10289958,
+              "netValuePaise": 10178088
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 8,
+              "recovered": 4,
+              "recoveryRate": 0.5,
+              "retries": 19,
+              "costPaise": 4770,
+              "recoveredPaise": 717612,
+              "netValuePaise": 712842
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 22,
+              "recovered": 1,
+              "recoveryRate": 0.045454545454545456,
+              "retries": 1,
+              "costPaise": 20830,
+              "recoveredPaise": 44685,
+              "netValuePaise": 23855
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 29,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 8,
+              "costPaise": 62000,
+              "recoveredPaise": 0,
+              "netValuePaise": -62000
+            }
+          ]
+        }
+      ],
+      "ruleTally": {
+        "QUIET_HOURS": 52,
+        "CONTACT_COOLDOWN": 46,
+        "DND_REGISTERED": 7,
+        "DAILY_CONTACT_CAP": 6
+      },
+      "sampleAuditTrail": [
+        {
+          "caseId": "loss_00239",
+          "at": 1788281240470,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Payment failure: retry 1 of 3 at +20.0h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 110
+        },
+        {
+          "caseId": "loss_00239",
+          "at": 1788367640470,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Payment failure: retry 2 of 3 at +44.0h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 111
+        },
+        {
+          "caseId": "loss_00239",
+          "at": 1788468440470,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Payment failure: retry 3 of 3 at +72.0h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 112
+        },
+        {
+          "caseId": "loss_00239",
+          "at": 1788470240470,
+          "actionKind": "contact_customer",
+          "channel": "email",
+          "outcome": "deferred",
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on email",
+          "rule": "QUIET_HOURS",
+          "explanation": "Contact would land at 02:47 local, inside quiet hours (21:00-09:00). Deferred to the next permitted window rather than dropped.",
+          "deferredTo": 1788492600000,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 113
+        },
+        {
+          "caseId": "loss_00239",
+          "at": 1788492600000,
+          "actionKind": "contact_customer",
+          "channel": "email",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on email",
+          "costPaise": 20,
+          "spamPoints": 1,
+          "seq": 114
+        },
+        {
+          "caseId": "loss_00239",
+          "at": 1788494400000,
+          "actionKind": "contact_customer",
+          "channel": "whatsapp",
+          "outcome": "deferred",
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on whatsapp",
+          "rule": "CONTACT_COOLDOWN",
+          "explanation": "Last contact was 0.5h ago; minimum gap is 4h.",
+          "deferredTo": 1788507000000,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 115
+        },
+        {
+          "caseId": "loss_00239",
+          "at": 1788507000000,
+          "actionKind": "contact_customer",
+          "channel": "whatsapp",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on whatsapp",
+          "costPaise": 80,
+          "spamPoints": 5,
+          "seq": 116
+        },
+        {
+          "caseId": "loss_00239",
+          "at": 1788510600000,
+          "actionKind": "escalate_human",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "automated recovery exhausted on a high-value case; handing to a human",
+          "costPaise": 5000,
+          "spamPoints": 10,
+          "seq": 117
+        },
+        {
+          "caseId": "loss_00239",
+          "at": 1788510600000,
+          "actionKind": "stop",
+          "outcome": "stopped",
+          "rationale": "TRANSIENT_FUNDS / Payment failure: playbook exhausted",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 118
+        }
+      ]
+    },
+    {
+      "id": "bank-outage",
+      "name": "Bank outage",
+      "description": "A major partner bank goes down for part of the day. Most failures are transient infrastructure and highly recoverable, but only if you wait for the outage to clear rather than hammering it.",
+      "seed": 1337,
+      "cohort": {
+        "count": 500,
+        "totalAtRiskPaise": 155560090,
+        "byRecoveryClass": {
+          "TRANSIENT_FUNDS": 29,
+          "TRANSIENT_INFRA": 305,
+          "ABANDONMENT": 145,
+          "AUTH_FAILURE": 4,
+          "CUSTOMER_ACTION_REQUIRED": 11,
+          "HARD_DECLINE": 6
+        },
+        "byLossType": {
+          "payment_failure": 299,
+          "receivable": 45,
+          "subscription_mandate": 57,
+          "checkout_abandonment": 99
+        },
+        "byMethod": {
+          "upi": 344,
+          "card": 156
+        }
+      },
+      "strategies": [
+        {
+          "id": "do-nothing",
+          "name": "Do nothing",
+          "description": "Write off every failed payment immediately. The floor: zero recovered, zero spent.",
+          "metrics": {
+            "strategyId": "do-nothing",
+            "strategyName": "Do nothing",
+            "casesTotal": 500,
+            "casesRecovered": 0,
+            "recoveryRate": 0,
+            "atRiskPaise": 155560090,
+            "recoveredPaise": 0,
+            "costPaise": 0,
+            "netValuePaise": 0,
+            "recoveryRateByValue": 0,
+            "totalRetries": 0,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": null,
+            "contactsPerRecovery": null,
+            "returnOnSpend": null,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 0,
+            "blockedActions": 0,
+            "deferrals": 0,
+            "issuerPenaltyPaise": 0,
+            "ruleTally": {},
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 29,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 305,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 145,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 4,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 11,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 6,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            }
+          ]
+        },
+        {
+          "id": "naive-retry",
+          "name": "Naive retry",
+          "description": "Retry three times in quick succession, ignoring the failure reason. The obvious implementation.",
+          "metrics": {
+            "strategyId": "naive-retry",
+            "strategyName": "Naive retry",
+            "casesTotal": 500,
+            "casesRecovered": 136,
+            "recoveryRate": 0.272,
+            "atRiskPaise": 155560090,
+            "recoveredPaise": 23681160,
+            "costPaise": 440500,
+            "netValuePaise": 23240660,
+            "recoveryRateByValue": 0.1522315910205503,
+            "totalRetries": 1402,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 10.308823529411764,
+            "contactsPerRecovery": 0,
+            "returnOnSpend": 53.75972758229285,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 23240660,
+            "blockedActions": 0,
+            "deferrals": 902,
+            "issuerPenaltyPaise": 90000,
+            "ruleTally": {
+              "RETRY_COOLDOWN": 902
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 305,
+              "recovered": 107,
+              "recoveryRate": 0.35081967213114756,
+              "retries": 860,
+              "costPaise": 215000,
+              "recoveredPaise": 17704774,
+              "netValuePaise": 17489774
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 145,
+              "recovered": 26,
+              "recoveryRate": 0.1793103448275862,
+              "retries": 394,
+              "costPaise": 98500,
+              "recoveredPaise": 5378349,
+              "netValuePaise": 5279849
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 4,
+              "recovered": 3,
+              "recoveryRate": 0.75,
+              "retries": 10,
+              "costPaise": 2500,
+              "recoveredPaise": 598037,
+              "netValuePaise": 595537
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 11,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 33,
+              "costPaise": 8250,
+              "recoveredPaise": 0,
+              "netValuePaise": -8250
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 29,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 87,
+              "costPaise": 21750,
+              "recoveredPaise": 0,
+              "netValuePaise": -21750
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 6,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 18,
+              "costPaise": 94500,
+              "recoveredPaise": 0,
+              "netValuePaise": -94500
+            }
+          ]
+        },
+        {
+          "id": "fixed-dunning",
+          "name": "Fixed dunning",
+          "description": "Retry on a fixed +1h / +24h / +72h ladder regardless of failure reason, then send a single email.",
+          "metrics": {
+            "strategyId": "fixed-dunning",
+            "strategyName": "Fixed dunning",
+            "casesTotal": 500,
+            "casesRecovered": 276,
+            "recoveryRate": 0.552,
+            "atRiskPaise": 155560090,
+            "recoveredPaise": 47198777,
+            "costPaise": 356430,
+            "netValuePaise": 46842347,
+            "recoveryRateByValue": 0.3034118648298545,
+            "totalRetries": 1049,
+            "totalContacts": 209,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 3.800724637681159,
+            "contactsPerRecovery": 0.7572463768115942,
+            "returnOnSpend": 132.4208876918329,
+            "spamPoints": 209,
+            "spamPerLakhRecovered": 44.280808377725556,
+            "netValueAfterAnnoyancePaise": 46424347,
+            "blockedActions": 0,
+            "deferrals": 209,
+            "issuerPenaltyPaise": 90000,
+            "ruleTally": {
+              "QUIET_HOURS": 209
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 305,
+              "recovered": 246,
+              "recoveryRate": 0.8065573770491803,
+              "retries": 503,
+              "costPaise": 126930,
+              "recoveredPaise": 41452001,
+              "netValuePaise": 41325071
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 145,
+              "recovered": 16,
+              "recoveryRate": 0.1103448275862069,
+              "retries": 404,
+              "costPaise": 103320,
+              "recoveredPaise": 3169843,
+              "netValuePaise": 3066523
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 29,
+              "recovered": 10,
+              "recoveryRate": 0.3448275862068966,
+              "retries": 83,
+              "costPaise": 21130,
+              "recoveredPaise": 1909402,
+              "netValuePaise": 1888272
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 4,
+              "recovered": 3,
+              "recoveryRate": 0.75,
+              "retries": 9,
+              "costPaise": 2250,
+              "recoveredPaise": 598037,
+              "netValuePaise": 595787
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 11,
+              "recovered": 1,
+              "recoveryRate": 0.09090909090909091,
+              "retries": 32,
+              "costPaise": 8180,
+              "recoveredPaise": 69494,
+              "netValuePaise": 61314
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 6,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 18,
+              "costPaise": 94620,
+              "recoveredPaise": 0,
+              "netValuePaise": -94620
+            }
+          ]
+        },
+        {
+          "id": "agent-rules",
+          "name": "Reason-aware agent",
+          "description": "Classifies each failure by Razorpay reason code and runs a per-class playbook: fast on abandonment, patient on funds, zero retries on hopeless classes, and value-weighted escalation.",
+          "metrics": {
+            "strategyId": "agent-rules",
+            "strategyName": "Reason-aware agent",
+            "casesTotal": 500,
+            "casesRecovered": 291,
+            "recoveryRate": 0.582,
+            "atRiskPaise": 155560090,
+            "recoveredPaise": 62360420,
+            "costPaise": 369550,
+            "netValuePaise": 61990870,
+            "recoveryRateByValue": 0.4008767287290718,
+            "totalRetries": 629,
+            "totalContacts": 165,
+            "totalHumanEscalations": 39,
+            "retriesPerRecovery": 2.161512027491409,
+            "contactsPerRecovery": 0.5670103092783505,
+            "returnOnSpend": 168.74690840211068,
+            "spamPoints": 799,
+            "spamPerLakhRecovered": 128.12614154939945,
+            "netValueAfterAnnoyancePaise": 60392870,
+            "blockedActions": 6,
+            "deferrals": 174,
+            "issuerPenaltyPaise": 10000,
+            "ruleTally": {
+              "QUIET_HOURS": 107,
+              "CONTACT_COOLDOWN": 58,
+              "DAILY_CONTACT_CAP": 9,
+              "DND_REGISTERED": 6
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 305,
+              "recovered": 238,
+              "recoveryRate": 0.780327868852459,
+              "retries": 477,
+              "costPaise": 253170,
+              "recoveredPaise": 50656169,
+              "netValuePaise": 50402999
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 145,
+              "recovered": 29,
+              "recoveryRate": 0.2,
+              "retries": 79,
+              "costPaise": 51830,
+              "recoveredPaise": 6365661,
+              "netValuePaise": 6313831
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 29,
+              "recovered": 18,
+              "recoveryRate": 0.6206896551724138,
+              "retries": 63,
+              "costPaise": 36290,
+              "recoveredPaise": 2824537,
+              "netValuePaise": 2788247
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 4,
+              "recovered": 4,
+              "recoveryRate": 1,
+              "retries": 7,
+              "costPaise": 1930,
+              "recoveredPaise": 1476906,
+              "netValuePaise": 1474976
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 11,
+              "recovered": 2,
+              "recoveryRate": 0.18181818181818182,
+              "retries": 1,
+              "costPaise": 15830,
+              "recoveredPaise": 1037147,
+              "netValuePaise": 1021317
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 6,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 2,
+              "costPaise": 10500,
+              "recoveredPaise": 0,
+              "netValuePaise": -10500
+            }
+          ]
+        }
+      ],
+      "ruleTally": {
+        "QUIET_HOURS": 107,
+        "CONTACT_COOLDOWN": 58,
+        "DAILY_CONTACT_CAP": 9,
+        "DND_REGISTERED": 6
+      },
+      "sampleAuditTrail": [
+        {
+          "caseId": "loss_00001",
+          "at": 1788288803106,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Payment failure: retry 1 of 3 at +20.0h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 923
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788375203106,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Payment failure: retry 2 of 3 at +44.0h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 924
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788476003106,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Payment failure: retry 3 of 3 at +72.0h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 925
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788477803106,
+          "actionKind": "contact_customer",
+          "channel": "email",
+          "outcome": "deferred",
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on email",
+          "rule": "QUIET_HOURS",
+          "explanation": "Contact would land at 04:53 local, inside quiet hours (21:00-09:00). Deferred to the next permitted window rather than dropped.",
+          "deferredTo": 1788492600000,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 926
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788492600000,
+          "actionKind": "contact_customer",
+          "channel": "email",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on email",
+          "costPaise": 20,
+          "spamPoints": 1,
+          "seq": 927
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788494400000,
+          "actionKind": "contact_customer",
+          "channel": "whatsapp",
+          "outcome": "deferred",
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on whatsapp",
+          "rule": "CONTACT_COOLDOWN",
+          "explanation": "Last contact was 0.5h ago; minimum gap is 4h.",
+          "deferredTo": 1788507000000,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 928
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788507000000,
+          "actionKind": "contact_customer",
+          "channel": "whatsapp",
+          "outcome": "executed",
+          "succeeded": true,
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on whatsapp",
+          "costPaise": 80,
+          "spamPoints": 5,
+          "seq": 929
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788507300000,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 930
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788510900000,
+          "actionKind": "escalate_human",
+          "outcome": "executed",
+          "succeeded": true,
+          "rationale": "automated recovery exhausted on a high-value case; handing to a human",
+          "costPaise": 5000,
+          "spamPoints": 10,
+          "seq": 931
+        },
+        {
+          "caseId": "loss_00001",
+          "at": 1788510900000,
+          "actionKind": "stop",
+          "outcome": "stopped",
+          "rationale": "TRANSIENT_FUNDS / Payment failure: playbook exhausted",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 932
+        }
+      ]
+    },
+    {
+      "id": "month-end-squeeze",
+      "name": "Month-end squeeze",
+      "description": "The days before payday. Insufficient funds and exhausted daily limits dominate. The money is recoverable, but only on a multi-day horizon.",
+      "seed": 909,
+      "cohort": {
+        "count": 500,
+        "totalAtRiskPaise": 155548675,
+        "byRecoveryClass": {
+          "ABANDONMENT": 145,
+          "TRANSIENT_FUNDS": 252,
+          "TRANSIENT_INFRA": 70,
+          "HARD_DECLINE": 14,
+          "CUSTOMER_ACTION_REQUIRED": 11,
+          "AUTH_FAILURE": 8
+        },
+        "byLossType": {
+          "checkout_abandonment": 88,
+          "payment_failure": 301,
+          "subscription_mandate": 61,
+          "receivable": 50
+        },
+        "byMethod": {
+          "upi": 328,
+          "card": 172
+        }
+      },
+      "strategies": [
+        {
+          "id": "do-nothing",
+          "name": "Do nothing",
+          "description": "Write off every failed payment immediately. The floor: zero recovered, zero spent.",
+          "metrics": {
+            "strategyId": "do-nothing",
+            "strategyName": "Do nothing",
+            "casesTotal": 500,
+            "casesRecovered": 0,
+            "recoveryRate": 0,
+            "atRiskPaise": 155548675,
+            "recoveredPaise": 0,
+            "costPaise": 0,
+            "netValuePaise": 0,
+            "recoveryRateByValue": 0,
+            "totalRetries": 0,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": null,
+            "contactsPerRecovery": null,
+            "returnOnSpend": null,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 0,
+            "blockedActions": 0,
+            "deferrals": 0,
+            "issuerPenaltyPaise": 0,
+            "ruleTally": {},
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 145,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 252,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 70,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 14,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 11,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 8,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            }
+          ]
+        },
+        {
+          "id": "naive-retry",
+          "name": "Naive retry",
+          "description": "Retry three times in quick succession, ignoring the failure reason. The obvious implementation.",
+          "metrics": {
+            "strategyId": "naive-retry",
+            "strategyName": "Naive retry",
+            "casesTotal": 500,
+            "casesRecovered": 55,
+            "recoveryRate": 0.11,
+            "atRiskPaise": 155548675,
+            "recoveredPaise": 7146361,
+            "costPaise": 568500,
+            "netValuePaise": 6577861,
+            "recoveryRateByValue": 0.04594292429684792,
+            "totalRetries": 1434,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 26.072727272727274,
+            "contactsPerRecovery": 0,
+            "returnOnSpend": 12.570555848724714,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 6577861,
+            "blockedActions": 0,
+            "deferrals": 934,
+            "issuerPenaltyPaise": 210000,
+            "ruleTally": {
+              "RETRY_COOLDOWN": 934
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 145,
+              "recovered": 34,
+              "recoveryRate": 0.23448275862068965,
+              "retries": 382,
+              "costPaise": 95500,
+              "recoveredPaise": 3589944,
+              "netValuePaise": 3494444
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 70,
+              "recovered": 16,
+              "recoveryRate": 0.22857142857142856,
+              "retries": 199,
+              "costPaise": 49750,
+              "recoveredPaise": 2868363,
+              "netValuePaise": 2818613
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 8,
+              "recovered": 4,
+              "recoveryRate": 0.5,
+              "retries": 22,
+              "costPaise": 5500,
+              "recoveredPaise": 438747,
+              "netValuePaise": 433247
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 14,
+              "recovered": 1,
+              "recoveryRate": 0.07142857142857142,
+              "retries": 42,
+              "costPaise": 220500,
+              "recoveredPaise": 249307,
+              "netValuePaise": 28807
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 11,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 33,
+              "costPaise": 8250,
+              "recoveredPaise": 0,
+              "netValuePaise": -8250
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 252,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 756,
+              "costPaise": 189000,
+              "recoveredPaise": 0,
+              "netValuePaise": -189000
+            }
+          ]
+        },
+        {
+          "id": "fixed-dunning",
+          "name": "Fixed dunning",
+          "description": "Retry on a fixed +1h / +24h / +72h ladder regardless of failure reason, then send a single email.",
+          "metrics": {
+            "strategyId": "fixed-dunning",
+            "strategyName": "Fixed dunning",
+            "casesTotal": 500,
+            "casesRecovered": 173,
+            "recoveryRate": 0.346,
+            "atRiskPaise": 155548675,
+            "recoveredPaise": 26206909,
+            "costPaise": 540580,
+            "netValuePaise": 25666329,
+            "recoveryRateByValue": 0.16848043867940374,
+            "totalRetries": 1298,
+            "totalContacts": 304,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 7.502890173410405,
+            "contactsPerRecovery": 1.7572254335260116,
+            "returnOnSpend": 48.47924266528543,
+            "spamPoints": 304,
+            "spamPerLakhRecovered": 115.99994490002616,
+            "netValueAfterAnnoyancePaise": 25058329,
+            "blockedActions": 0,
+            "deferrals": 170,
+            "issuerPenaltyPaise": 210000,
+            "ruleTally": {
+              "QUIET_HOURS": 170
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 252,
+              "recovered": 86,
+              "recoveryRate": 0.3412698412698413,
+              "retries": 702,
+              "costPaise": 178700,
+              "recoveredPaise": 14195003,
+              "netValuePaise": 14016303
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 70,
+              "recovered": 56,
+              "recoveryRate": 0.8,
+              "retries": 120,
+              "costPaise": 30260,
+              "recoveredPaise": 9401058,
+              "netValuePaise": 9370798
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 145,
+              "recovered": 23,
+              "recoveryRate": 0.15862068965517243,
+              "retries": 390,
+              "costPaise": 99640,
+              "recoveredPaise": 1856409,
+              "netValuePaise": 1756769
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 8,
+              "recovered": 8,
+              "recoveryRate": 1,
+              "retries": 11,
+              "costPaise": 2750,
+              "recoveredPaise": 754439,
+              "netValuePaise": 751689
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 11,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 33,
+              "costPaise": 8450,
+              "recoveredPaise": 0,
+              "netValuePaise": -8450
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 14,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 42,
+              "costPaise": 220780,
+              "recoveredPaise": 0,
+              "netValuePaise": -220780
+            }
+          ]
+        },
+        {
+          "id": "agent-rules",
+          "name": "Reason-aware agent",
+          "description": "Classifies each failure by Razorpay reason code and runs a per-class playbook: fast on abandonment, patient on funds, zero retries on hopeless classes, and value-weighted escalation.",
+          "metrics": {
+            "strategyId": "agent-rules",
+            "strategyName": "Reason-aware agent",
+            "casesTotal": 500,
+            "casesRecovered": 229,
+            "recoveryRate": 0.458,
+            "atRiskPaise": 155548675,
+            "recoveredPaise": 37426811,
+            "costPaise": 476370,
+            "netValuePaise": 36950441,
+            "recoveryRateByValue": 0.2406115706225077,
+            "totalRetries": 725,
+            "totalContacts": 238,
+            "totalHumanEscalations": 51,
+            "retriesPerRecovery": 3.165938864628821,
+            "contactsPerRecovery": 1.039301310043668,
+            "returnOnSpend": 78.56668346033545,
+            "spamPoints": 1076,
+            "spamPerLakhRecovered": 287.4944381448903,
+            "netValueAfterAnnoyancePaise": 34798441,
+            "blockedActions": 30,
+            "deferrals": 171,
+            "issuerPenaltyPaise": 30000,
+            "ruleTally": {
+              "QUIET_HOURS": 84,
+              "MAX_RETRIES": 26,
+              "CONTACT_COOLDOWN": 74,
+              "DAILY_CONTACT_CAP": 13,
+              "DND_REGISTERED": 4
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 252,
+              "recovered": 140,
+              "recoveryRate": 0.5555555555555556,
+              "retries": 511,
+              "costPaise": 282610,
+              "recoveredPaise": 25194043,
+              "netValuePaise": 24911433
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 70,
+              "recovered": 54,
+              "recoveryRate": 0.7714285714285715,
+              "retries": 96,
+              "costPaise": 69780,
+              "recoveredPaise": 8935495,
+              "netValuePaise": 8865715
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 145,
+              "recovered": 29,
+              "recoveryRate": 0.2,
+              "retries": 93,
+              "costPaise": 66770,
+              "recoveredPaise": 2798199,
+              "netValuePaise": 2731429
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 8,
+              "recovered": 5,
+              "recoveryRate": 0.625,
+              "retries": 18,
+              "costPaise": 4640,
+              "recoveredPaise": 389024,
+              "netValuePaise": 384384
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 11,
+              "recovered": 1,
+              "recoveryRate": 0.09090909090909091,
+              "retries": 1,
+              "costPaise": 11050,
+              "recoveredPaise": 110050,
+              "netValuePaise": 99000
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 14,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 6,
+              "costPaise": 41520,
+              "recoveredPaise": 0,
+              "netValuePaise": -41520
+            }
+          ]
+        }
+      ],
+      "ruleTally": {
+        "QUIET_HOURS": 84,
+        "MAX_RETRIES": 26,
+        "CONTACT_COOLDOWN": 74,
+        "DAILY_CONTACT_CAP": 13,
+        "DND_REGISTERED": 4
+      },
+      "sampleAuditTrail": [
+        {
+          "caseId": "loss_00086",
+          "at": 1788333343026,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 1 of 5 at +36.0h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 38
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788488863026,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 2 of 5 at +79.2h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 39
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788670303026,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 3 of 5 at +129.6h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 40
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788799903026,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 4 of 5 at +165.6h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 41
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788929503026,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 5 of 5 at +201.6h -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 42
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788931303026,
+          "actionKind": "contact_customer",
+          "channel": "email",
+          "outcome": "executed",
+          "succeeded": true,
+          "rationale": "TRANSIENT_FUNDS: retries exhausted, prompting on email",
+          "costPaise": 20,
+          "spamPoints": 1,
+          "seq": 43
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788931603026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 44
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788931903026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 45
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788932203026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 46
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788932503026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 47
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788932803026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 48
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788933103026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 49
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788933403026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 50
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788933703026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 51
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788934003026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 52
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788934303026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 53
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788934603026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 54
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788934903026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 55
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788935203026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 56
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788935503026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 57
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788935803026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 58
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788936103026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 59
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788936403026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 60
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788936703026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 61
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788937003026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 62
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788937303026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 63
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788937603026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 64
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788937903026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 65
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788938203026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 66
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788938503026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 67
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788938803026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 68
+        },
+        {
+          "caseId": "loss_00086",
+          "at": 1788939103026,
+          "actionKind": "retry_payment",
+          "outcome": "blocked",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "rule": "MAX_RETRIES",
+          "explanation": "Already attempted 5 retries (cap 5). Repeated authorisation attempts risk tripping issuer controls.",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 69
+        }
+      ]
+    },
+    {
+      "id": "risk-spike",
+      "name": "Risk spike",
+      "description": "A wave of fraud-flagged and blocked-instrument declines. Nearly nothing here is recoverable. The right answer is to stop early, and a naive retry loop is actively harmful.",
+      "seed": 5150,
+      "cohort": {
+        "count": 500,
+        "totalAtRiskPaise": 170913585,
+        "byRecoveryClass": {
+          "ABANDONMENT": 167,
+          "TRANSIENT_INFRA": 91,
+          "HARD_DECLINE": 159,
+          "CUSTOMER_ACTION_REQUIRED": 18,
+          "TRANSIENT_FUNDS": 60,
+          "AUTH_FAILURE": 5
+        },
+        "byLossType": {
+          "subscription_mandate": 72,
+          "payment_failure": 277,
+          "checkout_abandonment": 97,
+          "receivable": 54
+        },
+        "byMethod": {
+          "upi": 332,
+          "card": 168
+        }
+      },
+      "strategies": [
+        {
+          "id": "do-nothing",
+          "name": "Do nothing",
+          "description": "Write off every failed payment immediately. The floor: zero recovered, zero spent.",
+          "metrics": {
+            "strategyId": "do-nothing",
+            "strategyName": "Do nothing",
+            "casesTotal": 500,
+            "casesRecovered": 0,
+            "recoveryRate": 0,
+            "atRiskPaise": 170913585,
+            "recoveredPaise": 0,
+            "costPaise": 0,
+            "netValuePaise": 0,
+            "recoveryRateByValue": 0,
+            "totalRetries": 0,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": null,
+            "contactsPerRecovery": null,
+            "returnOnSpend": null,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 0,
+            "blockedActions": 0,
+            "deferrals": 0,
+            "issuerPenaltyPaise": 0,
+            "ruleTally": {},
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 167,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 91,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 159,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 18,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 60,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 5,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            }
+          ]
+        },
+        {
+          "id": "naive-retry",
+          "name": "Naive retry",
+          "description": "Retry three times in quick succession, ignoring the failure reason. The obvious implementation.",
+          "metrics": {
+            "strategyId": "naive-retry",
+            "strategyName": "Naive retry",
+            "casesTotal": 500,
+            "casesRecovered": 76,
+            "recoveryRate": 0.152,
+            "atRiskPaise": 170913585,
+            "recoveredPaise": 10631980,
+            "costPaise": 2734500,
+            "netValuePaise": 7897480,
+            "recoveryRateByValue": 0.06220675787708742,
+            "totalRetries": 1418,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 18.657894736842106,
+            "contactsPerRecovery": 0,
+            "returnOnSpend": 3.888089230206619,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 7897480,
+            "blockedActions": 0,
+            "deferrals": 918,
+            "issuerPenaltyPaise": 2380000,
+            "ruleTally": {
+              "RETRY_COOLDOWN": 918
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 167,
+              "recovered": 33,
+              "recoveryRate": 0.19760479041916168,
+              "retries": 446,
+              "costPaise": 111500,
+              "recoveredPaise": 4860913,
+              "netValuePaise": 4749413
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 91,
+              "recovered": 35,
+              "recoveryRate": 0.38461538461538464,
+              "retries": 252,
+              "costPaise": 63000,
+              "recoveredPaise": 4377763,
+              "netValuePaise": 4314763
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 18,
+              "recovered": 2,
+              "recoveryRate": 0.1111111111111111,
+              "retries": 50,
+              "costPaise": 12500,
+              "recoveredPaise": 324277,
+              "netValuePaise": 311777
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 5,
+              "recovered": 3,
+              "recoveryRate": 0.6,
+              "retries": 14,
+              "costPaise": 3500,
+              "recoveredPaise": 312018,
+              "netValuePaise": 308518
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 60,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 180,
+              "costPaise": 45000,
+              "recoveredPaise": 0,
+              "netValuePaise": -45000
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 159,
+              "recovered": 3,
+              "recoveryRate": 0.018867924528301886,
+              "retries": 476,
+              "costPaise": 2499000,
+              "recoveredPaise": 757009,
+              "netValuePaise": -1741991
+            }
+          ]
+        },
+        {
+          "id": "fixed-dunning",
+          "name": "Fixed dunning",
+          "description": "Retry on a fixed +1h / +24h / +72h ladder regardless of failure reason, then send a single email.",
+          "metrics": {
+            "strategyId": "fixed-dunning",
+            "strategyName": "Fixed dunning",
+            "casesTotal": 500,
+            "casesRecovered": 121,
+            "recoveryRate": 0.242,
+            "atRiskPaise": 170913585,
+            "recoveredPaise": 22778425,
+            "costPaise": 2697310,
+            "netValuePaise": 20081115,
+            "recoveryRateByValue": 0.1332745141353158,
+            "totalRetries": 1321,
+            "totalContacts": 353,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 10.917355371900827,
+            "contactsPerRecovery": 2.9173553719008263,
+            "returnOnSpend": 8.444867293711141,
+            "spamPoints": 353,
+            "spamPerLakhRecovered": 154.97120630596714,
+            "netValueAfterAnnoyancePaise": 19375115,
+            "blockedActions": 0,
+            "deferrals": 185,
+            "issuerPenaltyPaise": 2360000,
+            "ruleTally": {
+              "QUIET_HOURS": 185
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 91,
+              "recovered": 71,
+              "recoveryRate": 0.7802197802197802,
+              "retries": 154,
+              "costPaise": 38940,
+              "recoveredPaise": 14837918,
+              "netValuePaise": 14798978
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 60,
+              "recovered": 25,
+              "recoveryRate": 0.4166666666666667,
+              "retries": 168,
+              "costPaise": 42680,
+              "recoveredPaise": 3690317,
+              "netValuePaise": 3647637
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 167,
+              "recovered": 18,
+              "recoveryRate": 0.10778443113772455,
+              "retries": 465,
+              "costPaise": 118990,
+              "recoveredPaise": 3731030,
+              "netValuePaise": 3612040
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 5,
+              "recovered": 4,
+              "recoveryRate": 0.8,
+              "retries": 8,
+              "costPaise": 2020,
+              "recoveredPaise": 358707,
+              "netValuePaise": 356687
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 18,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 54,
+              "costPaise": 13780,
+              "recoveredPaise": 0,
+              "netValuePaise": -13780
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 159,
+              "recovered": 3,
+              "recoveryRate": 0.018867924528301886,
+              "retries": 472,
+              "costPaise": 2480900,
+              "recoveredPaise": 160453,
+              "netValuePaise": -2320447
+            }
+          ]
+        },
+        {
+          "id": "agent-rules",
+          "name": "Reason-aware agent",
+          "description": "Classifies each failure by Razorpay reason code and runs a per-class playbook: fast on abandonment, patient on funds, zero retries on hopeless classes, and value-weighted escalation.",
+          "metrics": {
+            "strategyId": "agent-rules",
+            "strategyName": "Reason-aware agent",
+            "casesTotal": 500,
+            "casesRecovered": 139,
+            "recoveryRate": 0.278,
+            "atRiskPaise": 170913585,
+            "recoveredPaise": 23224830,
+            "costPaise": 724190,
+            "netValuePaise": 22500640,
+            "recoveryRateByValue": 0.1358863896044308,
+            "totalRetries": 427,
+            "totalContacts": 182,
+            "totalHumanEscalations": 64,
+            "retriesPerRecovery": 3.0719424460431655,
+            "contactsPerRecovery": 1.3093525179856116,
+            "returnOnSpend": 32.07007829437026,
+            "spamPoints": 1054,
+            "spamPerLakhRecovered": 453.8246350995895,
+            "netValueAfterAnnoyancePaise": 20392640,
+            "blockedActions": 4,
+            "deferrals": 121,
+            "issuerPenaltyPaise": 290000,
+            "ruleTally": {
+              "QUIET_HOURS": 59,
+              "CONTACT_COOLDOWN": 55,
+              "DAILY_CONTACT_CAP": 7,
+              "DND_REGISTERED": 4
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 91,
+              "recovered": 75,
+              "recoveryRate": 0.8241758241758241,
+              "retries": 127,
+              "costPaise": 83130,
+              "recoveredPaise": 11171960,
+              "netValuePaise": 11088830
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 167,
+              "recovered": 29,
+              "recoveryRate": 0.17365269461077845,
+              "retries": 98,
+              "costPaise": 108700,
+              "recoveredPaise": 6930786,
+              "netValuePaise": 6822086
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 60,
+              "recovered": 31,
+              "recoveryRate": 0.5166666666666667,
+              "retries": 133,
+              "costPaise": 69190,
+              "recoveredPaise": 4636265,
+              "netValuePaise": 4567075
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 5,
+              "recovered": 4,
+              "recoveryRate": 0.8,
+              "retries": 11,
+              "costPaise": 2750,
+              "recoveredPaise": 485819,
+              "netValuePaise": 483069
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 18,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 20620,
+              "recoveredPaise": 0,
+              "netValuePaise": -20620
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 159,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 58,
+              "costPaise": 439800,
+              "recoveredPaise": 0,
+              "netValuePaise": -439800
+            }
+          ]
+        }
+      ],
+      "ruleTally": {
+        "QUIET_HOURS": 59,
+        "CONTACT_COOLDOWN": 55,
+        "DAILY_CONTACT_CAP": 7,
+        "DND_REGISTERED": 4
+      },
+      "sampleAuditTrail": [
+        {
+          "caseId": "loss_00358",
+          "at": 1788254686049,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "ABANDONMENT / Subscription / mandate: retry 1 of 4 at +0.1h -- Purchase intent decays by the hour. Re-engage while they are still in the moment; a reminder tomorrow is a reminder they already moved on.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 711
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788259330049,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "ABANDONMENT / Subscription / mandate: retry 2 of 4 at +1.4h -- Purchase intent decays by the hour. Re-engage while they are still in the moment; a reminder tomorrow is a reminder they already moved on.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 712
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788388930049,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "ABANDONMENT / Subscription / mandate: retry 3 of 4 at +37.4h -- Purchase intent decays by the hour. Re-engage while they are still in the moment; a reminder tomorrow is a reminder they already moved on.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 713
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788518530049,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "ABANDONMENT / Subscription / mandate: retry 4 of 4 at +73.3h -- Purchase intent decays by the hour. Re-engage while they are still in the moment; a reminder tomorrow is a reminder they already moved on.",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 714
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788520330049,
+          "actionKind": "contact_customer",
+          "channel": "email",
+          "outcome": "executed",
+          "succeeded": true,
+          "rationale": "ABANDONMENT: retries exhausted, prompting on email",
+          "costPaise": 20,
+          "spamPoints": 1,
+          "seq": 715
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788520630049,
+          "actionKind": "retry_payment",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "customer acted on our nudge, so the instrument should now work; retrying immediately",
+          "costPaise": 250,
+          "spamPoints": 0,
+          "seq": 716
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788522430049,
+          "actionKind": "contact_customer",
+          "channel": "whatsapp",
+          "outcome": "deferred",
+          "rationale": "ABANDONMENT: retries exhausted, prompting on whatsapp",
+          "rule": "CONTACT_COOLDOWN",
+          "explanation": "Last contact was 0.6h ago; minimum gap is 4h.",
+          "deferredTo": 1788534730049,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 717
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788534730049,
+          "actionKind": "contact_customer",
+          "channel": "whatsapp",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "ABANDONMENT: retries exhausted, prompting on whatsapp",
+          "costPaise": 80,
+          "spamPoints": 5,
+          "seq": 718
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788538330049,
+          "actionKind": "escalate_human",
+          "outcome": "executed",
+          "succeeded": true,
+          "rationale": "automated recovery exhausted on a high-value case; handing to a human",
+          "costPaise": 5000,
+          "spamPoints": 10,
+          "seq": 719
+        },
+        {
+          "caseId": "loss_00358",
+          "at": 1788538330049,
+          "actionKind": "stop",
+          "outcome": "stopped",
+          "rationale": "ABANDONMENT / Subscription / mandate: playbook exhausted",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 720
+        }
+      ]
+    },
+    {
+      "id": "stale-instruments",
+      "name": "Stale instruments",
+      "description": "Expired cards, deregistered VPAs and disabled online payments. No retry can ever succeed here. Every rupee recovered has to come through a customer nudge.",
+      "seed": 2718,
+      "cohort": {
+        "count": 500,
+        "totalAtRiskPaise": 181072150,
+        "byRecoveryClass": {
+          "TRANSIENT_FUNDS": 83,
+          "CUSTOMER_ACTION_REQUIRED": 144,
+          "TRANSIENT_INFRA": 91,
+          "ABANDONMENT": 164,
+          "HARD_DECLINE": 12,
+          "AUTH_FAILURE": 6
+        },
+        "byLossType": {
+          "payment_failure": 289,
+          "receivable": 58,
+          "checkout_abandonment": 103,
+          "subscription_mandate": 50
+        },
+        "byMethod": {
+          "upi": 344,
+          "card": 156
+        }
+      },
+      "strategies": [
+        {
+          "id": "do-nothing",
+          "name": "Do nothing",
+          "description": "Write off every failed payment immediately. The floor: zero recovered, zero spent.",
+          "metrics": {
+            "strategyId": "do-nothing",
+            "strategyName": "Do nothing",
+            "casesTotal": 500,
+            "casesRecovered": 0,
+            "recoveryRate": 0,
+            "atRiskPaise": 181072150,
+            "recoveredPaise": 0,
+            "costPaise": 0,
+            "netValuePaise": 0,
+            "recoveryRateByValue": 0,
+            "totalRetries": 0,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": null,
+            "contactsPerRecovery": null,
+            "returnOnSpend": null,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 0,
+            "blockedActions": 0,
+            "deferrals": 0,
+            "issuerPenaltyPaise": 0,
+            "ruleTally": {},
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 83,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 144,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 91,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 164,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 12,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 6,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 0,
+              "costPaise": 0,
+              "recoveredPaise": 0,
+              "netValuePaise": 0
+            }
+          ]
+        },
+        {
+          "id": "naive-retry",
+          "name": "Naive retry",
+          "description": "Retry three times in quick succession, ignoring the failure reason. The obvious implementation.",
+          "metrics": {
+            "strategyId": "naive-retry",
+            "strategyName": "Naive retry",
+            "casesTotal": 500,
+            "casesRecovered": 82,
+            "recoveryRate": 0.164,
+            "atRiskPaise": 181072150,
+            "recoveredPaise": 13542889,
+            "costPaise": 514750,
+            "netValuePaise": 13028139,
+            "recoveryRateByValue": 0.07479277735422041,
+            "totalRetries": 1419,
+            "totalContacts": 0,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 17.304878048780488,
+            "contactsPerRecovery": 0,
+            "returnOnSpend": 26.309643516270032,
+            "spamPoints": 0,
+            "spamPerLakhRecovered": 0,
+            "netValueAfterAnnoyancePaise": 13028139,
+            "blockedActions": 0,
+            "deferrals": 919,
+            "issuerPenaltyPaise": 160000,
+            "ruleTally": {
+              "RETRY_COOLDOWN": 919
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 164,
+              "recovered": 32,
+              "recoveryRate": 0.1951219512195122,
+              "retries": 444,
+              "costPaise": 111000,
+              "recoveredPaise": 7058072,
+              "netValuePaise": 6947072
+            },
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 91,
+              "recovered": 39,
+              "recoveryRate": 0.42857142857142855,
+              "retries": 250,
+              "costPaise": 62500,
+              "recoveredPaise": 5330105,
+              "netValuePaise": 5267605
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 6,
+              "recovered": 3,
+              "recoveryRate": 0.5,
+              "retries": 16,
+              "costPaise": 4000,
+              "recoveredPaise": 317756,
+              "netValuePaise": 313756
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 144,
+              "recovered": 5,
+              "recoveryRate": 0.034722222222222224,
+              "retries": 428,
+              "costPaise": 107000,
+              "recoveredPaise": 336378,
+              "netValuePaise": 229378
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 83,
+              "recovered": 1,
+              "recoveryRate": 0.012048192771084338,
+              "retries": 249,
+              "costPaise": 62250,
+              "recoveredPaise": 270924,
+              "netValuePaise": 208674
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 12,
+              "recovered": 2,
+              "recoveryRate": 0.16666666666666666,
+              "retries": 32,
+              "costPaise": 168000,
+              "recoveredPaise": 229654,
+              "netValuePaise": 61654
+            }
+          ]
+        },
+        {
+          "id": "fixed-dunning",
+          "name": "Fixed dunning",
+          "description": "Retry on a fixed +1h / +24h / +72h ladder regardless of failure reason, then send a single email.",
+          "metrics": {
+            "strategyId": "fixed-dunning",
+            "strategyName": "Fixed dunning",
+            "casesTotal": 500,
+            "casesRecovered": 125,
+            "recoveryRate": 0.25,
+            "atRiskPaise": 181072150,
+            "recoveredPaise": 20373526,
+            "costPaise": 506440,
+            "netValuePaise": 19867086,
+            "recoveryRateByValue": 0.1125160661095591,
+            "totalRetries": 1318,
+            "totalContacts": 347,
+            "totalHumanEscalations": 0,
+            "retriesPerRecovery": 10.544,
+            "contactsPerRecovery": 2.776,
+            "returnOnSpend": 40.2289037200853,
+            "spamPoints": 347,
+            "spamPerLakhRecovered": 170.31906995382144,
+            "netValueAfterAnnoyancePaise": 19173086,
+            "blockedActions": 0,
+            "deferrals": 173,
+            "issuerPenaltyPaise": 170000,
+            "ruleTally": {
+              "QUIET_HOURS": 173
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 91,
+              "recovered": 68,
+              "recoveryRate": 0.7472527472527473,
+              "retries": 158,
+              "costPaise": 39940,
+              "recoveredPaise": 9928130,
+              "netValuePaise": 9888190
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 83,
+              "recovered": 27,
+              "recoveryRate": 0.3253012048192771,
+              "retries": 233,
+              "costPaise": 59290,
+              "recoveredPaise": 4995382,
+              "netValuePaise": 4936092
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 164,
+              "recovered": 20,
+              "recoveryRate": 0.12195121951219512,
+              "retries": 453,
+              "costPaise": 115850,
+              "recoveredPaise": 4381960,
+              "netValuePaise": 4266110
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 6,
+              "recovered": 4,
+              "recoveryRate": 0.6666666666666666,
+              "retries": 12,
+              "costPaise": 3040,
+              "recoveredPaise": 601795,
+              "netValuePaise": 598755
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 144,
+              "recovered": 5,
+              "recoveryRate": 0.034722222222222224,
+              "retries": 428,
+              "costPaise": 109600,
+              "recoveredPaise": 414677,
+              "netValuePaise": 305077
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 12,
+              "recovered": 1,
+              "recoveryRate": 0.08333333333333333,
+              "retries": 34,
+              "costPaise": 178720,
+              "recoveredPaise": 51582,
+              "netValuePaise": -127138
+            }
+          ]
+        },
+        {
+          "id": "agent-rules",
+          "name": "Reason-aware agent",
+          "description": "Classifies each failure by Razorpay reason code and runs a per-class playbook: fast on abandonment, patient on funds, zero retries on hopeless classes, and value-weighted escalation.",
+          "metrics": {
+            "strategyId": "agent-rules",
+            "strategyName": "Reason-aware agent",
+            "casesTotal": 500,
+            "casesRecovered": 168,
+            "recoveryRate": 0.336,
+            "atRiskPaise": 181072150,
+            "recoveredPaise": 32159023,
+            "costPaise": 519990,
+            "netValuePaise": 31639033,
+            "recoveryRateByValue": 0.17760336418383502,
+            "totalRetries": 443,
+            "totalContacts": 330,
+            "totalHumanEscalations": 75,
+            "retriesPerRecovery": 2.636904761904762,
+            "contactsPerRecovery": 1.9642857142857142,
+            "returnOnSpend": 61.84546433585261,
+            "spamPoints": 1540,
+            "spamPerLakhRecovered": 478.87026916209487,
+            "netValueAfterAnnoyancePaise": 28559033,
+            "blockedActions": 9,
+            "deferrals": 234,
+            "issuerPenaltyPaise": 20000,
+            "ruleTally": {
+              "QUIET_HOURS": 107,
+              "CONTACT_COOLDOWN": 107,
+              "DAILY_CONTACT_CAP": 20,
+              "DND_REGISTERED": 9
+            },
+            "complianceViolations": 0
+          },
+          "byClass": [
+            {
+              "recoveryClass": "TRANSIENT_INFRA",
+              "cases": 91,
+              "recovered": 73,
+              "recoveryRate": 0.8021978021978022,
+              "retries": 131,
+              "costPaise": 84310,
+              "recoveredPaise": 12957436,
+              "netValuePaise": 12873126
+            },
+            {
+              "recoveryClass": "TRANSIENT_FUNDS",
+              "cases": 83,
+              "recovered": 44,
+              "recoveryRate": 0.5301204819277109,
+              "retries": 185,
+              "costPaise": 128050,
+              "recoveredPaise": 6477205,
+              "netValuePaise": 6349155
+            },
+            {
+              "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+              "cases": 144,
+              "recovered": 14,
+              "recoveryRate": 0.09722222222222222,
+              "retries": 16,
+              "costPaise": 171560,
+              "recoveredPaise": 6415633,
+              "netValuePaise": 6244073
+            },
+            {
+              "recoveryClass": "ABANDONMENT",
+              "cases": 164,
+              "recovered": 32,
+              "recoveryRate": 0.1951219512195122,
+              "retries": 96,
+              "costPaise": 97280,
+              "recoveredPaise": 5490279,
+              "netValuePaise": 5392999
+            },
+            {
+              "recoveryClass": "AUTH_FAILURE",
+              "cases": 6,
+              "recovered": 5,
+              "recoveryRate": 0.8333333333333334,
+              "retries": 11,
+              "costPaise": 2770,
+              "recoveredPaise": 818470,
+              "netValuePaise": 815700
+            },
+            {
+              "recoveryClass": "HARD_DECLINE",
+              "cases": 12,
+              "recovered": 0,
+              "recoveryRate": 0,
+              "retries": 4,
+              "costPaise": 36020,
+              "recoveredPaise": 0,
+              "netValuePaise": -36020
+            }
+          ]
+        }
+      ],
+      "ruleTally": {
+        "QUIET_HOURS": 107,
+        "CONTACT_COOLDOWN": 107,
+        "DAILY_CONTACT_CAP": 20,
+        "DND_REGISTERED": 9
+      },
+      "sampleAuditTrail": [
+        {
+          "caseId": "loss_00366",
+          "at": 1788203367796,
+          "actionKind": "contact_customer",
+          "channel": "email",
+          "outcome": "deferred",
+          "rationale": "TRANSIENT_INFRA: retries exhausted, prompting on email",
+          "rule": "QUIET_HOURS",
+          "explanation": "Contact would land at 00:39 local, inside quiet hours (21:00-09:00). Deferred to the next permitted window rather than dropped.",
+          "deferredTo": 1788233400000,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 18
+        },
+        {
+          "caseId": "loss_00366",
+          "at": 1788233400000,
+          "actionKind": "contact_customer",
+          "channel": "email",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_INFRA: retries exhausted, prompting on email",
+          "costPaise": 20,
+          "spamPoints": 1,
+          "seq": 19
+        },
+        {
+          "caseId": "loss_00366",
+          "at": 1788235200000,
+          "actionKind": "contact_customer",
+          "channel": "whatsapp",
+          "outcome": "deferred",
+          "rationale": "TRANSIENT_INFRA: retries exhausted, prompting on whatsapp",
+          "rule": "CONTACT_COOLDOWN",
+          "explanation": "Last contact was 0.5h ago; minimum gap is 4h.",
+          "deferredTo": 1788247800000,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 20
+        },
+        {
+          "caseId": "loss_00366",
+          "at": 1788247800000,
+          "actionKind": "contact_customer",
+          "channel": "whatsapp",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_INFRA: retries exhausted, prompting on whatsapp",
+          "costPaise": 80,
+          "spamPoints": 5,
+          "seq": 21
+        },
+        {
+          "caseId": "loss_00366",
+          "at": 1788249600000,
+          "actionKind": "contact_customer",
+          "channel": "sms",
+          "outcome": "deferred",
+          "rationale": "TRANSIENT_INFRA: retries exhausted, prompting on sms",
+          "rule": "CONTACT_COOLDOWN",
+          "explanation": "Last contact was 0.5h ago; minimum gap is 4h.",
+          "deferredTo": 1788262200000,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 22
+        },
+        {
+          "caseId": "loss_00366",
+          "at": 1788262200000,
+          "actionKind": "contact_customer",
+          "channel": "sms",
+          "outcome": "deferred",
+          "rationale": "TRANSIENT_INFRA: retries exhausted, prompting on sms",
+          "rule": "DAILY_CONTACT_CAP",
+          "explanation": "Already contacted 2 times in the last 24h (cap 2).",
+          "deferredTo": 1788319800000,
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 23
+        },
+        {
+          "caseId": "loss_00366",
+          "at": 1788319800000,
+          "actionKind": "contact_customer",
+          "channel": "sms",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "TRANSIENT_INFRA: retries exhausted, prompting on sms",
+          "costPaise": 100,
+          "spamPoints": 5,
+          "seq": 24
+        },
+        {
+          "caseId": "loss_00366",
+          "at": 1788323400000,
+          "actionKind": "escalate_human",
+          "outcome": "executed",
+          "succeeded": false,
+          "rationale": "automated recovery exhausted on a high-value case; handing to a human",
+          "costPaise": 5000,
+          "spamPoints": 10,
+          "seq": 25
+        },
+        {
+          "caseId": "loss_00366",
+          "at": 1788323400000,
+          "actionKind": "stop",
+          "outcome": "stopped",
+          "rationale": "TRANSIENT_INFRA / B2B receivable: playbook exhausted",
+          "costPaise": 0,
+          "spamPoints": 0,
+          "seq": 26
+        }
+      ]
+    }
+  ]
+}
