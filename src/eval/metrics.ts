@@ -35,7 +35,35 @@ export interface Metrics {
   /** Rupees returned per rupee spent. Infinity when nothing was spent. */
   readonly returnOnSpend: number;
 
-  /** Guardrail breaches. Must be zero. Populated once guardrails land. */
+  /**
+   * Customer-annoyance score: email 1, SMS/WhatsApp 5, voice 10, silent retry 0.
+   *
+   * The metric that actually constrains a recovery agent. Rupee cost cannot: at
+   * a median ticket of a few hundred rupees against per-message costs in paise,
+   * recovery dwarfs spend by two orders of magnitude, so no honest cost model
+   * makes aggression unprofitable. Irritating the merchant's customers is the
+   * real price, and it is not denominated in rupees.
+   */
+  readonly spamPoints: number;
+  /** Annoyance per rupee recovered. Lower is better. */
+  readonly spamPerLakhRecovered: number;
+
+  /**
+   * Actions the guardrails refused. This is NOT a failure count: it is evidence
+   * the guardrails are load-bearing. A strategy with zero blocks either never
+   * pushed hard enough to hit a limit, or is not going through the gate.
+   */
+  readonly blockedActions: number;
+  /** Actions postponed to a compliant window instead of being dropped. */
+  readonly deferrals: number;
+  /** Which guardrail rules fired, and how often. */
+  readonly ruleTally: Readonly<Record<string, number>>;
+
+  /**
+   * Compliance breaches that actually executed. Must be zero by construction:
+   * nothing reaches execution without an `allow` verdict. Reported so the claim
+   * is measured rather than asserted.
+   */
   readonly complianceViolations: number;
 }
 
@@ -47,6 +75,9 @@ export function score(run: RunResult): Metrics {
   let totalRetries = 0;
   let totalContacts = 0;
   let totalHumanEscalations = 0;
+  let spamPoints = 0;
+  let blockedActions = 0;
+  let deferrals = 0;
 
   for (const c of run.cases) {
     atRiskPaise += c.amountPaise;
@@ -56,7 +87,16 @@ export function score(run: RunResult): Metrics {
     totalRetries += c.retries;
     totalContacts += c.contacts;
     totalHumanEscalations += c.humanEscalations;
+    spamPoints += c.spamPoints;
+    blockedActions += c.blockedActions;
+    deferrals += c.deferrals;
   }
+
+  // Every executed contact carried an `allow` verdict, so a violation here would
+  // mean the gate was bypassed. Counted rather than assumed.
+  const complianceViolations = run.ledger
+    .all()
+    .filter((e) => e.outcome === 'executed' && e.rule !== undefined).length;
 
   const casesTotal = run.cases.length;
   const safeRate = (n: number, d: number): number => (d === 0 ? 0 : n / d);
@@ -81,7 +121,13 @@ export function score(run: RunResult): Metrics {
     contactsPerRecovery: perRecovery(totalContacts),
     returnOnSpend:
       costPaise === 0 ? Number.POSITIVE_INFINITY : recoveredPaise / costPaise,
-    complianceViolations: 0,
+    spamPoints,
+    spamPerLakhRecovered:
+      recoveredPaise === 0 ? 0 : spamPoints / (recoveredPaise / 10_000_000),
+    blockedActions,
+    deferrals,
+    ruleTally: run.ledger.ruleTally(),
+    complianceViolations,
   };
 }
 
