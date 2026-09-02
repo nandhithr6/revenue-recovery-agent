@@ -8,7 +8,9 @@ import type { CaseContext, Strategy } from '../policies/types.js';
 import { generateCohort } from '../sim/generator.js';
 import { Rng } from '../sim/rng.js';
 import { DEFAULT_COSTS, SCENARIO_IDS, getScenario } from '../sim/scenario.js';
-import { evaluateCompliance, nextPermittedContactTime, QUIET_HOURS } from './compliance.js';
+import { createRulesAgent } from '../policies/rules-agent.js';
+import { DEFAULT_COMPLIANCE, evaluateCompliance, nextPermittedContactTime, QUIET_HOURS } from './compliance.js';
+import { DEFAULT_LIMITS } from './limits.js';
 
 const IST = 330;
 
@@ -301,5 +303,75 @@ describe('time helpers', () => {
     expect(localHour(ist(0))).toBe(0);
     expect(localHour(ist(23))).toBe(23);
     expect(ist(1) - ist(0)).toBe(HOUR);
+  });
+});
+
+/**
+ * The kill switch and the terminal rules.
+ *
+ * Both are advertised in the README as safety properties and neither had a test.
+ * A safety feature nobody exercises is a claim, not a control.
+ */
+describe('kill switch', () => {
+  const halted = {
+    compliance: DEFAULT_COMPLIANCE,
+    limits: { ...DEFAULT_LIMITS, killSwitch: true },
+  };
+
+  it('refuses every action kind', () => {
+    for (const strategy of [...BASELINE_STRATEGIES, adversarial]) {
+      const result = runCase(
+        lossEvent(),
+        strategy,
+        DEFAULT_COSTS,
+        new Rng(4),
+        new Ledger(),
+        halted,
+      );
+      expect(result.retries).toBe(0);
+      expect(result.contacts).toBe(0);
+      expect(result.humanEscalations).toBe(0);
+    }
+  });
+
+  it('halts an entire cohort: nothing recovered, nothing spent', () => {
+    const scenario = { ...getScenario('baseline-week'), cohortSize: 80 };
+    const events = generateCohort(scenario, ist(0));
+    const metrics = score(
+      runCohort(events, adversarial, DEFAULT_COSTS, scenario.seed + 1, halted),
+    );
+    expect(metrics.recoveredPaise).toBe(0);
+    expect(metrics.costPaise).toBe(0);
+    expect(metrics.spamPoints).toBe(0);
+  });
+
+  it('records every refusal in the ledger rather than failing silently', () => {
+    const ledger = new Ledger();
+    runCase(lossEvent(), adversarial, DEFAULT_COSTS, new Rng(4), ledger, halted);
+    const blocked = ledger.blocked();
+    expect(blocked.length).toBeGreaterThan(0);
+    expect(blocked.every((e) => e.rule === 'KILL_SWITCH')).toBe(true);
+  });
+});
+
+describe('terminal rules close a case', () => {
+  it('the agent stops instead of re-proposing a permanently refused action', () => {
+    // Regression: the agent once re-proposed the same retry 29 times against
+    // CASE_AGE_LIMIT -- the exact loop it criticises fixed dunning for. A rule
+    // that can never be satisfied must end the case, not be retried.
+    const agent = createRulesAgent(DEFAULT_COSTS);
+    const ledger = new Ledger();
+    runCase(
+      lossEvent({ lossType: 'subscription_mandate', reasonCode: 'insufficient_funds' }),
+      agent,
+      DEFAULT_COSTS,
+      new Rng(4),
+      ledger,
+      { compliance: DEFAULT_COMPLIANCE, limits: { ...DEFAULT_LIMITS, maxCaseAgeMs: 2 * HOUR } },
+    );
+
+    const ageBlocks = ledger.all().filter((e) => e.rule === 'CASE_AGE_LIMIT');
+    // One refusal is informative. A wall of identical refusals is a bug.
+    expect(ageBlocks.length).toBeLessThanOrEqual(2);
   });
 });
