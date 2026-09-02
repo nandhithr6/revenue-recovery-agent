@@ -163,6 +163,57 @@ export interface ClassBreakdown {
   readonly netValuePaise: Paise;
 }
 
+/**
+ * Per-payment-method breakdown.
+ *
+ * India-specific and worth reporting separately: UPI and cards fail for
+ * different reasons and in different proportions, so a strategy can look fine
+ * in aggregate while being poor on the method that carries most of the volume.
+ * Our cohorts are UPI-dominant, as Indian digital payments are.
+ */
+export interface MethodBreakdown {
+  readonly method: string;
+  readonly cases: number;
+  readonly recovered: number;
+  readonly recoveryRate: number;
+  readonly retries: number;
+  readonly atRiskPaise: Paise;
+  readonly recoveredPaise: Paise;
+  readonly netValuePaise: Paise;
+}
+
+export function breakdownByMethod(run: RunResult): MethodBreakdown[] {
+  const acc = new Map<
+    string,
+    { cases: number; recovered: number; retries: number; atRisk: number; got: number; cost: number }
+  >();
+
+  for (const c of run.cases) {
+    const key = c.method;
+    const row = acc.get(key) ?? { cases: 0, recovered: 0, retries: 0, atRisk: 0, got: 0, cost: 0 };
+    row.cases += 1;
+    if (c.recovered) row.recovered += 1;
+    row.retries += c.retries;
+    row.atRisk += c.amountPaise;
+    row.got += c.recoveredPaise;
+    row.cost += c.costPaise;
+    acc.set(key, row);
+  }
+
+  return [...acc.entries()]
+    .map(([method, r]) => ({
+      method,
+      cases: r.cases,
+      recovered: r.recovered,
+      recoveryRate: r.cases === 0 ? 0 : r.recovered / r.cases,
+      retries: r.retries,
+      atRiskPaise: r.atRisk,
+      recoveredPaise: r.got,
+      netValuePaise: r.got - r.cost,
+    }))
+    .sort((a, b) => b.cases - a.cases);
+}
+
 export function breakdownByClass(run: RunResult): ClassBreakdown[] {
   const acc = new Map<
     string,

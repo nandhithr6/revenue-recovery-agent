@@ -167,6 +167,15 @@ export class LlmDecisionCache {
       if (seen.has(key)) continue;
       seen.add(key);
 
+      // Already answered, either earlier in this run or on a previous one
+      // restored from disk. Re-fetching it would pay the rate-limit wait again
+      // for a decision we already hold, which made a warm run as slow as a cold
+      // one -- the entire point of persisting the cache.
+      if (this.entries.has(key)) {
+        this.stats.cacheHits += 1;
+        continue;
+      }
+
       if (called) await new Promise((r) => setTimeout(r, gapMs));
       called = true;
 

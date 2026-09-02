@@ -65,12 +65,11 @@ so the instrument had been fixed by then.)
 No, and this is the question worth pre-empting. `npm run eval:robust` reruns
 every scenario across 50 independently seeded cohorts:
 
-> **The agent posted the highest net value in 245 of 250 independent cohorts
-> (98.0%), with zero compliance violations across every strategy and every run.**
+> **The agent posted the highest net value in 244 of 250 independent cohorts
+> (97.6%), with zero compliance violations across every strategy and every run.**
 
-It is not 250 of 250, and that is reported rather than tuned away — it loses
-occasionally in `baseline-week`, `bank-outage` and `month-end-squeeze`. An honest
-98% is worth more than a suspicious 100%.
+It is not 250 of 250, and that is reported rather than tuned away. An honest
+97.6% is worth more than a suspicious 100%.
 
 ### Does the answer depend on your annoyance price?
 

@@ -45,6 +45,8 @@ const MAX_HORIZON_MS = 14 * DAY;
 export interface CaseResult {
   readonly eventId: string;
   readonly amountPaise: Paise;
+  /** Payment method, so results can be split UPI vs card. */
+  readonly method: string;
   readonly recovered: boolean;
   readonly recoveredPaise: Paise;
   readonly retries: number;
@@ -358,6 +360,7 @@ export function runCase(
   return {
     eventId: event.id,
     amountPaise: event.amountPaise,
+    method: event.method,
     recovered,
     recoveredPaise: recovered ? event.amountPaise : 0,
     retries,
