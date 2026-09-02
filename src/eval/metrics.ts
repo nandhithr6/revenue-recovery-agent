@@ -1,4 +1,5 @@
 import type { Paise } from '../domain/types.js';
+import { SPAM_POINT_PRICE_PAISE } from '../policies/playbook.js';
 import type { RunResult } from './engine.js';
 
 /**
@@ -47,6 +48,14 @@ export interface Metrics {
   readonly spamPoints: number;
   /** Annoyance per rupee recovered. Lower is better. */
   readonly spamPerLakhRecovered: number;
+  /**
+   * Net value with annoyance priced in: recovered - spend - (spam x Rs 20).
+   *
+   * The single honest number. Reporting rupees and annoyance in separate
+   * columns invites the reader to pick whichever favours their conclusion; this
+   * forces the trade to be made explicitly, at a stated exchange rate.
+   */
+  readonly netValueAfterAnnoyancePaise: Paise;
 
   /**
    * Actions the guardrails refused. This is NOT a failure count: it is evidence
@@ -124,6 +133,8 @@ export function score(run: RunResult): Metrics {
     spamPoints,
     spamPerLakhRecovered:
       recoveredPaise === 0 ? 0 : spamPoints / (recoveredPaise / 10_000_000),
+    netValueAfterAnnoyancePaise:
+      recoveredPaise - costPaise - spamPoints * SPAM_POINT_PRICE_PAISE,
     blockedActions,
     deferrals,
     ruleTally: run.ledger.ruleTally(),

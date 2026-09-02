@@ -1,5 +1,6 @@
 import { formatINR } from '../domain/types.js';
 import { BASELINE_STRATEGIES } from '../policies/baselines.js';
+import { createRulesAgent } from '../policies/rules-agent.js';
 import type { Strategy } from '../policies/types.js';
 import { generateCohort, summariseCohort } from '../sim/generator.js';
 import { DEFAULT_COSTS, getScenario, SCENARIO_IDS } from '../sim/scenario.js';
@@ -17,7 +18,10 @@ import { breakdownByClass, score, type Metrics } from './metrics.js';
 /** Fixed clock so runs are reproducible across days. */
 const SIMULATION_START = Date.parse('2026-09-01T00:00:00+05:30');
 
-const STRATEGIES: readonly Strategy[] = [...BASELINE_STRATEGIES];
+const STRATEGIES: readonly Strategy[] = [
+  ...BASELINE_STRATEGIES,
+  createRulesAgent(DEFAULT_COSTS),
+];
 
 const pct = (v: number): string => `${(v * 100).toFixed(1)}%`;
 const ratio = (v: number): string => (Number.isFinite(v) ? v.toFixed(2) : '--');
@@ -71,23 +75,27 @@ function main(): void {
   );
   const results: Metrics[] = runs.map(score);
 
-  const best = results.reduce((a, b) => (b.netValuePaise > a.netValuePaise ? b : a));
+  // Ranked on the fully-loaded number, so a strategy cannot win by being noisy.
+  const best = results.reduce((a, b) =>
+    b.netValueAfterAnnoyancePaise > a.netValueAfterAnnoyancePaise ? b : a,
+  );
 
   console.log('\nStrategy comparison:');
   printTable(
-    ['Strategy', 'Recovered', 'Spent', 'Net value', 'Rate', 'Retries/rec', 'Spam', 'Violations'],
+    ['Strategy', 'Recovered', 'Spent', 'Net value', 'Net after annoy.', 'Rate', 'Retries/rec', 'Spam', 'Viol.'],
     results.map((m) => [
       m.strategyId === best.strategyId ? `* ${m.strategyName}` : `  ${m.strategyName}`,
       formatINR(m.recoveredPaise),
       formatINR(m.costPaise),
       formatINR(m.netValuePaise),
+      formatINR(m.netValueAfterAnnoyancePaise),
       pct(m.recoveryRate),
       ratio(m.retriesPerRecovery),
       String(m.spamPoints),
       String(m.complianceViolations),
     ]),
   );
-  console.log(`\n  * best by net value: ${best.strategyName}`);
+  console.log(`\n  * best by net value after annoyance: ${best.strategyName}`);
 
   console.log('\nGuardrail activity:');
   printTable(
