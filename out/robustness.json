@@ -1,0 +1,545 @@
+{
+  "generatedAt": "2026-09-02T11:48:49.327Z",
+  "seeds": 50,
+  "cohortSize": 500,
+  "totalRuns": 250,
+  "agentWins": 245,
+  "totalViolations": 0,
+  "scenarios": [
+    {
+      "scenarioId": "baseline-week",
+      "scenarioName": "Baseline week",
+      "seeds": 50,
+      "strategies": [
+        {
+          "strategyId": "do-nothing",
+          "strategyName": "Do nothing",
+          "netValue": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "recoveryRate": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "naive-retry",
+          "strategyName": "Naive retry",
+          "netValue": {
+            "mean": 18643094.5,
+            "median": 18154707,
+            "p10": 15495752,
+            "p90": 21997269,
+            "min": 13727199,
+            "max": 30405951,
+            "stdDev": 2996360.7342191045
+          },
+          "recoveryRate": {
+            "mean": 0.24680000000000002,
+            "median": 0.246,
+            "p10": 0.222,
+            "p90": 0.276,
+            "min": 0.206,
+            "max": 0.284,
+            "stdDev": 0.01929974093090371
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "fixed-dunning",
+          "strategyName": "Fixed dunning",
+          "netValue": {
+            "mean": 30602185.4,
+            "median": 29990016,
+            "p10": 25355050,
+            "p90": 37545580,
+            "min": 23896338,
+            "max": 43173271,
+            "stdDev": 4503612.808261314
+          },
+          "recoveryRate": {
+            "mean": 0.3916800000000001,
+            "median": 0.392,
+            "p10": 0.36,
+            "p90": 0.42,
+            "min": 0.34,
+            "max": 0.438,
+            "stdDev": 0.020996609250067026
+          },
+          "wins": 1,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "agent-rules",
+          "strategyName": "Reason-aware agent",
+          "netValue": {
+            "mean": 43241310.72,
+            "median": 41365346,
+            "p10": 36141767,
+            "p90": 52339169,
+            "min": 31657633,
+            "max": 67359326,
+            "stdDev": 7839454.193227954
+          },
+          "recoveryRate": {
+            "mean": 0.47676,
+            "median": 0.474,
+            "p10": 0.446,
+            "p90": 0.506,
+            "min": 0.436,
+            "max": 0.534,
+            "stdDev": 0.021915802517818054
+          },
+          "wins": 49,
+          "runs": 50,
+          "complianceViolations": 0
+        }
+      ]
+    },
+    {
+      "scenarioId": "bank-outage",
+      "scenarioName": "Bank outage",
+      "seeds": 50,
+      "strategies": [
+        {
+          "strategyId": "do-nothing",
+          "strategyName": "Do nothing",
+          "netValue": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "recoveryRate": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "naive-retry",
+          "strategyName": "Naive retry",
+          "netValue": {
+            "mean": 24026941.16,
+            "median": 23240660,
+            "p10": 19846671,
+            "p90": 31036556,
+            "min": 16807752,
+            "max": 33606494,
+            "stdDev": 3877381.7063887245
+          },
+          "recoveryRate": {
+            "mean": 0.31992,
+            "median": 0.318,
+            "p10": 0.294,
+            "p90": 0.348,
+            "min": 0.272,
+            "max": 0.366,
+            "stdDev": 0.02170330850354388
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "fixed-dunning",
+          "strategyName": "Fixed dunning",
+          "netValue": {
+            "mean": 43722853.78,
+            "median": 42728851,
+            "p10": 37270622,
+            "p90": 53489325,
+            "min": 32778308,
+            "max": 57818909,
+            "stdDev": 5616496.817932781
+          },
+          "recoveryRate": {
+            "mean": 0.5563999999999999,
+            "median": 0.554,
+            "p10": 0.532,
+            "p90": 0.586,
+            "min": 0.512,
+            "max": 0.6,
+            "stdDev": 0.020222759455623237
+          },
+          "wins": 3,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "agent-rules",
+          "strategyName": "Reason-aware agent",
+          "netValue": {
+            "mean": 56891300.42,
+            "median": 56599337,
+            "p10": 46486129,
+            "p90": 69022956,
+            "min": 40027837,
+            "max": 84566632,
+            "stdDev": 9269688.697359454
+          },
+          "recoveryRate": {
+            "mean": 0.58856,
+            "median": 0.586,
+            "p10": 0.564,
+            "p90": 0.616,
+            "min": 0.538,
+            "max": 0.628,
+            "stdDev": 0.019608324762712393
+          },
+          "wins": 47,
+          "runs": 50,
+          "complianceViolations": 0
+        }
+      ]
+    },
+    {
+      "scenarioId": "month-end-squeeze",
+      "scenarioName": "Month-end squeeze",
+      "seeds": 50,
+      "strategies": [
+        {
+          "strategyId": "do-nothing",
+          "strategyName": "Do nothing",
+          "netValue": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "recoveryRate": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "naive-retry",
+          "strategyName": "Naive retry",
+          "netValue": {
+            "mean": 9139166.6,
+            "median": 8789509,
+            "p10": 6549834,
+            "p90": 13474095,
+            "min": 4048801,
+            "max": 15960169,
+            "stdDev": 2550387.3435428506
+          },
+          "recoveryRate": {
+            "mean": 0.12780000000000002,
+            "median": 0.128,
+            "p10": 0.108,
+            "p90": 0.154,
+            "min": 0.096,
+            "max": 0.162,
+            "stdDev": 0.01642071862008481
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "fixed-dunning",
+          "strategyName": "Fixed dunning",
+          "netValue": {
+            "mean": 28619702.7,
+            "median": 28712185,
+            "p10": 22743862,
+            "p90": 34230286,
+            "min": 19237957,
+            "max": 39143175,
+            "stdDev": 4309363.180502595
+          },
+          "recoveryRate": {
+            "mean": 0.3654,
+            "median": 0.366,
+            "p10": 0.338,
+            "p90": 0.402,
+            "min": 0.308,
+            "max": 0.424,
+            "stdDev": 0.025012796724876652
+          },
+          "wins": 1,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "agent-rules",
+          "strategyName": "Reason-aware agent",
+          "netValue": {
+            "mean": 39582046.7,
+            "median": 39982758,
+            "p10": 32771550,
+            "p90": 46575574,
+            "min": 29216434,
+            "max": 55017352,
+            "stdDev": 5285448.12545783
+          },
+          "recoveryRate": {
+            "mean": 0.4886,
+            "median": 0.492,
+            "p10": 0.462,
+            "p90": 0.518,
+            "min": 0.444,
+            "max": 0.53,
+            "stdDev": 0.021007617665980124
+          },
+          "wins": 49,
+          "runs": 50,
+          "complianceViolations": 0
+        }
+      ]
+    },
+    {
+      "scenarioId": "risk-spike",
+      "scenarioName": "Risk spike",
+      "seeds": 50,
+      "strategies": [
+        {
+          "strategyId": "do-nothing",
+          "strategyName": "Do nothing",
+          "netValue": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "recoveryRate": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "naive-retry",
+          "strategyName": "Naive retry",
+          "netValue": {
+            "mean": 10650959.7,
+            "median": 10713191,
+            "p10": 7892119,
+            "p90": 13642040,
+            "min": 5699320,
+            "max": 17887033,
+            "stdDev": 2399968.5183207826
+          },
+          "recoveryRate": {
+            "mean": 0.17412000000000002,
+            "median": 0.174,
+            "p10": 0.154,
+            "p90": 0.196,
+            "min": 0.14,
+            "max": 0.216,
+            "stdDev": 0.015729767957601917
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "fixed-dunning",
+          "strategyName": "Fixed dunning",
+          "netValue": {
+            "mean": 17781150.2,
+            "median": 17097158,
+            "p10": 13483868,
+            "p90": 24071818,
+            "min": 8427238,
+            "max": 26182756,
+            "stdDev": 4222798.7417920455
+          },
+          "recoveryRate": {
+            "mean": 0.26164000000000004,
+            "median": 0.262,
+            "p10": 0.238,
+            "p90": 0.292,
+            "min": 0.204,
+            "max": 0.308,
+            "stdDev": 0.02079496092807101
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "agent-rules",
+          "strategyName": "Reason-aware agent",
+          "netValue": {
+            "mean": 26832505.58,
+            "median": 26195767,
+            "p10": 20011079,
+            "p90": 36346086,
+            "min": 14518830,
+            "max": 48922095,
+            "stdDev": 6242350.831473974
+          },
+          "recoveryRate": {
+            "mean": 0.31560000000000005,
+            "median": 0.314,
+            "p10": 0.292,
+            "p90": 0.35,
+            "min": 0.278,
+            "max": 0.358,
+            "stdDev": 0.020364675298172565
+          },
+          "wins": 50,
+          "runs": 50,
+          "complianceViolations": 0
+        }
+      ]
+    },
+    {
+      "scenarioId": "stale-instruments",
+      "scenarioName": "Stale instruments",
+      "seeds": 50,
+      "strategies": [
+        {
+          "strategyId": "do-nothing",
+          "strategyName": "Do nothing",
+          "netValue": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "recoveryRate": {
+            "mean": 0,
+            "median": 0,
+            "p10": 0,
+            "p90": 0,
+            "min": 0,
+            "max": 0,
+            "stdDev": 0
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "naive-retry",
+          "strategyName": "Naive retry",
+          "netValue": {
+            "mean": 12113005.6,
+            "median": 11772635,
+            "p10": 9616411,
+            "p90": 16325247,
+            "min": 6895355,
+            "max": 21106354,
+            "stdDev": 2696684.520644519
+          },
+          "recoveryRate": {
+            "mean": 0.15823999999999996,
+            "median": 0.156,
+            "p10": 0.14,
+            "p90": 0.18,
+            "min": 0.124,
+            "max": 0.186,
+            "stdDev": 0.014954009495784064
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "fixed-dunning",
+          "strategyName": "Fixed dunning",
+          "netValue": {
+            "mean": 19599959.6,
+            "median": 19212968,
+            "p10": 15517605,
+            "p90": 22925867,
+            "min": 12773527,
+            "max": 33913863,
+            "stdDev": 3840426.8485500356
+          },
+          "recoveryRate": {
+            "mean": 0.24516000000000004,
+            "median": 0.248,
+            "p10": 0.22,
+            "p90": 0.27,
+            "min": 0.206,
+            "max": 0.288,
+            "stdDev": 0.01949806144210239
+          },
+          "wins": 0,
+          "runs": 50,
+          "complianceViolations": 0
+        },
+        {
+          "strategyId": "agent-rules",
+          "strategyName": "Reason-aware agent",
+          "netValue": {
+            "mean": 34360245.92,
+            "median": 33366513,
+            "p10": 26116547,
+            "p90": 45338818,
+            "min": 23296419,
+            "max": 64678886,
+            "stdDev": 9355439.84556317
+          },
+          "recoveryRate": {
+            "mean": 0.31887999999999983,
+            "median": 0.314,
+            "p10": 0.302,
+            "p90": 0.344,
+            "min": 0.27,
+            "max": 0.368,
+            "stdDev": 0.01876660864407845
+          },
+          "wins": 50,
+          "runs": 50,
+          "complianceViolations": 0
+        }
+      ]
+    }
+  ]
+}

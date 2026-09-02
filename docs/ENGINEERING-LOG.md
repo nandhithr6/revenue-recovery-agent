@@ -141,6 +141,25 @@ See entries 7 and 8.
 
 ---
 
+## 6. Smaller things
+
+- **Money as floats.** Rejected early. All currency is integer paise; a test
+  asserts every cost constant is an integer. `0.1 + 0.2 !== 0.3` is not a
+  property you want in a recovery ledger.
+- **A static singleton ledger.** Considered and rejected: state would leak
+  between strategy runs, tests would become order-dependent, and two strategies
+  could not be scored independently. The ledger is an instance.
+- **Wall-clock timestamps in the audit trail.** Caught before it shipped. An
+  audit ledger stamped with *when you ran the script* rather than when the event
+  occurred is not an audit trail. Entries use simulation time, and a test
+  asserts it.
+- **Policies re-proposing blocked actions.** Fixed dunning loops on a refused
+  channel because it never reads its own history. The agent inspects `blockedBy`
+  and routes around it — a small change that removed a whole class of wasted
+  steps.
+
+---
+
 ## 7. The loss-type adapters broke everything, and that was the useful part
 
 **What happened.** We had claimed the engine covered Razorpay's seven example
@@ -203,19 +222,38 @@ updated only after the reason was written down — which is why
 
 ---
 
-## 6. Smaller things
+## 9. A sensitivity analysis that was measuring its own noise
 
-- **Money as floats.** Rejected early. All currency is integer paise; a test
-  asserts every cost constant is an integer. `0.1 + 0.2 !== 0.3` is not a
-  property you want in a recovery ledger.
-- **A static singleton ledger.** Considered and rejected: state would leak
-  between strategy runs, tests would become order-dependent, and two strategies
-  could not be scored independently. The ledger is an instance.
-- **Wall-clock timestamps in the audit trail.** Caught before it shipped. An
-  audit ledger stamped with *when you ran the script* rather than when the event
-  occurred is not an audit trail. Entries use simulation time, and a test
-  asserts it.
-- **Policies re-proposing blocked actions.** Fixed dunning loops on a refused
-  channel because it never reads its own history. The agent inspects `blockedBy`
-  and routes around it — a small change that removed a whole class of wasted
-  steps.
+**What happened.** The annoyance-price sweep was built to answer the most
+obvious attack on our headline metric: we price customer annoyance at ₹20 a
+point, and that figure is a judgement call. Sweeping it from ₹0 to ₹100
+showed the winner flipping to fixed dunning at ₹50 in `risk-spike` and at ₹100
+in `stale-instruments`. We were ready to write that up as an honest limit.
+
+**Then the numbers looked wrong.** The adaptive arm of the sweep produced
+4.32L, 3.69L, 4.57L, 3.98L, 4.80L, 3.43L as the price rose. Net value should
+fall monotonically as annoyance gets more expensive. It was swinging by about
+1L in both directions.
+
+**Root cause.** Changing the agent's spend threshold changes which actions it
+takes, which changes how much randomness it consumes, which makes every price
+point a different random draw. The robustness run had already measured the
+agent's standard deviation across cohorts at roughly 0.9L -- the same size as
+the swings. The sweep was reading its own noise floor and calling it
+sensitivity.
+
+**The fix.** Average every point over 15 seeds. The curves became monotonic,
+and the Rs 50 flip in  disappeared entirely: it had been a
+single-seed artefact.
+
+**What it changed about the conclusion.** With noise removed and the agent
+allowed to know the price it is being judged on, it posts the highest net value
+at every price from ₹0 to ₹100, in all five scenarios. The ₹20 constant
+is an input, not a thumb on the scale.
+
+**The lesson worth keeping.** A sensitivity analysis dominated by noise is worse
+than none, because it manufactures findings that feel like rigour. Two things
+caught it: the result was non-monotonic when theory said it could not be, and
+we already had an independent estimate of the noise floor from Part A to compare
+against. Build the variance measurement first; it tells you which of your other
+results you are allowed to read.

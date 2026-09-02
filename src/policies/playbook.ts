@@ -217,8 +217,12 @@ export function expectedContactGainPaise(
 /**
  * True cost of an action: what it costs to send, plus what it costs in goodwill.
  */
-export function fullCostPaise(directCostPaise: Paise, spamPoints: number): number {
-  return directCostPaise + spamPoints * SPAM_POINT_PRICE_PAISE;
+export function fullCostPaise(
+  directCostPaise: Paise,
+  spamPoints: number,
+  annoyancePricePaise: Paise = SPAM_POINT_PRICE_PAISE,
+): number {
+  return directCostPaise + spamPoints * annoyancePricePaise;
 }
 
 /**
@@ -248,8 +252,9 @@ export function worthContacting(
   channel: Channel,
   directCostPaise: Paise,
   spamPoints: number,
+  annoyancePricePaise: Paise = SPAM_POINT_PRICE_PAISE,
 ): boolean {
-  const cost = fullCostPaise(directCostPaise, spamPoints);
+  const cost = fullCostPaise(directCostPaise, spamPoints, annoyancePricePaise);
   if (cost <= 0) return true;
   return expectedContactGainPaise(amountPaise, believedRetryOdds, channel) > cost * EV_MARGIN;
 }

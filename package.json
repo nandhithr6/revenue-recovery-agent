@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "eval:all": "tsx src/eval/run-all.ts",
     "dashboard": "vite",
-    "dashboard:build": "vite build"
+    "dashboard:build": "vite build",
+    "eval:robust": "tsx src/eval/robustness.ts",
+    "eval:sensitivity": "tsx src/eval/sensitivity.ts"
   },
   "author": "",
   "license": "MIT",

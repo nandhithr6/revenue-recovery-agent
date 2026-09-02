@@ -1,10 +1,11 @@
 import { lookupReason, type RecoveryClass } from '../domain/failure-taxonomy.js';
-import { DAY, HOUR, type Action, type Channel, type Timestamp } from '../domain/types.js';
+import { DAY, HOUR, type Action, type Channel, type Paise, type Timestamp } from '../domain/types.js';
 import { SPAM_POINTS } from '../guardrails/compliance.js';
 import type { CostModel } from '../sim/scenario.js';
 import {
   HUMAN_ESCALATION_FLOOR_PAISE,
   PLAYBOOKS,
+  SPAM_POINT_PRICE_PAISE,
   worthContacting,
   type Playbook,
 } from './playbook.js';
@@ -152,7 +153,17 @@ function classify(ctx: CaseContext): RecoveryClass | undefined {
   return lookupReason(ctx.event.reasonCode)?.recoveryClass;
 }
 
-export function createRulesAgent(costs: CostModel): Strategy {
+/**
+ * @param annoyancePricePaise what one point of customer annoyance is worth to
+ *   this agent. Defaults to the shipped figure. Parameterised so the
+ *   sensitivity sweep can ask the fair question: at a different price, does the
+ *   agent still win once it is allowed to ADAPT to that price, rather than being
+ *   scored against a price it was never told about?
+ */
+export function createRulesAgent(
+  costs: CostModel,
+  annoyancePricePaise: Paise = SPAM_POINT_PRICE_PAISE,
+): Strategy {
   return {
     id: 'agent-rules',
     name: 'Reason-aware agent',
@@ -184,8 +195,22 @@ export function createRulesAgent(costs: CostModel): Strategy {
       // The loss type decides what is even permitted. You cannot re-attempt a
       // charge nobody authorised, and you cannot "retry" an invoice.
       const scaled = playbook.retrySchedule.map((d) => d * profile.retryDelayScale);
+
+      // Precedence matters here, and getting it backwards was a real bug.
+      //
+      // An empty class schedule is not "no opinion", it is the strongest opinion
+      // the playbook can express: retrying this can NEVER work. A fraud-flagged
+      // card stays fraud-flagged whether the loss is a one-off charge or a
+      // subscription. So a loss type may extend a schedule that exists; it may
+      // not conjure one that does not.
+      //
+      // Without this guard, `extraRetries` on the mandate profile fell back to a
+      // one-day anchor and manufactured attempts against hard declines, which is
+      // exactly the behaviour the whole project criticises.
+      const canRetry = profile.canRetryCharge && scaled.length > 0;
       const lastScheduled = scaled.at(-1) ?? DAY;
-      const retrySchedule = profile.canRetryCharge
+
+      const retrySchedule = canRetry
         ? [
             ...scaled,
             // A standing mandate earns extra attempts, spaced out rather than
@@ -272,6 +297,7 @@ export function createRulesAgent(costs: CostModel): Strategy {
             channel,
             cost,
             SPAM_POINTS[channel],
+            annoyancePricePaise,
           )
         ) {
           // On nudge-is-the-path classes, reach out immediately: every hour of

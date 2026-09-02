@@ -36,27 +36,59 @@ strategy. The only variable is the policy.
 ```
 Strategy                Recovered     Spent    Net value  Net after annoy.   Rate  Retries/rec  Spam  Viol.
   Do nothing                 Rs 0      Rs 0         Rs 0              Rs 0   0.0%           --     0      0
-  Naive retry         Rs 7,30,304  Rs 3,193  Rs 7,27,111       Rs 7,27,111  40.8%         6.26     0      0
-  Fixed dunning       Rs 6,80,688  Rs 2,780  Rs 6,77,908       Rs 6,73,668  52.2%         4.20   212      0
-* Reason-aware agent  Rs 9,16,448  Rs 4,691  Rs 9,11,758       Rs 8,97,658  62.2%         2.65   705      0
+  Naive retry         Rs 2,16,490  Rs 7,713  Rs 2,08,777       Rs 2,08,777  26.6%        10.26     0      0
+  Fixed dunning       Rs 2,94,904  Rs 7,151  Rs 2,87,754       Rs 2,82,454  41.2%         5.72   265      0
+* Reason-aware agent  Rs 4,16,533  Rs 3,841  Rs 4,12,692       Rs 3,96,572  49.2%         2.56   806      0
 ```
 
-**+₹1.70 lakh over the best baseline, using 58% fewer retries per recovery, with
+**+₹1.14 lakh over the best baseline, using 55% fewer retries per recovery, with
 zero compliance violations.**
 
-Where the agent's advantage actually comes from:
+Where the advantage comes from:
 
 | Class | Naive retry | Fixed dunning | **Agent** |
 |---|---|---|---|
-| `TRANSIENT_INFRA` | 48.2% | 88.3% | **82.5%** |
-| `ABANDONMENT` | 69.9% | 42.5% | **61.8%** |
-| `TRANSIENT_FUNDS` | 0.0% | 45.8% | **63.6%** |
-| `HARD_DECLINE` retries wasted | 86 | 85 | **0** |
-| `CUSTOMER_ACTION_REQUIRED` retries wasted | 66 | 66 | **0** |
+| `TRANSIENT_INFRA` | 45.3% | 81.0% | **78.8%** |
+| `ABANDONMENT` | 33.9% | 21.5% | **31.7%** |
+| `TRANSIENT_FUNDS` | 1.7% | 38.1% | **62.7%** |
+| `HARD_DECLINE` retries spent | 86 | 83 | **0** |
+| `CUSTOMER_ACTION_REQUIRED` retries spent | 66 | 64 | **1** |
 
-The baselines each win one class and lose another. The agent is competitive
-across all of them, and spends **zero** attempts on the 151 cases where retrying
-provably cannot work.
+The baselines each win one class and lose another, because neither reads why the
+payment failed. The agent is competitive across all of them and spends almost
+nothing on the 150 cases where retrying provably cannot work. (The single
+`CUSTOMER_ACTION_REQUIRED` attempt is deliberate: it follows a nudge that landed,
+so the instrument had been fixed by then.)
+
+### Is that just one lucky seed?
+
+No, and this is the question worth pre-empting. `npm run eval:robust` reruns
+every scenario across 50 independently seeded cohorts:
+
+> **The agent posted the highest net value in 245 of 250 independent cohorts
+> (98.0%), with zero compliance violations across every strategy and every run.**
+
+It is not 250 of 250, and that is reported rather than tuned away — it loses
+occasionally in `baseline-week`, `bank-outage` and `month-end-squeeze`. An honest
+98% is worth more than a suspicious 100%.
+
+### Does the answer depend on your annoyance price?
+
+The headline metric prices customer annoyance at ₹20 a point, which is a
+judgement call and the most attackable number here. So rather than defend it,
+`npm run eval:sensitivity` sweeps it from ₹0 to ₹100, averaged over 15 seeds per
+point:
+
+> **Told what annoyance costs, the agent posts the highest net value at every
+> price in that range, in all five scenarios.**
+
+The ₹20 figure is an input, not a thumb on the scale. Holding the *shipped*
+policy fixed while raising only the scoring price does flip the winner in the
+harshest scenarios — which says something narrower and true: a policy tuned for
+one price is not automatically right at another.
+
+That sweep also caught itself being wrong once. See
+[the engineering log, entry 9](docs/ENGINEERING-LOG.md).
 
 ## Architecture
 
@@ -197,10 +229,29 @@ npm run eval -- bank-outage
 `baseline-week` · `bank-outage` · `month-end-squeeze` · `risk-spike` ·
 `stale-instruments`
 
-Tests (91, including the adversarial policy and the schema fuzzing):
+The two checks that make the headline defensible — 50 seeded cohorts per
+scenario, and the annoyance-price sweep:
+
+```bash
+npm run eval:robust
+```
+
+```bash
+npm run eval:sensitivity
+```
+
+Tests (118, including an adversarial policy that cannot breach any limit, the
+kill switch, and the loss-type layer):
 
 ```bash
 npm test
+```
+
+The dashboard reads the bundle `eval:all` writes and never simulates anything
+itself, so there is no second source of truth:
+
+```bash
+npm run eval:all && npm run dashboard
 ```
 
 Optional LLM policy — free tiers only, no paid service anywhere in this project:

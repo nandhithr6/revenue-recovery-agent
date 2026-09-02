@@ -199,3 +199,33 @@ describe('profile coverage', () => {
     }
   });
 });
+
+describe('a loss type may extend a retry schedule, never conjure one', () => {
+  // Regression: `extraRetries` on the mandate profile fell back to a one-day
+  // anchor when the class schedule was empty, manufacturing attempts against
+  // hard declines. An empty class schedule is the playbook's strongest
+  // statement -- retrying this can never work -- and no loss type may override
+  // it. A fraud-flagged card stays fraud-flagged whether the loss is a one-off
+  // charge or a subscription.
+  const neverRetryable = [
+    { reasonCode: 'payment_risk_check_failed', label: 'HARD_DECLINE' },
+    { reasonCode: 'card_expired', label: 'CUSTOMER_ACTION_REQUIRED' },
+  ] as const;
+
+  for (const { reasonCode, label } of neverRetryable) {
+    for (const lossType of ['payment_failure', 'subscription_mandate'] as const) {
+      it(`${label} on a ${lossType} proposes no retry`, () => {
+        const action = agent.decide(ctx(event(lossType, { reasonCode })));
+        expect(action.kind).not.toBe('retry_payment');
+      });
+    }
+  }
+
+  it('a subscription mandate still gets extra retries where the class allows any', () => {
+    // The guard must not neuter the mandate sequencer on classes that ARE
+    // retryable, or it would trade one bug for another.
+    const mandate = run(event('subscription_mandate', { reasonCode: 'insufficient_funds' }));
+    const oneOff = run(event('payment_failure', { reasonCode: 'insufficient_funds' }));
+    expect(mandate.retries).toBeGreaterThan(oneOff.retries);
+  });
+});
