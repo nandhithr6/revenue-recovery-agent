@@ -4,7 +4,10 @@ import { createRulesAgent } from '../policies/rules-agent.js';
 import type { Strategy } from '../policies/types.js';
 import { generateCohort, summariseCohort } from '../sim/generator.js';
 import { DEFAULT_COSTS, getScenario, SCENARIO_IDS } from '../sim/scenario.js';
+import { configFromEnv } from '../llm/client.js';
+import { LlmDecisionCache, createLlmAgent } from '../policies/llm-agent.js';
 import { runCohort, type RunResult } from './engine.js';
+import { writeReport } from './report.js';
 import { breakdownByClass, score, type Metrics } from './metrics.js';
 
 /**
@@ -42,7 +45,7 @@ function printTable(headers: readonly string[], rows: readonly (readonly string[
   for (const r of rows) console.log(line(r));
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const requested = process.argv[2] ?? 'baseline-week';
 
   if (requested === '--list') {
@@ -53,6 +56,30 @@ function main(): void {
 
   const scenario = getScenario(requested);
   const events = generateCohort(scenario, SIMULATION_START);
+
+  // The LLM policy joins the comparison only when a key is configured. Without
+  // one the whole system still runs; that is the point of ADR 0003.
+  const strategies = [...STRATEGIES];
+  const llmConfig = configFromEnv();
+  if (llmConfig) {
+    const cache = new LlmDecisionCache();
+    console.log(`
+Pre-warming LLM decisions via ${llmConfig.model}...`);
+    await cache.prewarm(events, llmConfig, (event) => ({
+      event,
+      now: event.occurredAt,
+      history: [],
+      attemptCount: 0,
+      contactCount: 0,
+      channelsUsed: [],
+    }));
+    const s = cache.stats;
+    console.log(
+      `  ${cache.size} situations cached from ${s.requests} requests ` +
+        `(${s.parseFailures} unparseable, ${s.transportFailures} transport failures)`,
+    );
+    strategies.push(createLlmAgent(DEFAULT_COSTS, cache));
+  }
   const summary = summariseCohort(events);
 
   console.log(`\n=== ${scenario.name} (${scenario.id}) ===`);
@@ -70,7 +97,7 @@ function main(): void {
 
   // Run each strategy exactly once and keep everything: the comparison, the
   // per-class breakdown and the ledger all read from the same run.
-  const runs: RunResult[] = STRATEGIES.map((s) =>
+  const runs: RunResult[] = strategies.map((s) =>
     runCohort(events, s, DEFAULT_COSTS, scenario.seed + 1),
   );
   const results: Metrics[] = runs.map(score);
@@ -138,7 +165,20 @@ function main(): void {
     );
   }
 
+  const { resultsPath, ledgerPath } = await writeReport(
+    'out',
+    scenario,
+    {
+      count: summary.count,
+      totalAtRiskPaise: summary.totalAtRiskPaise,
+      byRecoveryClass: summary.byRecoveryClass as Record<string, number>,
+    },
+    runs,
+    results,
+  );
+  console.log(`
+Wrote ${resultsPath} and ${ledgerPath}`);
   console.log('');
 }
 
-main();
+await main();
