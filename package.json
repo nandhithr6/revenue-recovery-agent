@@ -1,0 +1,20 @@
+{
+  "name": "revenue-recovery-agent",
+  "version": "0.1.0",
+  "description": "Reason-aware, bounded AI agent that recovers failed payment revenue. Razorpay AI Buildathon.",
+  "scripts": {
+    "eval": "tsx src/eval/run.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}
