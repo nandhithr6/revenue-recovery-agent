@@ -1,7 +1,12 @@
 # ADR 0001 — Simulate the rails, adopt Razorpay's real vocabulary
 
-**Status:** Accepted
+**Status:** Partly superseded by [ADR 0007](0007-executor-split-simulator-and-live.md)
 **Date:** 2026-09-02
+
+> The taxonomy decision below stands. The choice to skip a live integration does
+> not: test mode turned out to offer failure-triggering test cards, which is the
+> assumption this ADR got wrong. Kept as written rather than edited, because the
+> reasoning that changed is the interesting part.
 
 ## Context
 

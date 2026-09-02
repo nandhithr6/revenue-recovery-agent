@@ -251,3 +251,135 @@ Naming these is worth more than half-building them:
 Then the Remotion video, then push to `github.com/nandhithr6/revenue-recovery-agent`.
 
 **Commit messages carry no co-author trailer.**
+
+---
+
+# Part H — Live Razorpay integration (decided: yes)
+
+Phase 1 chose pure simulation and ADR 0001 recorded that. **That decision is now
+partly reversed.** Research into test mode found it offers more than assumed, and
+the added credibility is worth the time.
+
+## What test mode actually gives us
+
+**Test cards that trigger specific failures on demand.** This is the valuable
+part, and it was the thing worth checking before deciding:
+
+| Error code | Visa test card | Mastercard test card |
+|---|---|---|
+| `payment_timed_out` | 4100 2800 0009 0000 | 5305 6200 0006 0000 |
+| `insufficient_fund` | 4100 2800 0008 0001 | 5305 6200 0005 0001 |
+| `payment_cancelled` | 4100 2800 0007 0002 | 5305 6200 0004 0002 |
+| `gateway_technical_error` | 4100 2800 0002 0007 | 5305 6200 0009 0007 |
+| `authentication_failed` | 4100 2800 0000 0009 | 5305 6200 0007 0009 |
+| `card_disabled_for_online_payments` | 4100 2800 0003 0006 | 5305 6200 0000 0006 |
+| `card_declined` | several variants | several variants |
+
+Also available: **Payment Links API** (30 per business in test mode), **webhooks**
+including `payment.failed`, and Orders/Payments/Customers/Subscriptions.
+
+Note the discrepancy to verify: the test-card page says `insufficient_fund`
+(singular) while the error-code page says `insufficient_funds`. Confirm against a
+real response and fix the taxonomy if needed — finding that ourselves would be a
+good detail to mention.
+
+## The architecture: an executor split, not a rewrite
+
+**Nothing about the agent or the guardrails changes.** Introduce an interface at
+the only point that touches the outside world:
+
+```
+Agent (unchanged) -> Guardrails (unchanged) -> Executor -> Ledger (unchanged)
+                                                  |
+                                    +-------------+-------------+
+                                    |                           |
+                            SimulatedExecutor          RazorpayExecutor
+                            (seeded, 500 cases,        (live test mode,
+                             reproducible)              real API responses)
+```
+
+- `src/execution/executor.ts` — the interface: `retryPayment`, `contactCustomer`,
+  `escalateHuman`, each returning an outcome.
+- `src/execution/simulated.ts` — lift the current engine execution into it.
+- `src/execution/razorpay.ts` — the live one.
+
+**Why this is the right shape:** the same agent, byte for byte, runs against both.
+That is a much stronger claim than either alone, and it turns the executor split
+into evidence that the layering was correct rather than a design assertion.
+
+## What the live path does
+
+1. **Create an Order** via the Orders API.
+2. **Drive a failing payment** with a chosen test card, capturing the real error
+   response: `code`, `description`, `source`, `step`, `reason`, `metadata`.
+3. **Feed that real failure to the unmodified agent**, which classifies it from
+   the real `reason` string and picks an action.
+4. **Execute the action for real:**
+   - `contact_customer` -> create an actual **Razorpay Payment Link** and record
+     its URL in the ledger. This is a genuine recovery mechanism, not a mock.
+   - `retry_payment` -> create a fresh Order and attempt it again.
+5. **Ledger the whole thing** exactly as the simulator does.
+
+Output `out/live-run.json` plus ledger entries carrying real Razorpay ids
+(`order_...`, `pay_...`, `plink_...`). Those ids are the proof.
+
+## Division of labour: simulator vs live
+
+State this plainly in the README, because it is the honest and the strongest
+framing:
+
+| | Simulator | Live test mode |
+|---|---|---|
+| Purpose | **Measurement** | **Proof it runs on real rails** |
+| Volume | 500 cases x 5 scenarios x 30 seeds | a handful of cases |
+| Reproducible | yes, seeded | no |
+| Money | none, modelled | none, test mode |
+| What it proves | the policy is better | the policy works against the real API |
+
+Neither alone is enough. Statistical claims need the simulator; credibility needs
+the live path. Do not let the live run pretend to be a measurement — a dozen
+hand-driven payments prove nothing about recovery rates, and claiming otherwise
+is the fastest way to lose a panel.
+
+## Safety rules (non-negotiable)
+
+- **Test keys only.** Assert the key starts with `rzp_test_` and refuse to run
+  otherwise. A live key must be impossible to use by accident.
+- **Keys in `.env`, which is already gitignored.** Never committed, never logged,
+  never printed in output or screenshots.
+- `.env.example` documents the variable names with empty values.
+- The live path is **opt-in**: `npm run live` only. `npm run eval`, `eval:all`
+  and the tests never touch the network.
+- Rate limits: sequential calls, small delays, and stop on the first 4xx.
+
+## What Nandhitha needs to do
+
+1. Sign up at <https://dashboard.razorpay.com/signup> (no business verification
+   is needed for test mode).
+2. Settings -> API Keys -> **switch to Test Mode** -> Generate Test Key.
+3. Put them in `.env`:
+   ```
+   RAZORPAY_KEY_ID=rzp_test_xxxxxxxx
+   RAZORPAY_KEY_SECRET=xxxxxxxx
+   ```
+4. Do not paste the secret into chat. Only the file.
+
+## Deliverables
+
+- `src/execution/` with the interface and both executors
+- `npm run live` — drives a few real failures end to end
+- `out/live-run.json` with real Razorpay ids
+- A dashboard section showing the live run beside the simulated one
+- ADR 0007 recording the executor split; ADR 0001 amended, not deleted
+- README section on the simulator/live division of labour
+
+## Honest note on sequencing
+
+This is real work sitting alongside Parts A, B, E and F plus the video, with
+three days left. If time runs short, the order that preserves the most value is:
+
+**A and B first** (they make every existing claim defensible), **then a minimal
+live path** — even a single real failure, correctly classified by the unmodified
+agent, with a real Payment Link created, is worth most of the credibility of a
+full integration. Breadth of live coverage matters far less than the fact that it
+runs at all.

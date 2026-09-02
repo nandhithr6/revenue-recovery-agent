@@ -11,6 +11,7 @@ decision, and the trade accepted — including the ones that went against us.
 | [0004](0004-price-annoyance-as-a-currency.md) | Price customer annoyance as a currency |
 | [0005](0005-the-agent-must-not-read-ground-truth.md) | The agent must not read the simulator's ground truth |
 | [0006](0006-defer-do-not-drop.md) | Compliance defers, it does not drop |
+| [0007](0007-executor-split-simulator-and-live.md) | Split the executor: simulate to measure, run live to prove |
 
 See also [ENGINEERING-LOG.md](../ENGINEERING-LOG.md) — what broke during the
 build and what we did about it.
