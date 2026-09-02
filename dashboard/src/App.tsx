@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { GroupedBars, HorizontalBars, Legend, seriesColor } from './charts';
 import { CaseInspector } from './CaseInspector';
+import { LiveSection, RobustnessSection, SensitivitySection } from './Evidence';
 import { TimingRibbon, type ClassTrack } from './TimingRibbon';
 import type { Bundle, LedgerEntry, ScenarioResult } from './types';
 
@@ -211,7 +212,10 @@ export default function App() {
         <a href="#rules">06 Rules</a>
         <a href="#playbook">07 The playbook</a>
         <a href="#trail">08 Audit trail</a>
-        <a href="#provenance">09 What is real</a>
+        <a href="#robust">09 Robustness</a>
+        <a href="#sensitivity">10 Sensitivity</a>
+        <a href="#live">11 Live Razorpay</a>
+        <a href="#provenance">12 What is real</a>
       </nav>
 
       <section id="how">
@@ -535,9 +539,42 @@ export default function App() {
         <AuditTrail entries={scenario.sampleAuditTrail} />
       </section>
 
-      <section id="provenance">
+      <section id="robust">
         <div className="sec-head">
           <span className="sec-num">09</span>
+          <h2>Did it just get lucky once?</h2>
+        </div>
+        <p className="note">
+          Every figure above comes from one seeded cohort, which invites the obvious question.
+          This reruns each scenario across many independent cohorts and reports the spread.
+        </p>
+        <RobustnessSection data={bundle.robustness} />
+      </section>
+
+      <section id="sensitivity">
+        <div className="sec-head">
+          <span className="sec-num">10</span>
+          <h2>Does the answer depend on a number we chose?</h2>
+        </div>
+        <SensitivitySection data={bundle.sensitivity} />
+      </section>
+
+      <section id="live">
+        <div className="sec-head">
+          <span className="sec-num">11</span>
+          <h2>The same agent, against the real Razorpay API</h2>
+        </div>
+        <p className="note">
+          Everything above runs on a simulator, because measurement needs cohorts nobody can pay
+          for by hand. This is the other half: the identical policy driving live API calls in
+          Razorpay test mode.
+        </p>
+        <LiveSection run={bundle.liveRun} decline={bundle.liveDecline} />
+      </section>
+
+      <section id="provenance">
+        <div className="sec-head">
+          <span className="sec-num">12</span>
           <h2>What is real here, and what we made up</h2>
         </div>
         <p className="note">

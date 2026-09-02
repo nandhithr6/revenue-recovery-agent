@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { BASELINE_STRATEGIES } from '../policies/baselines.js';
 import { createRulesAgent } from '../policies/rules-agent.js';
@@ -197,8 +197,30 @@ async function main(): Promise<void> {
     };
   });
 
+  // Fold in whatever the other runs have produced. Each is optional: the
+  // dashboard degrades to 'not run yet' rather than failing, so a fresh clone
+  // that has only run eval:all still renders.
+  const optional = async (file: string): Promise<unknown> => {
+    try {
+      return JSON.parse(await readFile(join('out', file), 'utf8'));
+    } catch {
+      return null;
+    }
+  };
+
+  const [robustness, sensitivity, liveRun, liveDecline] = await Promise.all([
+    optional('robustness.json'),
+    optional('sensitivity.json'),
+    optional('live-run.json'),
+    optional('live-decline.json'),
+  ]);
+
   const bundle = {
     generatedAt: new Date().toISOString(),
+    robustness,
+    sensitivity,
+    liveRun,
+    liveDecline,
     costModel: DEFAULT_COSTS,
     playbooks: Object.fromEntries(
       Object.entries(PLAYBOOKS).map(([k, p]) => [

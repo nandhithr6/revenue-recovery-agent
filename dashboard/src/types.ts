@@ -138,8 +138,78 @@ export interface LossProfileView {
   reasoning: string;
 }
 
+export interface Robustness {
+  seeds: number;
+  cohortSize: number;
+  totalRuns: number;
+  agentWins: number;
+  totalViolations: number;
+  scenarios: {
+    scenarioId: string;
+    scenarioName: string;
+    seeds: number;
+    strategies: {
+      strategyId: string;
+      strategyName: string;
+      netValue: { mean: number; p10: number; p90: number; stdDev: number };
+      wins: number;
+      runs: number;
+    }[];
+  }[];
+}
+
+export interface Sensitivity {
+  shippedPricePaise: number;
+  pricesPaise: number[];
+  seeds: number;
+  adaptiveRankingStable: boolean;
+  scenarios: {
+    scenarioId: string;
+    scenarioName: string;
+    adaptive: {
+      points: { pricePaise: number; byStrategy: Record<string, number>; winnerName: string }[];
+      flipped: boolean;
+    };
+  }[];
+}
+
+export interface LiveRun {
+  generatedAt: string;
+  note: string;
+  cases: {
+    caseId: string;
+    reasonCode: string;
+    recoveryClass: string;
+    amountPaise: number;
+    orderId: string;
+    testCardToReproduce: string | null;
+    actions: {
+      step: number;
+      decided: string;
+      channel?: string;
+      rationale: string;
+      verdict: string;
+      rule?: string;
+      razorpay?: Record<string, string>;
+    }[];
+  }[];
+}
+
+export interface LiveDecline {
+  generatedAt: string;
+  paymentLinkId: string;
+  razorpayError: Record<string, string | null>;
+  taxonomyRecognised: boolean;
+  recoveryClass: string | null;
+  agentDecisions: { step: number; kind: string; rationale: string; verdict?: string }[];
+}
+
 export interface Bundle {
   generatedAt: string;
+  robustness: Robustness | null;
+  sensitivity: Sensitivity | null;
+  liveRun: LiveRun | null;
+  liveDecline: LiveDecline | null;
   costModel: Record<string, unknown>;
   playbooks: Record<
     string,

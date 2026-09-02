@@ -165,15 +165,6 @@ export class RazorpayClient {
     });
   }
 
-  /** Payments made against an order, including failed ones with their real error fields. */
-  async paymentsForOrder(orderId: string): Promise<RazorpayPayment[]> {
-    const res = await this.request<{ items: RazorpayPayment[] }>(
-      'GET',
-      `/orders/${orderId}/payments`,
-    );
-    return res.items;
-  }
-
   async fetchPaymentLink(id: string): Promise<RazorpayPaymentLink> {
     return this.request<RazorpayPaymentLink>('GET', `/payment_links/${id}`);
   }
@@ -199,18 +190,4 @@ export class RazorpayClient {
     return this.request<RazorpayPayment>('GET', `/payments/${id}`);
   }
 
-  /**
-   * Every attempt made against a payment link, each fetched individually.
-   *
-   * The link object lists attempt ids but not their error fields, and the error
-   * fields are the entire point here -- they are what Razorpay actually says
-   * went wrong, as opposed to what we assumed from the documentation.
-   */
-  async paymentsForPaymentLink(linkId: string): Promise<RazorpayPayment[]> {
-    const link = await this.fetchPaymentLink(linkId);
-    const ids = (link.payments ?? []).map((p) => p.payment_id).filter(Boolean);
-    const out: RazorpayPayment[] = [];
-    for (const id of ids) out.push(await this.fetchPayment(id));
-    return out;
-  }
 }

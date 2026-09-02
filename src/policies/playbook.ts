@@ -245,7 +245,15 @@ export function worthSpending(
   return expectedGainPaise(amountPaise, believedOdds) > cost * EV_MARGIN;
 }
 
-/** As `worthSpending`, but for a contact, whose payoff is a two-step gamble. */
+/**
+ * Does the expected gain from CONTACTING justify it, counting both currencies?
+ *
+ * The consequence worth understanding: intrusiveness scales with the money at
+ * stake. A Rs 400 abandoned cart earns an email and nothing more; a Rs 40,000
+ * receivable earns a WhatsApp message, because there the annoyance is worth it.
+ * The agent is neither uniformly polite nor uniformly pushy -- it is
+ * proportionate.
+ */
 export function worthContacting(
   amountPaise: Paise,
   believedRetryOdds: number,

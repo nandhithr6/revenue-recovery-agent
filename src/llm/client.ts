@@ -19,8 +19,18 @@ export interface LlmConfig {
 }
 
 /** Known free-tier providers, for documentation and easy switching. */
+/**
+ * Free-tier providers, all speaking the OpenAI-compatible API so switching is a
+ * base URL change rather than a rewrite.
+ *
+ * Model ids go stale: the previous default here, llama-3.3-70b-versatile, was
+ * retired by Groq and every request 404'd. The policy fell back to rules and the
+ * run still completed, which is the fallback working -- but it is also why
+ * transportFailures is reported rather than swallowed. Check /v1/models if the
+ * failure count is suspiciously equal to the request count.
+ */
 export const PROVIDERS = {
-  groq: { baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
+  groq: { baseUrl: 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b' },
   openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'meta-llama/llama-3.3-70b-instruct:free' },
   cerebras: { baseUrl: 'https://api.cerebras.ai/v1', model: 'llama-3.3-70b' },
 } as const;

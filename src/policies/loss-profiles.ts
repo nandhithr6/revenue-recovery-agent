@@ -1,4 +1,4 @@
-import { DAY, HOUR, type Channel, type LossType, type Paise } from '../domain/types.js';
+import { DAY, type Channel, type LossType, type Paise } from '../domain/types.js';
 
 /**
  * Per-loss-type modulation of the recovery playbook.
@@ -128,14 +128,3 @@ export const LOSS_PROFILES: Readonly<Record<LossType, LossProfile>> = {
   },
 };
 
-/** How long after a landed contact we wait before the first follow-up chase. */
-export const CHASE_INTERVAL_MS = 2 * DAY;
-
-/**
- * Gap before re-engaging an abandoned checkout. Deliberately short: the
- * recovery curve for abandonment decays over hours, so a next-day reminder is a
- * reminder that they already moved on.
- */
-export const ABANDONMENT_REENGAGE_MS = 30 * 60_000;
-
-export { HOUR };

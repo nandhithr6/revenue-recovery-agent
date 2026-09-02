@@ -118,6 +118,8 @@ export interface LlmStats {
   parseFailures: number;
   transportFailures: number;
   fallbacks: number;
+  /** Entries restored from disk rather than fetched. */
+  loadedFromDisk: number;
 }
 
 export class LlmDecisionCache {
@@ -128,6 +130,7 @@ export class LlmDecisionCache {
     parseFailures: 0,
     transportFailures: 0,
     fallbacks: 0,
+    loadedFromDisk: 0,
   };
 
   get(key: string): LlmDecision | undefined {
@@ -147,14 +150,25 @@ export class LlmDecisionCache {
     events: readonly LossEvent[],
     config: LlmConfig,
     buildCtx: (event: LossEvent) => CaseContext,
+    /**
+     * Minimum gap between calls. Free tiers are rate-limited around 30 requests
+     * a minute, and firing the whole cohort at once earns a wall of 429s: the
+     * first run of this hit 108 transport failures out of 203 for exactly that
+     * reason, and silently fell back to rules for half its decisions.
+     */
+    gapMs = 2_100,
   ): Promise<void> {
     const seen = new Set<string>();
+    let called = false;
 
     for (const event of events) {
       const ctx = buildCtx(event);
       const key = situationKey(ctx);
       if (seen.has(key)) continue;
       seen.add(key);
+
+      if (called) await new Promise((r) => setTimeout(r, gapMs));
+      called = true;
 
       this.stats.requests += 1;
       const response = await complete(
@@ -180,6 +194,20 @@ export class LlmDecisionCache {
 
   get size(): number {
     return this.entries.size;
+  }
+
+  /**
+   * Serialise the cache so a run costs the rate-limit wait once rather than
+   * every time. It also makes the LLM arm reproducible: the same cached
+   * decisions produce the same numbers, which a live model call never would.
+   */
+  toJSON(): Record<string, LlmDecision> {
+    return Object.fromEntries(this.entries);
+  }
+
+  load(raw: Record<string, LlmDecision>): void {
+    for (const [k, v] of Object.entries(raw)) this.entries.set(k, v);
+    this.stats.loadedFromDisk = this.entries.size;
   }
 }
 

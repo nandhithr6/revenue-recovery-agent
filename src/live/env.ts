@@ -21,6 +21,19 @@ export function loadEnv(path = '.env'): Record<string, string> {
   return out;
 }
 
+/**
+ * Merge .env into process.env without overwriting anything already set.
+ *
+ * The LLM client reads process.env directly, which is the right shape for a
+ * deployed service but means a local .env is invisible to it. Real values
+ * already in the environment win, so CI and shell exports still take priority.
+ */
+export function applyEnvFile(path = '.env'): void {
+  for (const [k, v] of Object.entries(loadEnv(path))) {
+    if (process.env[k] === undefined && v) process.env[k] = v;
+  }
+}
+
 export interface RazorpayCredentials {
   readonly keyId: string;
   readonly keySecret: string;

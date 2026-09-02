@@ -1,4 +1,7 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { formatINR } from '../domain/types.js';
+import { applyEnvFile } from '../live/env.js';
 import { BASELINE_STRATEGIES } from '../policies/baselines.js';
 import { createRulesAgent } from '../policies/rules-agent.js';
 import type { Strategy } from '../policies/types.js';
@@ -19,6 +22,8 @@ import { breakdownByClass, score, type Metrics } from './metrics.js';
  */
 
 /** Fixed clock so runs are reproducible across days. */
+applyEnvFile();
+
 const SIMULATION_START = Date.parse('2026-09-01T00:00:00+05:30');
 
 const STRATEGIES: readonly Strategy[] = [
@@ -63,8 +68,21 @@ async function main(): Promise<void> {
   const llmConfig = configFromEnv();
   if (llmConfig) {
     const cache = new LlmDecisionCache();
-    console.log(`
-Pre-warming LLM decisions via ${llmConfig.model}...`);
+
+    // Reuse a previous pre-warm where possible. Free-tier rate limits mean a
+    // cold pre-warm takes several minutes, and paying that on every run makes
+    // the LLM arm impractical to iterate on. Caching also makes it
+    // reproducible: a live model call would give different numbers each time,
+    // which is no basis for a comparison.
+    const cachePath = join('out', 'llm-cache.json');
+    try {
+      cache.load(JSON.parse(await readFile(cachePath, 'utf8')));
+      console.log(`\nLoaded ${cache.size} cached LLM decisions from ${cachePath}`);
+    } catch {
+      // No cache yet; fall through to a cold pre-warm.
+    }
+
+    console.log(`Pre-warming LLM decisions via ${llmConfig.model}...`);
     await cache.prewarm(events, llmConfig, (event) => ({
       event,
       now: event.occurredAt,
@@ -73,11 +91,23 @@ Pre-warming LLM decisions via ${llmConfig.model}...`);
       contactCount: 0,
       channelsUsed: [],
     }));
+
     const s = cache.stats;
     console.log(
-      `  ${cache.size} situations cached from ${s.requests} requests ` +
-        `(${s.parseFailures} unparseable, ${s.transportFailures} transport failures)`,
+      `  ${cache.size} situations cached ` +
+        `(${s.loadedFromDisk} from disk, ${s.requests} fetched, ` +
+        `${s.parseFailures} unparseable, ${s.transportFailures} transport failures)`,
     );
+    if (s.transportFailures > s.requests / 2 && s.requests > 4) {
+      console.log(
+        '  Warning: over half the requests failed. Check the model id against ' +
+          `${llmConfig.baseUrl}/models — a retired model 404s on every call.`,
+      );
+    }
+
+    await mkdir('out', { recursive: true });
+    await writeFile(cachePath, JSON.stringify(cache.toJSON(), null, 2), 'utf8');
+
     strategies.push(createLlmAgent(DEFAULT_COSTS, cache));
   }
   const summary = summariseCohort(events);
