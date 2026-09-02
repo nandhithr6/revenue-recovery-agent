@@ -3,51 +3,50 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Invalid VPA, customer must update their UPI ID"
+    "reasoning": "Invalid VPA, instrument dead, need customer to update"
   },
   "bank_technical_error|medium|r0|c0|email,voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure issue; wait 30‑60 min before retry"
+    "reasoning": "Infrastructure downtime; wait before retry"
   },
   "payment_cancelled|medium|r0|c0|email,sms": {
     "action": "contact_customer",
-    "channel": "sms",
+    "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer cancelled; act fast to recover intent"
+    "reasoning": "customer cancelled, act fast to recover intent"
   },
   "payment_timed_out|medium|r0|c0|email,voice": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer timed out, act fast via email"
+    "reasoning": "Payment timed out; immediate contact needed to recover intent"
   },
   "payment_timed_out|medium|r0|c0|email,sms,whatsapp": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "payment timed out, act fast to recover intent"
+    "reasoning": "Customer timed out, act fast to recover"
   },
   "insufficient_funds|small|r0|c0|email,sms": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds; retry after ~20 hours when balance may be restored"
+    "reasoning": "Insufficient funds; retry after ~20 hours"
   },
   "gateway_technical_error|medium|r0|c0|email,sms,voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "gateway technical error; wait before retry"
+    "reasoning": "gateway technical error, wait before retry"
   },
   "payment_timed_out|small|r0|c0|email,sms,whatsapp": {
-    "action": "contact_customer",
-    "channel": "email",
+    "action": "retry_payment",
     "delay_hours": 0,
-    "reasoning": "customer timed out, act fast"
+    "reasoning": "Customer timed out, retry immediately while intent remains"
   },
   "payment_cancelled|medium|r0|c0|email,whatsapp": {
     "action": "retry_payment",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, retry quickly before intent decays"
+    "reasoning": "Customer cancelled, act fast with immediate retry"
   },
   "transaction_limit_exceeded|small|r0|c0|email,sms,voice": {
     "action": "retry_payment",
@@ -58,7 +57,7 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer cancelled, act fast"
+    "reasoning": "customer cancelled, act fast to recover"
   },
   "insufficient_funds|medium|r0|c0|email,sms,whatsapp,voice": {
     "action": "retry_payment",
@@ -67,14 +66,14 @@
   },
   "authentication_failed|small|r0|c0|email,sms,whatsapp,voice": {
     "action": "retry_payment",
-    "delay_hours": 0.25,
-    "reasoning": "authentication_failed can succeed after a short pause"
+    "delay_hours": 0.5,
+    "reasoning": "authentication_failed can succeed after short pause"
   },
   "invalid_vpa|medium|r0|c0|email,whatsapp,voice": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Invalid VPA; instrument dead, customer must update"
+    "reasoning": "Invalid VPA means the instrument is dead; customer must update it"
   },
   "insufficient_funds|small|r0|c0|sms,whatsapp": {
     "action": "retry_payment",
@@ -84,29 +83,30 @@
   "insufficient_funds|medium|r0|c0|email,whatsapp,voice": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds; retry after ~20 hours"
+    "reasoning": "Insufficient funds; retry after ~20 hours when balance may be restored"
   },
   "payment_timed_out|medium|r0|c0|email,whatsapp,voice": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer timed out, act quickly"
+    "reasoning": "customer timed out, act fast"
   },
   "bank_technical_error|small|r0|c0|email,whatsapp": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure downtime; wait before retrying"
+    "reasoning": "Infrastructure downtime; wait before retry"
   },
   "payment_cancelled|medium|r0|c0|email,voice": {
-    "action": "retry_payment",
+    "action": "contact_customer",
+    "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, intent decays quickly, retry immediately"
+    "reasoning": "Customer cancelled; act fast to recover intent"
   },
   "payment_cancelled|medium|r0|c0|email,sms,whatsapp": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer cancelled; prompt contact needed before intent decays"
+    "reasoning": "customer cancelled, act fast to recover intent"
   },
   "bank_technical_error|medium|r0|c0|email,sms,voice": {
     "action": "retry_payment",
@@ -122,7 +122,7 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer timed out, act fast via email"
+    "reasoning": "Payment timed out, act fast to recover intent"
   },
   "insufficient_funds|medium|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
@@ -133,13 +133,13 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, need immediate follow-up"
+    "reasoning": "customer cancelled, act fast"
   },
   "invalid_vpa|medium|r0|c0|email,sms,voice": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Invalid VPA; instrument dead, must ask customer to update payment details"
+    "reasoning": "Invalid VPA means instrument is dead; need customer to update details"
   },
   "payment_collect_request_expired|medium|r0|c0|whatsapp": {
     "action": "contact_customer",
@@ -150,7 +150,7 @@
   "insufficient_funds|small|r0|c0|email,whatsapp": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds; retry after ~20 hours when balance may be restored"
+    "reasoning": "Insufficient funds; retry after ~20 hours"
   },
   "gateway_technical_error|medium|r0|c0|email,whatsapp": {
     "action": "retry_payment",
@@ -161,17 +161,17 @@
     "action": "contact_customer",
     "channel": "sms",
     "delay_hours": 0,
-    "reasoning": "customer did not act on collect request, prompt reminder needed"
+    "reasoning": "customer did not act on collect request, prompt via SMS"
   },
   "authentication_failed|medium|r0|c0|email,sms": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "authentication_failed can succeed after a short pause"
+    "reasoning": "authentication_failed may succeed after a short pause"
   },
   "gateway_technical_error|medium|r0|c0|email,sms": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "gateway down, wait before retry"
+    "reasoning": "gateway technical error, wait before retry"
   },
   "insufficient_funds|medium|r0|c0|email,sms": {
     "action": "retry_payment",
@@ -182,13 +182,13 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer cancelled; act fast to recover intent"
+    "reasoning": "customer cancelled, act fast"
   },
   "invalid_vpa|small|r0|c0|sms,whatsapp": {
     "action": "contact_customer",
     "channel": "sms",
     "delay_hours": 0,
-    "reasoning": "invalid VPA means instrument is dead; need customer to update"
+    "reasoning": "Invalid VPA; instrument dead, need customer to update"
   },
   "bank_technical_error|medium|r0|c0|email,whatsapp": {
     "action": "retry_payment",
@@ -198,27 +198,27 @@
   "bank_technical_error|very_large|r0|c0|email,sms": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure issue; wait before retrying"
+    "reasoning": "bank_technical_error, wait 30-60 minutes before retry"
   },
   "insufficient_funds|small|r0|c0|email": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds; retry after about 20 hours"
+    "reasoning": "Insufficient funds; retry after ~20 hours when balance may be restored"
   },
   "bank_technical_error|small|r0|c0|email": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure downtime; wait 30‑60 min before retry"
+    "reasoning": "Bank technical issue; wait before retry"
   },
   "bank_technical_error|small|r0|c0|voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure issue; wait before retrying"
+    "reasoning": "Infrastructure downtime, wait before retry"
   },
   "insufficient_funds|small|r0|c0|email,whatsapp,voice": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds require waiting ~20 hours before retry"
+    "reasoning": "Insufficient funds; retry after about 20 hours"
   },
   "insufficient_funds|large|r0|c0|email,whatsapp": {
     "action": "retry_payment",
@@ -228,35 +228,35 @@
   "bank_technical_error|small|r0|c0|sms,voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure downtime; wait before retry"
+    "reasoning": "bank technical error, wait before retry"
   },
   "payment_timed_out|small|r0|c0|email,sms,whatsapp,voice": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "payment_timed_out indicates the customer walked away; quick email contact is needed"
+    "reasoning": "Customer timed out; act fast to recover low-value payment"
   },
   "credit_failed|large|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Partner bank downtime suggests a temporary technical issue; retry after short wait"
+    "reasoning": "partner bank downtime, wait before retry"
   },
   "payment_collect_request_expired|small|r0|c0|email,sms,voice": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "payment timed out, need immediate customer contact"
+    "reasoning": "customer did not act on collect request; prompt contact needed"
   },
   "invalid_vpa|small|r0|c0|email,sms": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Invalid VPA; instrument dead, must ask customer to update"
+    "reasoning": "invalid VPA means instrument is dead; need customer to update payment details"
   },
   "insufficient_funds|medium|r0|c0|email,sms,voice": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds require waiting ~20 hours before retry"
+    "reasoning": "Insufficient funds; retry after ~20 hours"
   },
   "insufficient_funds|large|r0|c0|email,sms": {
     "action": "retry_payment",
@@ -269,21 +269,20 @@
     "reasoning": "Insufficient funds; retry after ~20 hours"
   },
   "payment_cancelled|very_large|r0|c0|email,whatsapp": {
-    "action": "contact_customer",
-    "channel": "whatsapp",
+    "action": "retry_payment",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, intent decays quickly"
+    "reasoning": "customer cancelled, act fast"
   },
   "bank_technical_error|small|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure downtime; wait before retrying"
+    "reasoning": "bank_technical_error, wait before retry"
   },
   "payment_collect_request_expired|large|r0|c0|email,whatsapp": {
     "action": "contact_customer",
     "channel": "whatsapp",
     "delay_hours": 0,
-    "reasoning": "customer did not act on collect request; prompt contact needed"
+    "reasoning": "payment_collect_request_expired indicates customer timed out, need immediate contact"
   },
   "payment_timed_out|large|r0|c0|email,sms": {
     "action": "retry_payment",
@@ -293,12 +292,12 @@
   "bank_technical_error|medium|r0|c0|email": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure issue; wait 30‑60 min before retry"
+    "reasoning": "Infrastructure downtime; wait before retrying"
   },
   "bank_technical_error|medium|r0|c0|whatsapp": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure issue; wait before retry"
+    "reasoning": "Infrastructure issue; wait before retrying"
   },
   "card_declined|medium|r0|c0|email,sms,whatsapp,voice": {
     "action": "stop",
@@ -308,19 +307,19 @@
   "bank_technical_error|medium|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure downtime; wait before retrying"
+    "reasoning": "bank technical error, wait before retry"
   },
   "payment_timed_out|medium|r0|c0|email,whatsapp": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer timed out, act fast to revive purchase intent"
+    "reasoning": "payment_timed_out indicates customer walked away; immediate contact is needed"
   },
   "payment_collect_request_expired|small|r0|c0|email,sms,whatsapp": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer did not act on collect request, need immediate contact"
+    "reasoning": "customer did not act on collect request, prompt quickly"
   },
   "bank_technical_error|large|r0|c0|email,whatsapp": {
     "action": "retry_payment",
@@ -352,35 +351,35 @@
   "insufficient_funds|small|r0|c0|email,sms,voice": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds; retry after ~20 hours when balance may be restored"
+    "reasoning": "Insufficient funds; retry after about 20 hours when balance may be restored"
   },
   "bank_technical_error|medium|r0|c0|email,sms": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "bank_technical_error, wait 30-60 minutes before retry"
+    "reasoning": "Infrastructure downtime; wait before retrying"
   },
   "invalid_vpa|large|r0|c0|email,sms,whatsapp": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "invalid VPA requires customer correction"
+    "reasoning": "invalid VPA, instrument must be corrected by customer"
   },
   "insufficient_funds|large|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds require waiting before retry"
+    "reasoning": "Insufficient funds; retry after ~20 hours"
   },
   "payment_collect_request_expired|medium|r0|c0|sms": {
     "action": "contact_customer",
     "channel": "sms",
     "delay_hours": 0,
-    "reasoning": "customer did not act on collect request, prompt via SMS"
+    "reasoning": "customer did not act on collect request, prompt immediately"
   },
   "payment_cancelled|small|r0|c0|email": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer cancelled; act immediately to recover intent"
+    "reasoning": "customer cancelled, act fast via email"
   },
   "transaction_limit_exceeded|small|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
@@ -396,19 +395,19 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "invalid VPA, customer must update UPI ID"
+    "reasoning": "invalid VPA, must ask customer to update"
   },
   "payment_collect_request_expired|medium|r0|c0|sms,whatsapp,voice": {
     "action": "contact_customer",
     "channel": "sms",
     "delay_hours": 0,
-    "reasoning": "Customer did not act on collect request; prompt contact needed"
+    "reasoning": "customer did not act on collect request, prompt reminder needed"
   },
   "payment_cancelled|large|r0|c0|email,sms,whatsapp": {
     "action": "contact_customer",
-    "channel": "whatsapp",
+    "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer cancelled; act fast to recover intent"
+    "reasoning": "Customer cancelled; prompt contact needed before intent decays"
   },
   "payment_timed_out|medium|r0|c0|email,sms": {
     "action": "contact_customer",
@@ -420,23 +419,23 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer did not act on collect request; prompt contact needed"
+    "reasoning": "customer did not act on collect request; prompt contact needed"
   },
   "payment_timed_out|small|r0|c0|email,sms": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "payment timed out, prompt customer quickly"
+    "reasoning": "Customer timed out; immediate contact needed to recover intent"
   },
   "bank_technical_error|small|r0|c0|email,voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "bank technical error, wait before retry"
+    "reasoning": "Infrastructure downtime; wait before retrying"
   },
   "gateway_technical_error|large|r0|c0|email,sms,whatsapp,voice": {
     "action": "retry_payment",
     "delay_hours": 1,
-    "reasoning": "gateway technical error; wait before retry"
+    "reasoning": "gateway down, wait before retry"
   },
   "credit_failed|small|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
@@ -447,13 +446,12 @@
     "action": "contact_customer",
     "channel": "sms",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, act fast"
+    "reasoning": "customer cancelled, intent decays quickly"
   },
   "debit_instrument_inactive|medium|r0|c0|email": {
-    "action": "contact_customer",
-    "channel": "email",
+    "action": "stop",
     "delay_hours": 0,
-    "reasoning": "instrument not enabled for online use, must ask customer to enable"
+    "reasoning": "Bank blocked the debit instrument, retry would harm auth rates"
   },
   "credit_failed|medium|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
@@ -464,27 +462,27 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer timed out, act fast"
+    "reasoning": "Customer timed out, act fast via email"
   },
   "bank_technical_error|medium|r0|c0|voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "bank technical issue, wait before retry"
+    "reasoning": "bank technical error, wait before retry"
   },
   "credit_failed|medium|r0|c0|email": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Bank/partner downtime; wait ~30‑60 min before retry"
+    "reasoning": "bank technical error; wait 30‑60 min before retry"
   },
   "gateway_technical_error|medium|r0|c0|whatsapp": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "gateway technical error, wait before retry"
+    "reasoning": "gateway down, wait before retry"
   },
   "incorrect_cvv|medium|r0|c0|email,sms": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Incorrect CVV can succeed after a short pause"
+    "reasoning": "CVV error can be corrected after a short pause"
   },
   "payment_timed_out|medium|r0|c0|email,sms,voice": {
     "action": "contact_customer",
@@ -496,7 +494,7 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer did not act on collect request; prompt email needed"
+    "reasoning": "customer did not act on collect request, prompt via email"
   },
   "gateway_technical_error|medium|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
@@ -506,23 +504,23 @@
   "insufficient_funds|large|r0|c0|none": {
     "action": "retry_payment",
     "delay_hours": 20,
-    "reasoning": "Insufficient funds; retry after ~20 hours"
+    "reasoning": "insufficient funds, retry after ~20 hours"
   },
   "gateway_technical_error|medium|r0|c0|email": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "gateway technical issue, wait before retry"
+    "reasoning": "gateway down, wait before retry"
   },
   "bank_technical_error|medium|r0|c0|sms": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure issue; wait 30‑60 min before retry"
+    "reasoning": "bank technical error, wait before retry"
   },
   "payment_timed_out|large|r0|c0|sms": {
     "action": "contact_customer",
     "channel": "sms",
     "delay_hours": 0,
-    "reasoning": "Customer timed out, act fast to recover intent"
+    "reasoning": "Customer timed out, immediate contact needed"
   },
   "insufficient_funds|large|r0|c0|email,sms,voice": {
     "action": "retry_payment",
@@ -531,58 +529,58 @@
   },
   "incorrect_cvv|medium|r0|c0|email,sms,whatsapp,voice": {
     "action": "retry_payment",
-    "delay_hours": 0.5,
+    "delay_hours": 0.1,
     "reasoning": "Incorrect CVV can succeed after a short pause"
   },
   "gateway_technical_error|small|r0|c0|email,sms,whatsapp": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "gateway down, wait before retry"
+    "reasoning": "infrastructure downtime, wait before retrying"
   },
   "payment_cancelled|small|r0|c0|email,sms,whatsapp,voice": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, act fast to recover intent"
+    "reasoning": "Customer cancelled; act fast to recover intent"
   },
   "credit_failed|medium|r0|c0|email,sms": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Partner bank downtime; wait before retrying"
+    "reasoning": "bank technical error, wait before retry"
   },
   "payment_collect_request_expired|medium|r0|c0|email,whatsapp": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer did not act on collect request, prompt contact needed"
+    "reasoning": "customer did not act on collect request, prompt quickly"
   },
   "payment_collect_request_expired|medium|r0|c0|sms,whatsapp": {
     "action": "contact_customer",
     "channel": "sms",
     "delay_hours": 0,
-    "reasoning": "customer did not act on collect request, prompt quickly"
+    "reasoning": "customer did not act on collect request; prompt reminder needed"
   },
   "bank_technical_error|medium|r0|c0|email,sms,whatsapp,voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure downtime; wait before retry"
+    "reasoning": "Bank technical issue; wait before retrying"
   },
   "gateway_technical_error|medium|r0|c0|email,sms,whatsapp,voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "gateway down, wait before retry"
+    "reasoning": "Infrastructure down; wait before retrying"
   },
   "vpa_resolution_failed|small|r0|c0|email,sms": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "invalid VPA, instrument dead, need customer to update"
+    "reasoning": "invalid VPA, must ask customer to update"
   },
   "payment_timed_out|small|r0|c0|email": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer timed out, prompt contact needed"
+    "reasoning": "customer timed out, act fast"
   },
   "credit_failed|small|r0|c0|email,sms,voice": {
     "action": "retry_payment",
@@ -593,7 +591,7 @@
     "action": "contact_customer",
     "channel": "whatsapp",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, act fast to recover intent"
+    "reasoning": "Customer cancelled, act fast via WhatsApp"
   },
   "card_declined|medium|r0|c0|sms,whatsapp": {
     "action": "stop",
@@ -602,32 +600,32 @@
   },
   "payment_cancelled|small|r0|c0|email,whatsapp,voice": {
     "action": "contact_customer",
-    "channel": "email",
+    "channel": "whatsapp",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, act quickly"
+    "reasoning": "customer cancelled, need immediate re-engagement"
   },
   "payment_collect_request_expired|medium|r0|c0|email,sms,whatsapp,voice": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer did not act on collect request, prompt contact needed"
+    "reasoning": "Customer did not act on collect request; prompt quickly to recover"
   },
   "invalid_vpa|very_large|r0|c0|email,sms": {
     "action": "contact_customer",
     "channel": "sms",
     "delay_hours": 0,
-    "reasoning": "Invalid VPA; instrument dead, must ask customer to update"
+    "reasoning": "invalid VPA, must ask customer to update"
   },
   "payment_cancelled|small|r0|c0|email,sms,whatsapp": {
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "customer cancelled, act fast"
+    "reasoning": "Customer cancelled; act fast via email"
   },
   "bank_technical_error|small|r0|c0|email,sms,whatsapp,voice": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "Infrastructure issue; wait before retrying"
+    "reasoning": "bank technical error, wait before retry"
   },
   "transaction_limit_exceeded|medium|r0|c0|email,sms,voice": {
     "action": "retry_payment",
@@ -732,7 +730,7 @@
   "gateway_technical_error|small|r0|c0|sms": {
     "action": "retry_payment",
     "delay_hours": 0.5,
-    "reasoning": "gateway down, wait before retry"
+    "reasoning": "gateway technical error, wait before retry"
   },
   "gateway_technical_error|medium|r0|c0|email,voice": {
     "action": "retry_payment",
@@ -948,7 +946,7 @@
     "action": "contact_customer",
     "channel": "email",
     "delay_hours": 0,
-    "reasoning": "Customer cancelled; act fast to recover intent"
+    "reasoning": "customer cancelled, act fast"
   },
   "payment_collect_request_expired|large|r0|c0|email,sms": {
     "action": "contact_customer",
@@ -997,5 +995,26 @@
     "action": "retry_payment",
     "delay_hours": 0.5,
     "reasoning": "gateway technical issue; wait before retry"
+  },
+  "debit_instrument_inactive|medium|r0|c0|email,sms,whatsapp": {
+    "action": "contact_customer",
+    "channel": "email",
+    "delay_hours": 0,
+    "reasoning": "Instrument not enabled for online use; customer must enable it"
+  },
+  "payment_declined|medium|r0|c0|email,sms": {
+    "action": "stop",
+    "delay_hours": 0,
+    "reasoning": "Bank declined the payment; retry would harm authorization rates"
+  },
+  "debit_instrument_blocked|medium|r0|c0|email,whatsapp": {
+    "action": "stop",
+    "delay_hours": 0,
+    "reasoning": "Bank blocked the instrument; retry would be futile"
+  },
+  "payment_risk_check_failed|small|r0|c0|email": {
+    "action": "stop",
+    "delay_hours": 0,
+    "reasoning": "Bank declined with prejudice; retry would harm auth rates"
   }
 }

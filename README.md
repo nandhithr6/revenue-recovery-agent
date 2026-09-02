@@ -169,6 +169,9 @@ is gitignored. See
 
 ## Architecture
 
+Full write-up: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the layers, what
+each one is forbidden from doing, and why the separations sit where they do.
+
 ```
  LossEvent ──> Diagnose ──> Policy ──> Guardrails ──> Execute ──> Ledger
                               │            │                        │
@@ -246,6 +249,35 @@ discarded, invented actions and out-of-range delays rejected. Anything that fail
 validation falls back to the deterministic agent. **The system runs identically
 with the network unplugged.** Full reasoning in
 [ADR 0003](docs/adr/0003-where-we-chose-not-to-use-an-llm.md).
+
+### And we measured it, rather than assuming
+
+That argument was made from first principles. It now has a number behind it, on
+the same cohort, with the LLM policy actually deciding:
+
+| | Rules agent | LLM agent |
+|---|---|---|
+| Net after annoyance | **₹3,96,572** | ₹3,39,628 |
+| Recovery rate | **49.2%** | 47.4% |
+| Retries per recovery | **2.56** | 2.91 |
+| Annoyance points | **806** | 1,225 |
+| Compliance violations | 0 | **0** |
+
+**The LLM is worse on every axis, and worst on restraint** — 52% more customer
+annoyance for less recovered revenue. It reaches for a message where the rules
+agent has already worked out that the expected value does not justify one.
+
+Two things worth drawing out. The zero in that last column is ADR 0002 doing its
+job: the guardrails hold identically whichever policy proposes the action. And an
+earlier run appeared to show the *opposite* result — rate limits meant only 90 of
+203 decisions were cached, so the policy fell back to rules for more than half
+its cases and we were crediting the model for the rules agent's work. That
+mistake is written up in [engineering log entry 11](docs/ENGINEERING-LOG.md)
+rather than quietly replaced.
+
+The LLM arm stays in the repo, for reason codes the taxonomy has no entry for and
+as evidence the layering is real. It does not go on the critical path of a
+decision a lookup table makes better and for free.
 
 ## Honesty about the data
 

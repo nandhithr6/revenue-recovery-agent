@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T14:37:56.486Z",
+  "generatedAt": "2026-09-02T14:39:13.224Z",
   "scenario": {
     "id": "baseline-week",
     "name": "Baseline week",
@@ -404,31 +404,32 @@
         "strategyId": "agent-llm",
         "strategyName": "LLM agent",
         "casesTotal": 500,
-        "casesRecovered": 237,
-        "recoveryRate": 0.474,
+        "casesRecovered": 243,
+        "recoveryRate": 0.486,
         "atRiskPaise": 148668206,
-        "recoveredPaise": 36860749,
-        "costPaise": 447930,
-        "netValuePaise": 36412819,
-        "recoveryRateByValue": 0.24793969061549045,
-        "totalRetries": 689,
-        "totalContacts": 307,
-        "totalHumanEscalations": 52,
-        "retriesPerRecovery": 2.9071729957805905,
-        "contactsPerRecovery": 1.2953586497890295,
-        "returnOnSpend": 82.29131560734936,
-        "spamPoints": 1225,
-        "spamPerLakhRecovered": 332.33182537880606,
-        "netValueAfterAnnoyancePaise": 33962819,
-        "blockedActions": 198,
-        "deferrals": 225,
+        "recoveredPaise": 38524965,
+        "costPaise": 402750,
+        "netValuePaise": 38122215,
+        "recoveryRateByValue": 0.2591338527351302,
+        "totalRetries": 693,
+        "totalContacts": 294,
+        "totalHumanEscalations": 43,
+        "retriesPerRecovery": 2.8518518518518516,
+        "contactsPerRecovery": 1.2098765432098766,
+        "returnOnSpend": 95.65478584729982,
+        "spamPoints": 1074,
+        "spamPerLakhRecovered": 278.7802662507286,
+        "netValueAfterAnnoyancePaise": 35974215,
+        "blockedActions": 127,
+        "deferrals": 205,
         "issuerPenaltyPaise": 0,
         "ruleTally": {
-          "QUIET_HOURS": 114,
-          "CONTACT_COOLDOWN": 69,
-          "RETRY_COOLDOWN": 33,
-          "DND_REGISTERED": 198,
-          "DAILY_CONTACT_CAP": 9
+          "QUIET_HOURS": 108,
+          "CONTACT_COOLDOWN": 59,
+          "RETRY_COOLDOWN": 31,
+          "MAX_RETRIES": 25,
+          "DND_REGISTERED": 102,
+          "DAILY_CONTACT_CAP": 7
         },
         "complianceViolations": 0
       },
@@ -436,52 +437,52 @@
         {
           "recoveryClass": "TRANSIENT_INFRA",
           "cases": 137,
-          "recovered": 113,
-          "recoveryRate": 0.8248175182481752,
-          "retries": 214,
-          "costPaise": 110020,
-          "recoveredPaise": 19812969,
-          "netValuePaise": 19702949
+          "recovered": 110,
+          "recoveryRate": 0.8029197080291971,
+          "retries": 215,
+          "costPaise": 110170,
+          "recoveredPaise": 19180593,
+          "netValuePaise": 19070423
         },
         {
           "recoveryClass": "TRANSIENT_FUNDS",
           "cases": 118,
-          "recovered": 77,
-          "recoveryRate": 0.652542372881356,
-          "retries": 265,
-          "costPaise": 133150,
-          "recoveredPaise": 9976055,
-          "netValuePaise": 9842905
+          "recovered": 74,
+          "recoveryRate": 0.6271186440677966,
+          "retries": 275,
+          "costPaise": 115290,
+          "recoveredPaise": 10485673,
+          "netValuePaise": 10370383
         },
         {
           "recoveryClass": "ABANDONMENT",
           "cases": 186,
-          "recovered": 40,
-          "recoveryRate": 0.21505376344086022,
-          "retries": 189,
-          "costPaise": 158570,
-          "recoveredPaise": 6659396,
-          "netValuePaise": 6500826
+          "recovered": 51,
+          "recoveryRate": 0.27419354838709675,
+          "retries": 183,
+          "costPaise": 146510,
+          "recoveredPaise": 8002200,
+          "netValuePaise": 7855690
         },
         {
           "recoveryClass": "AUTH_FAILURE",
           "cases": 8,
-          "recovered": 5,
-          "recoveryRate": 0.625,
+          "recovered": 6,
+          "recoveryRate": 0.75,
           "retries": 17,
-          "costPaise": 14390,
-          "recoveredPaise": 295970,
-          "netValuePaise": 281580
+          "costPaise": 4270,
+          "recoveredPaise": 796628,
+          "netValuePaise": 792358
         },
         {
           "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
           "cases": 22,
           "recovered": 2,
           "recoveryRate": 0.09090909090909091,
-          "retries": 4,
-          "costPaise": 16800,
-          "recoveredPaise": 116359,
-          "netValuePaise": 99559
+          "retries": 3,
+          "costPaise": 16510,
+          "recoveredPaise": 59871,
+          "netValuePaise": 43361
         },
         {
           "recoveryClass": "HARD_DECLINE",
@@ -489,9 +490,9 @@
           "recovered": 0,
           "recoveryRate": 0,
           "retries": 0,
-          "costPaise": 15000,
+          "costPaise": 10000,
           "recoveredPaise": 0,
-          "netValuePaise": -15000
+          "netValuePaise": -10000
         }
       ]
     }
