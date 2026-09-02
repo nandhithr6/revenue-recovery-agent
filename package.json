@@ -11,7 +11,8 @@
     "dashboard": "vite",
     "dashboard:build": "vite build",
     "eval:robust": "tsx src/eval/robustness.ts",
-    "eval:sensitivity": "tsx src/eval/sensitivity.ts"
+    "eval:sensitivity": "tsx src/eval/sensitivity.ts",
+    "live": "tsx src/live/run-live.ts"
   },
   "author": "",
   "license": "MIT",

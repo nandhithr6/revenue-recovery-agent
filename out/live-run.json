@@ -1,0 +1,199 @@
+{
+  "generatedAt": "2026-09-02T13:39:54.664Z",
+  "mode": "razorpay_test",
+  "note": "Recovery actions are real Razorpay API calls. The initial failure reason on each case is seeded from Razorpay documented codes, because producing a genuine decline requires driving their hosted checkout in a browser. This run measures nothing; the statistical claims come from the seeded simulator.",
+  "cases": [
+    {
+      "caseId": "live_001",
+      "reasonCode": "gateway_technical_error",
+      "recoveryClass": "TRANSIENT_INFRA",
+      "lossType": "payment_failure",
+      "amountPaise": 129900,
+      "testCardToReproduce": "4100 2800 0002 0007",
+      "orderId": "order_TXBiGcUBzp3Y9L",
+      "actions": [
+        {
+          "step": 0,
+          "decided": "retry_payment",
+          "rationale": "TRANSIENT_INFRA / Payment failure: retry 1 of 3 at +30m after the failure -- Infrastructure failure, not a customer problem. Retry silently once the outage has had time to clear; contacting the customer would only add doubt.",
+          "verdict": "allow",
+          "razorpay": {
+            "order_id": "order_TXBiH9l7Xhl73B"
+          }
+        },
+        {
+          "step": 1,
+          "decided": "retry_payment",
+          "rationale": "TRANSIENT_INFRA / Payment failure: retry 2 of 3 at +2.0h after the failure -- Infrastructure failure, not a customer problem. Retry silently once the outage has had time to clear; contacting the customer would only add doubt.",
+          "verdict": "defer",
+          "rule": "RETRY_COOLDOWN",
+          "explanation": "Last retry was 0m ago; minimum gap is 15m."
+        },
+        {
+          "step": 2,
+          "decided": "retry_payment",
+          "rationale": "TRANSIENT_INFRA / Payment failure: retry 2 of 3 at +2.0h after the failure -- Infrastructure failure, not a customer problem. Retry silently once the outage has had time to clear; contacting the customer would only add doubt.",
+          "verdict": "allow",
+          "razorpay": {
+            "order_id": "order_TXBiHiu8EQn80O"
+          }
+        },
+        {
+          "step": 3,
+          "decided": "retry_payment",
+          "rationale": "TRANSIENT_INFRA / Payment failure: retry 3 of 3 at +6.0h after the failure -- Infrastructure failure, not a customer problem. Retry silently once the outage has had time to clear; contacting the customer would only add doubt.",
+          "verdict": "allow",
+          "razorpay": {
+            "order_id": "order_TXBiIFP4xOhhOR"
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "live_002",
+      "reasonCode": "insufficient_funds",
+      "recoveryClass": "TRANSIENT_FUNDS",
+      "lossType": "subscription_mandate",
+      "amountPaise": 49900,
+      "testCardToReproduce": "4100 2800 0008 0001",
+      "orderId": "order_TXBiImP5p6LlkW",
+      "actions": [
+        {
+          "step": 0,
+          "decided": "retry_payment",
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 1 of 5 at +1.5d after the failure -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "verdict": "allow",
+          "razorpay": {
+            "order_id": "order_TXBiJHyexid4AT"
+          }
+        },
+        {
+          "step": 1,
+          "decided": "retry_payment",
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 2 of 5 at +3.3d after the failure -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "verdict": "allow",
+          "razorpay": {
+            "order_id": "order_TXBiJo3U7ICm2w"
+          }
+        },
+        {
+          "step": 2,
+          "decided": "retry_payment",
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 3 of 5 at +5.4d after the failure -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "verdict": "allow",
+          "razorpay": {
+            "order_id": "order_TXBiKJjZtrEmIe"
+          }
+        },
+        {
+          "step": 3,
+          "decided": "retry_payment",
+          "rationale": "TRANSIENT_FUNDS / Subscription / mandate: retry 4 of 5 at +6.9d after the failure -- Needs a balance top-up or a daily limit reset. Retrying inside the hour wastes an attempt; a day later is when it lands.",
+          "verdict": "allow",
+          "razorpay": {
+            "order_id": "order_TXBiKq9ehyDqkN"
+          }
+        }
+      ]
+    },
+    {
+      "caseId": "live_003",
+      "reasonCode": "card_expired",
+      "recoveryClass": "CUSTOMER_ACTION_REQUIRED",
+      "lossType": "payment_failure",
+      "amountPaise": 275000,
+      "testCardToReproduce": null,
+      "orderId": "order_TXBiLKlIblkudr",
+      "actions": [
+        {
+          "step": 0,
+          "decided": "contact_customer",
+          "channel": "email",
+          "rationale": "CUSTOMER_ACTION_REQUIRED: no retry can succeed until the customer fixes the instrument, so nudging on email",
+          "verdict": "allow",
+          "razorpay": {
+            "payment_link_id": "plink_TXBiMBj6vavTvh",
+            "short_url": "https://rzp.io/rzp/yLvtcN7"
+          }
+        },
+        {
+          "step": 1,
+          "decided": "contact_customer",
+          "channel": "whatsapp",
+          "rationale": "CUSTOMER_ACTION_REQUIRED: no retry can succeed until the customer fixes the instrument, so nudging on whatsapp",
+          "verdict": "defer",
+          "rule": "CONTACT_COOLDOWN",
+          "explanation": "Last contact was 0.0h ago; minimum gap is 4h."
+        },
+        {
+          "step": 2,
+          "decided": "contact_customer",
+          "channel": "whatsapp",
+          "rationale": "CUSTOMER_ACTION_REQUIRED: no retry can succeed until the customer fixes the instrument, so nudging on whatsapp",
+          "verdict": "allow",
+          "razorpay": {
+            "payment_link_id": "plink_TXBiNCqmCgzaNb",
+            "short_url": "https://rzp.io/rzp/IZxiC63"
+          }
+        },
+        {
+          "step": 3,
+          "decided": "escalate_human",
+          "rationale": "automated recovery exhausted on a high-value case; handing to a human",
+          "verdict": "allow"
+        }
+      ]
+    },
+    {
+      "caseId": "live_004",
+      "reasonCode": "payment_cancelled",
+      "recoveryClass": "ABANDONMENT",
+      "lossType": "checkout_abandonment",
+      "amountPaise": 89900,
+      "testCardToReproduce": "4100 2800 0007 0002",
+      "orderId": "order_TXBiOIry75v0Eq",
+      "actions": [
+        {
+          "step": 0,
+          "decided": "contact_customer",
+          "channel": "email",
+          "rationale": "ABANDONMENT: retries exhausted, prompting on email",
+          "verdict": "allow",
+          "razorpay": {
+            "payment_link_id": "plink_TXBiP8GJXjlV2o",
+            "short_url": "https://rzp.io/rzp/EKp1RtyV"
+          }
+        },
+        {
+          "step": 1,
+          "decided": "stop",
+          "rationale": "ABANDONMENT: expected gain on Rs 899 does not justify the cost and intrusion of whatsapp outreach",
+          "verdict": "allow"
+        }
+      ]
+    },
+    {
+      "caseId": "live_005",
+      "reasonCode": "payment_risk_check_failed",
+      "recoveryClass": "HARD_DECLINE",
+      "lossType": "payment_failure",
+      "amountPaise": 1450000,
+      "testCardToReproduce": null,
+      "orderId": "order_TXBiPjDUc6jSRi",
+      "actions": [
+        {
+          "step": 0,
+          "decided": "escalate_human",
+          "rationale": "HARD_DECLINE: unrecoverable automatically, but the amount warrants a human risk review",
+          "verdict": "allow"
+        },
+        {
+          "step": 1,
+          "decided": "stop",
+          "rationale": "HARD_DECLINE: Fraud flag or blocked instrument. Retrying cannot succeed and repeated attempts risk the merchant’s authorisation rates. Stop, and route to risk review if the amount warrants a human.",
+          "verdict": "allow"
+        }
+      ]
+    }
+  ]
+}

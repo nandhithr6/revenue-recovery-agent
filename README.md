@@ -90,6 +90,61 @@ one price is not automatically right at another.
 That sweep also caught itself being wrong once. See
 [the engineering log, entry 9](docs/ENGINEERING-LOG.md).
 
+## It also runs against the real Razorpay API
+
+The simulator measures. The live path proves the policy runs on real rails —
+same agent, same guardrails, byte for byte. There is no `if (live)` anywhere
+above the execution layer.
+
+```
+live_003        ₹2,750  card_expired               CUSTOMER_ACTION_REQUIRED
+         order order_TXBhFgAUP8YINN
+         contact via email → plink_TXBhGds8nhhLC3  https://rzp.io/rzp/jbJHYYSJ
+         defer — CONTACT_COOLDOWN
+         contact via whatsapp → plink_TXBhIJ8VOCkVbB
+         escalate_human
+
+live_004          ₹899  payment_cancelled          ABANDONMENT
+         contact via email → plink_TXBhKEb49j3X5Q
+         stop — expected gain on Rs 899 does not justify the cost and
+                intrusion of whatsapp outreach
+
+live_005       ₹14,500  payment_risk_check_failed  HARD_DECLINE
+         escalate_human
+         stop — retrying cannot succeed and repeated attempts risk the
+                merchant's authorisation rates
+```
+
+Those `plink_` ids are real and the URLs open: a Razorpay-hosted page reading
+*"Recovery for live_003 — card_expired · INR 2,750.00"*, in test mode, created by
+the agent's own decision rather than by hand.
+
+Note what it does per case. On `card_expired` it spends **zero** retries and goes
+straight to a link, because no retry can ever charge a dead card. On an ₹899 cart
+it sends one email and then stops, because the expected gain does not justify a
+WhatsApp message. On a fraud flag it spends **zero** retries and routes to a
+human.
+
+**What this is not: a measurement.** Five hand-driven cases cannot support a
+recovery rate, and claiming otherwise would be the fastest way to lose a
+technical panel. The statistics come from the seeded simulator; this shows the
+same policy driving real API calls.
+
+**What is seeded, plainly:** the initial failure reason. Producing a genuine
+decline needs Razorpay's hosted checkout driven in a browser with a failure test
+card, which is not a server-side operation. So each case starts from a real
+documented reason code, the test card that reproduces it is recorded alongside,
+and every recovery *action* after that is a real API call.
+
+```bash
+npm run live
+```
+
+Test keys only — the runner asserts an `rzp_test_` prefix and refuses anything
+else, so a live key cannot be used by accident. Credentials live in `.env`, which
+is gitignored. See
+[ADR 0007](docs/adr/0007-executor-split-simulator-and-live.md).
+
 ## Architecture
 
 ```

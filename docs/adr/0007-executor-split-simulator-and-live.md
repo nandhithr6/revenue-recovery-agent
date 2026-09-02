@@ -1,6 +1,6 @@
 # ADR 0007 — Split the executor: simulate to measure, run live to prove
 
-**Status:** Accepted
+**Status:** Accepted and implemented (npm run live)
 **Date:** 2026-09-02
 **Amends:** [ADR 0001](0001-simulate-rather-than-integrate.md), which chose pure
 simulation. That decision is now partly reversed, and the reasoning that changed
