@@ -20,6 +20,7 @@ import type { CaseContext, HistoryEntry, Strategy } from '../policies/types.js';
 import { NUDGE_EFFECTIVENESS, recoversViaLink, recoveryOdds } from '../sim/recovery-model.js';
 import { Rng } from '../sim/rng.js';
 import type { CostModel } from '../sim/scenario.js';
+import { captureAction, captureView, type TraceSink } from './trace.js';
 
 /**
  * Executes a strategy against simulated ground truth, through the guardrails,
@@ -76,6 +77,8 @@ export function runCase(
   rng: Rng,
   ledger: Ledger,
   guardrails: GuardrailConfig = DEFAULT_GUARDRAILS,
+  /** Opt-in. Omitted on hot paths so tracing costs nothing when unused. */
+  trace?: TraceSink,
 ): CaseResult {
   const recoveryClass = classOf(event);
   const history: HistoryEntry[] = [];
@@ -104,6 +107,9 @@ export function runCase(
       channelsUsed,
     };
 
+    // Snapshot BEFORE deciding, so the trace records the inputs the policy
+    // actually had rather than the state afterwards.
+    const seen = trace ? captureView(ctx) : undefined;
     const action = strategy.decide(ctx);
 
     if (action.kind === 'stop') {
@@ -122,6 +128,17 @@ export function runCase(
         costPaise: 0,
         spamPoints: 0,
       });
+      if (trace && seen) {
+        trace.push({
+          at: now,
+          seen,
+          decided: captureAction(action),
+          verdict: { kind: 'allow' },
+          outcome: 'stopped',
+          costPaise: 0,
+          spamPoints: 0,
+        });
+      }
       break;
     }
 
@@ -157,6 +174,22 @@ export function runCase(
         costPaise: 0,
         spamPoints: 0,
       });
+      if (trace && seen) {
+        trace.push({
+          at: scheduledAt,
+          seen,
+          decided: captureAction(action),
+          verdict: {
+            kind: 'defer',
+            rule: verdict.rule,
+            explanation: verdict.explanation,
+            notBefore: verdict.notBefore,
+          },
+          outcome: 'deferred',
+          costPaise: 0,
+          spamPoints: 0,
+        });
+      }
       deferrals += 1;
       deferralsHere += 1;
       scheduledAt = verdict.notBefore;
@@ -190,6 +223,18 @@ export function runCase(
         costPaise: 0,
         spamPoints: 0,
       });
+      if (trace && seen) {
+        trace.push({
+          at: scheduledAt,
+          seen,
+          decided: captureAction(action),
+          verdict: { kind: 'block', rule, explanation },
+          outcome: 'blocked',
+          succeeded: false,
+          costPaise: 0,
+          spamPoints: 0,
+        });
+      }
       // The clock still advances: the agent tried, and time passed.
       now = scheduledAt;
       continue;
@@ -290,6 +335,19 @@ export function runCase(
       costPaise: actionCost,
       spamPoints: actionSpam,
     });
+
+    if (trace && seen) {
+      trace.push({
+        at: now,
+        seen,
+        decided: captureAction(action),
+        verdict: { kind: 'allow' },
+        outcome: 'executed',
+        succeeded,
+        costPaise: actionCost,
+        spamPoints: actionSpam,
+      });
+    }
 
     if (recovered) {
       stoppedReason = 'recovered';

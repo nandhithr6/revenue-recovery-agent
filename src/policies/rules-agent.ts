@@ -52,6 +52,17 @@ const TERMINAL_RULES: ReadonlySet<string> = new Set([
 /** Never schedule an attempt the case-age limit would refuse on arrival. */
 const MAX_USEFUL_CASE_AGE_MS = DEFAULT_LIMITS.maxCaseAgeMs;
 
+/**
+ * Human-readable delay. Hours are the natural unit for most of this agent's
+ * schedule, but rounding two minutes to '+0.0h' makes a fast abandonment retry
+ * look like an immediate one, which is the opposite of the point.
+ */
+function formatDelay(ms: number): string {
+  if (ms < HOUR) return `${Math.round(ms / 60_000)}m`;
+  if (ms < DAY) return `${(ms / HOUR).toFixed(1)}h`;
+  return `${(ms / DAY).toFixed(1)}d`;
+}
+
 /** Executed (not blocked) entries of a given kind. */
 function executed(history: readonly HistoryEntry[], kind: string): HistoryEntry[] {
   return history.filter((h) => h.action.kind === kind && h.blockedBy === undefined);
@@ -280,7 +291,7 @@ export function createRulesAgent(
         return {
           kind: 'retry_payment',
           delayMs,
-          rationale: `${recoveryClass} / ${profile.label}: retry ${retriesDone + 1} of ${retrySchedule.length} at +${(target / HOUR).toFixed(1)}h -- ${playbook.reasoning}`,
+          rationale: `${recoveryClass} / ${profile.label}: retry ${retriesDone + 1} of ${retrySchedule.length} at +${formatDelay(target)} after the failure -- ${playbook.reasoning}`,
         };
       }
 

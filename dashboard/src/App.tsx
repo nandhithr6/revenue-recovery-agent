@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { GroupedBars, HorizontalBars, Legend, seriesColor } from './charts';
+import { CaseInspector } from './CaseInspector';
 import { TimingRibbon, type ClassTrack } from './TimingRibbon';
 import type { Bundle, LedgerEntry, ScenarioResult } from './types';
 
@@ -200,7 +201,64 @@ export default function App() {
         <b>{lakh(scenario.cohort.totalAtRiskPaise)}</b> at risk. Seed <b>{scenario.seed}</b>.
       </p>
 
-      <section>
+      <nav className="railnav" aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#timing">01 Timing</a>
+        <a href="#books">02 The books</a>
+        <a href="#classes">03 By failure class</a>
+        <a href="#waste">04 Doomed attempts</a>
+        <a href="#inspect">05 Inspect a case</a>
+        <a href="#rules">06 Rules</a>
+        <a href="#playbook">07 The playbook</a>
+        <a href="#trail">08 Audit trail</a>
+        <a href="#provenance">09 What is real</a>
+      </nav>
+
+      <section id="how">
+        <div className="sec-head">
+          <span className="sec-num">00</span>
+          <h2>How this works, in five steps</h2>
+        </div>
+        <div className="howto">
+          <div>
+            <b>1 · the losses</b>
+            <p>
+              {scenario.cohort.count} simulated failed payments, each with a real Razorpay error
+              code, an amount, and a customer with their own consent settings.
+            </p>
+          </div>
+          <div>
+            <b>2 · diagnose</b>
+            <p>
+              The agent reads the error code and works out which of six situations it is in.
+              It never sees whether recovery would actually succeed.
+            </p>
+          </div>
+          <div>
+            <b>3 · decide</b>
+            <p>
+              It picks one action: retry now, retry later, message the customer, hand to a
+              person, or stop.
+            </p>
+          </div>
+          <div>
+            <b>4 · guardrails</b>
+            <p>
+              A separate layer allows, delays or refuses that action. The agent cannot overrule
+              it, so quiet hours and attempt caps always hold.
+            </p>
+          </div>
+          <div>
+            <b>5 · score</b>
+            <p>
+              Every decision is written to a ledger, and the same cohort is replayed through
+              three other strategies to compare.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="timing">
         <div className="sec-head">
           <span className="sec-num">01</span>
           <h2>A day, and what the agent is allowed to do in it</h2>
@@ -234,7 +292,7 @@ export default function App() {
         </div>
       </section>
 
-      <section>
+      <section id="books">
         <div className="sec-head">
           <span className="sec-num">02</span>
           <h2>The books</h2>
@@ -325,7 +383,7 @@ export default function App() {
         </div>
       </section>
 
-      <section>
+      <section id="classes">
         <div className="sec-head">
           <span className="sec-num">03</span>
           <h2>Where each strategy wins, and where it gives up</h2>
@@ -339,7 +397,7 @@ export default function App() {
         <GroupedBars rows={rateRows} maxValue={1} />
       </section>
 
-      <section>
+      <section id="waste">
         <div className="sec-head">
           <span className="sec-num">04</span>
           <h2>Attempts against payments that could never succeed</h2>
@@ -353,11 +411,25 @@ export default function App() {
         <GroupedBars rows={wasteRows} maxValue={maxWaste} formatTick={(v) => String(Math.round(v))} />
       </section>
 
-      <section>
+      <section id="inspect">
+        <div className="sec-head">
+          <span className="sec-num">05</span>
+          <h2>Inspect any case yourself</h2>
+        </div>
+        <p className="note">
+          Everything above is a summary, and a summary has to be taken on trust. This is not:
+          pick a failure class and a case, and see the exact inputs the agent was given, the
+          action it chose in its own words, and the guardrail ruling on it. Then see what the
+          other three strategies did with the same case, on the same randomness.
+        </p>
+        <CaseInspector cases={scenario.inspectableCases} />
+      </section>
+
+      <section id="rules">
         <div className="cols">
           <div>
             <div className="sec-head">
-              <span className="sec-num">05</span>
+              <span className="sec-num">06</span>
               <h2>Rules that fired</h2>
             </div>
             <p className="note" style={{ marginLeft: 0 }}>
@@ -373,7 +445,7 @@ export default function App() {
 
           <div>
             <div className="sec-head">
-              <span className="sec-num">06</span>
+              <span className="sec-num">07</span>
               <h2>What kind of loss</h2>
             </div>
             <p className="note" style={{ marginLeft: 0 }}>
@@ -406,16 +478,123 @@ export default function App() {
         </div>
       </section>
 
-      <section>
+      <section id="playbook">
         <div className="sec-head">
-          <span className="sec-num">07</span>
-          <h2>One case, every decision</h2>
+          <span className="sec-num">07b</span>
+          <h2>The whole playbook, in the open</h2>
+        </div>
+        <p className="note">
+          These are the agent's actual rules, rendered from the same file it runs on. Nothing
+          about the policy is hidden in source: the retry timings, the channel order and the
+          written reasoning are all here.
+        </p>
+        <table className="ledger">
+          <thead>
+            <tr>
+              <th>Situation</th>
+              <th>Retries at</th>
+              <th>Channels, in order</th>
+              <th>Reasoning</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(bundle.playbooks).map(([cls, p]) => (
+              <tr key={cls}>
+                <td>
+                  <span className="name">
+                    <span>
+                      {CLASS_LABEL[cls] ?? cls}
+                      <small>{cls}</small>
+                    </span>
+                  </span>
+                </td>
+                <td className="money">
+                  {p.retryOffsetsHours.length
+                    ? p.retryOffsetsHours.map((h) => `+${h < 1 ? `${Math.round(h * 60)}m` : `${h}h`}`).join(', ')
+                    : 'never'}
+                </td>
+                <td className="money">{p.channelLadder.join(' → ') || 'none'}</td>
+                <td style={{ textAlign: 'left', whiteSpace: 'normal', color: 'var(--ink-2)', fontSize: 13 }}>
+                  {p.reasoning}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section id="trail">
+        <div className="sec-head">
+          <span className="sec-num">08</span>
+          <h2>The raw ledger, one case end to end</h2>
         </div>
         <p className="note">
           The audit trail records what the agent did, what it was refused, and why. A blocked action
           is evidence, not silence: it shows the rule that stopped it and where the work went next.
         </p>
         <AuditTrail entries={scenario.sampleAuditTrail} />
+      </section>
+
+      <section id="provenance">
+        <div className="sec-head">
+          <span className="sec-num">09</span>
+          <h2>What is real here, and what we made up</h2>
+        </div>
+        <p className="note">
+          Worth answering before anyone has to ask. Real failed-payment data is
+          merchant-confidential, so every transaction on this page is synthetic. What is not
+          invented is the vocabulary: these are Razorpay's own documented error codes, which
+          means this taxonomy would not need rewriting to point at a production webhook feed.
+        </p>
+        <div className="prov">
+          <div>
+            <h4>From Razorpay's documentation</h4>
+            <ul>
+              <li>
+                21 failure <code>reason</code> codes, cards and UPI —{' '}
+                <a href="https://razorpay.com/docs/errors/payments/cards/">cards</a>,{' '}
+                <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a>
+              </li>
+              <li>
+                The error structure — <code>code</code>, <code>description</code>,{' '}
+                <code>source</code>, <code>step</code>, <code>reason</code> —{' '}
+                <a href="https://razorpay.com/docs/errors/">error docs</a>
+              </li>
+              <li>The documented next step for each error</li>
+              <li>That UPI dominates Indian digital payments, hence the 68/32 mix</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Our own assumptions</h4>
+            <ul>
+              <li>
+                Which of six recovery classes each reason maps to — reasoned from the documented
+                next steps, not measured
+              </li>
+              <li>Recovery-probability curves, one shape per class</li>
+              <li>Cost model, and the ₹20 annoyance price</li>
+              <li>The failure mix in each scenario</li>
+              <li>Nudge effectiveness per channel</li>
+            </ul>
+          </div>
+          <div>
+            <h4>What these numbers are not</h4>
+            <ul>
+              <li>
+                <strong>Not a revenue forecast.</strong> They compare policy quality on identical
+                cohorts with a fixed seed. Anyone claiming production rupees from synthetic data
+                would be overselling.
+              </li>
+              <li>
+                Every assumption is a named constant with a comment explaining it, listed in{' '}
+                <code>docs/SOURCES.md</code>.
+              </li>
+              <li>
+                Robustness: the agent wins 245 of 250 independently seeded cohorts, not 250 of 250.
+              </li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <footer>

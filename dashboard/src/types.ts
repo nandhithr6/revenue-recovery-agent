@@ -62,6 +62,57 @@ export interface LedgerEntry {
   spamPoints: number;
 }
 
+export interface AgentView {
+  reasonCode?: string;
+  derivedRecoveryClass: string;
+  lossType: string;
+  method: string;
+  amountPaise: number;
+  hoursSinceFailure: number;
+  retriesSoFar: number;
+  contactsSoFar: number;
+  channelsUsed: string[];
+  consentedChannels: string[];
+  dndRegistered: boolean;
+  rulesAlreadyHit: string[];
+}
+
+export interface TraceStep {
+  step: number;
+  at: number;
+  seen: AgentView;
+  decided: { kind: string; channel?: string; delayMs: number; rationale: string };
+  verdict: { kind: 'allow' | 'defer' | 'block'; rule?: string; explanation?: string; notBefore?: number };
+  outcome: 'executed' | 'deferred' | 'blocked' | 'stopped';
+  succeeded?: boolean;
+  costPaise: number;
+  spamPoints: number;
+}
+
+export interface CaseTrace {
+  strategyId: string;
+  steps: TraceStep[];
+  recovered: boolean;
+  recoveredPaise: number;
+  costPaise: number;
+  spamPoints: number;
+  stoppedReason: string;
+}
+
+export interface InspectableCase {
+  event: {
+    id: string;
+    amountPaise: number;
+    method: string;
+    lossType: string;
+    reasonCode?: string;
+    recoveryClass: string;
+    occurredAt: number;
+    customer: { id: string; dndRegistered: boolean; consent: Record<string, boolean> };
+  };
+  traces: CaseTrace[];
+}
+
 export interface ScenarioResult {
   id: string;
   name: string;
@@ -77,6 +128,7 @@ export interface ScenarioResult {
   strategies: StrategyResult[];
   ruleTally: Record<string, number>;
   sampleAuditTrail: LedgerEntry[];
+  inspectableCases: InspectableCase[];
 }
 
 export interface LossProfileView {
