@@ -138,6 +138,86 @@ function hashId(id: string): number {
   return h % 100_000;
 }
 
+export interface LiveFeedEntry {
+  readonly seq: number;
+  readonly caseId: string;
+  readonly at: number;
+  readonly actionKind: string;
+  readonly channel?: string | undefined;
+  readonly outcome: 'executed' | 'deferred' | 'blocked' | 'stopped';
+  readonly succeeded?: boolean | undefined;
+  readonly rationale: string;
+  readonly rule?: string | undefined;
+  readonly explanation?: string | undefined;
+  readonly deferredTo?: number | undefined;
+  readonly costPaise: number;
+  readonly spamPoints: number;
+  /** Denormalised from the case, so the dashboard needs no join to play this back. */
+  readonly amountPaise: number;
+  readonly reasonCode?: string | undefined;
+  readonly recoveryClass: string;
+  readonly lossType: string;
+  /**
+   * True when this single entry is the moment the case's money actually
+   * lands -- an executed retry or contact that succeeded. A live view sums
+   * amountPaise on entries where this is true to get a running "recovered so
+   * far" figure without re-deriving it from case outcomes.
+   */
+  readonly isRecoveryMoment: boolean;
+}
+
+/**
+ * The full, real, chronologically-ordered sequence of every decision the
+ * agent made across an entire cohort -- not a summary of one case, the whole
+ * run. This is what a "watch it work" view plays back: nothing here is
+ * synthesised for the UI, it is the exact ledger the engine produced,
+ * re-sorted by when each action actually happened (the ledger's own order is
+ * per-case, so a later case's early decision can otherwise appear ahead of an
+ * earlier case's later one).
+ */
+function buildLiveFeed(
+  events: readonly LossEvent[],
+  entries: readonly import('../ledger/ledger.js').LedgerEntry[],
+): LiveFeedEntry[] {
+  const byId = new Map(events.map((e) => [e.id, e]));
+
+  const enriched = entries.map((e, i) => {
+    const event = byId.get(e.caseId);
+    if (!event) throw new Error(`Live feed: no event found for case ${e.caseId}`);
+    const cls = event.reasonCode ? (lookupReason(event.reasonCode)?.recoveryClass ?? 'UNKNOWN') : 'UNKNOWN';
+    const isRecoveryMoment =
+      e.outcome === 'executed' &&
+      e.succeeded === true &&
+      (e.actionKind === 'retry_payment' || e.actionKind === 'contact_customer');
+
+    return {
+      seq: i,
+      caseId: e.caseId,
+      at: e.at,
+      actionKind: e.actionKind,
+      channel: e.channel,
+      outcome: e.outcome,
+      succeeded: e.succeeded,
+      rationale: e.rationale,
+      rule: e.rule,
+      explanation: e.explanation,
+      deferredTo: e.deferredTo,
+      costPaise: e.costPaise,
+      spamPoints: e.spamPoints,
+      amountPaise: event.amountPaise,
+      reasonCode: event.reasonCode,
+      recoveryClass: cls,
+      lossType: event.lossType,
+      isRecoveryMoment,
+    } satisfies LiveFeedEntry;
+  });
+
+  // Chronological by simulated time. Re-sequence after sorting so `seq` is a
+  // clean 0..n playback index rather than the original ledger insertion order.
+  enriched.sort((a, b) => a.at - b.at);
+  return enriched.map((e, i) => ({ ...e, seq: i }));
+}
+
 async function main(): Promise<void> {
   const strategies: readonly Strategy[] = [
     ...BASELINE_STRATEGIES,
@@ -193,6 +273,7 @@ async function main(): Promise<void> {
       })),
       ruleTally: agentRun.ledger.ruleTally(),
       sampleAuditTrail: sampleCaseId ? agentRun.ledger.forCase(sampleCaseId) : [],
+      liveFeed: buildLiveFeed(events, agentRun.ledger.all()),
       inspectableCases: buildInspectableCases(events, strategies, scenario.seed + 1),
     };
   });

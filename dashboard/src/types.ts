@@ -113,6 +113,27 @@ export interface InspectableCase {
   traces: CaseTrace[];
 }
 
+export interface LiveFeedEntry {
+  seq: number;
+  caseId: string;
+  at: number;
+  actionKind: string;
+  channel?: string;
+  outcome: 'executed' | 'deferred' | 'blocked' | 'stopped';
+  succeeded?: boolean;
+  rationale: string;
+  rule?: string;
+  explanation?: string;
+  deferredTo?: number;
+  costPaise: number;
+  spamPoints: number;
+  amountPaise: number;
+  reasonCode?: string;
+  recoveryClass: string;
+  lossType: string;
+  isRecoveryMoment: boolean;
+}
+
 export interface ScenarioResult {
   id: string;
   name: string;
@@ -129,6 +150,7 @@ export interface ScenarioResult {
   ruleTally: Record<string, number>;
   sampleAuditTrail: LedgerEntry[];
   inspectableCases: InspectableCase[];
+  liveFeed: LiveFeedEntry[];
 }
 
 export interface LossProfileView {
