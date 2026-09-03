@@ -38,8 +38,8 @@ Strategy                Recovered     Spent    Net value  Net after annoy.   Rat
   Do nothing                 Rs 0      Rs 0         Rs 0              Rs 0   0.0%           --     0      0
   Naive retry         Rs 2,16,490  Rs 7,713  Rs 2,08,777       Rs 2,08,777  26.6%        10.26     0      0
   Fixed dunning       Rs 2,94,904  Rs 7,151  Rs 2,87,754       Rs 2,82,454  41.2%         5.72   265      0
-  Reason-aware agent  Rs 4,10,753  Rs 4,072  Rs 4,06,681       Rs 3,88,921  49.6%         2.50   888      0
-* Adaptive agent      Rs 5,58,957  Rs 3,510  Rs 5,55,447       Rs 5,40,467  59.8%         2.33   749      0
+  Reason-aware agent  Rs 4,14,163  Rs 2,266  Rs 4,11,897       Rs 4,01,317  49.2%         2.59   529      0
+* Adaptive agent      Rs 6,08,559  Rs 2,228  Rs 6,06,331       Rs 5,96,511  59.4%         2.37   491      0
 ```
 
 Two agents, not one. `agent-rules` classifies the failure and follows a
@@ -54,30 +54,30 @@ evidence quality all move the answer. Both agents are measured against the
 baselines and against each other on identical cohorts; nothing about the
 comparison is rigged toward either.
 
-**Adaptive agent: +₹2.58 lakh over the best baseline (fixed dunning) — a
-91% lift — using 59% fewer retries per recovery, with zero compliance
-violations. Efficiency: ₹159.23 recovered per ₹1 spent, against fixed
+**Adaptive agent: +₹3.14 lakh over the best baseline (fixed dunning) — a
+111% lift — using 59% fewer retries per recovery, with zero compliance
+violations. Efficiency: ₹273.13 recovered per ₹1 spent, against fixed
 dunning's ₹41.24. The trade is explicit, not hidden: fixed dunning is
 quieter per case it recovers (1.29 annoyance points per recovery vs.
-adaptive's 2.51), adaptive is far more money-efficient. Net value after
+adaptive's 1.65), adaptive is far more money-efficient. Net value after
 annoyance already prices that trade in; it is not free.**
 
 Where the advantage comes from:
 
 | Class | Naive retry | Fixed dunning | Reason-aware agent | **Adaptive agent** |
 |---|---|---|---|---|
-| `TRANSIENT_INFRA` | 45.3% | 81.0% | 81.8% | **87.6%** |
-| `TRANSIENT_FUNDS` | 1.7% | 38.1% | 61.9% | **79.7%** |
-| `ABANDONMENT` | 33.9% | 21.5% | 30.1% | **40.3%** |
+| `TRANSIENT_INFRA` | 45.3% | 81.0% | 80.3% | **86.1%** |
+| `TRANSIENT_FUNDS` | 1.7% | 38.1% | 59.3% | **78.0%** |
+| `ABANDONMENT` | 33.9% | 21.5% | 31.2% | **40.9%** |
 | `HARD_DECLINE` retries spent | 86 | 83 | 0 | **0** |
-| `CUSTOMER_ACTION_REQUIRED` retries spent | 66 | 64 | 2 | **4** |
+| `CUSTOMER_ACTION_REQUIRED` retries spent | 66 | 64 | 3 | **3** |
 
 The baselines each win one class and lose another, because neither reads why
 the payment failed. Both agents spend almost nothing on the classes where
 retrying provably cannot work; the adaptive agent additionally out-recovers
 the schedule-based agent on every class where amount and timing actually
 matter, because it is the only one of the four that can see either.
-`CUSTOMER_ACTION_REQUIRED` is a deliberate, small exception: 4 retries
+`CUSTOMER_ACTION_REQUIRED` is a deliberate, small exception: 3 retries
 (never against the dead instrument itself — always a genuine, unlocked
 retry after a nudge landed) is the honest cost of a real fix, made after
 this project's own audit found and fixed a boundary bug where the agent
@@ -90,20 +90,20 @@ No, and this is the question worth pre-empting. `npm run eval:robust` reruns
 every scenario across 50 independently seeded cohorts, for both agents at once:
 
 > **One of our two strategies posted the highest net value in 250 of 250
-> independent cohorts — the adaptive agent alone in 204 (81.6%), the
-> reason-aware agent alone in 46 (18.4%) — with zero compliance violations
+> independent cohorts — the adaptive agent alone in 211 (84.4%), the
+> reason-aware agent alone in 39 (15.6%) — with zero compliance violations
 > across every strategy and every run.**
 
-That is not a manufactured 100%: no scenario has any strategy winning all
-50 of its own seeds (see the per-scenario breakdown below), so real
-variance remains inside the number — it simply means that across every one
-of these 250 independently reseeded cohorts, at least one of our two
-strategies beat every baseline. Reported as it came out of a full rerun,
-not selected for.
-
-It is not 250 of 250, and that is reported rather than tuned away. An honest
-99.6% is worth more than a suspicious 100%; the one loss goes to a baseline in
-a single cohort and stays in the numbers.
+That is not a manufactured number: no scenario has any strategy winning all
+50 of its own seeds (see the per-scenario breakdown below) — which strategy
+wins varies genuinely, run to run and scenario to scenario. What is literally
+250 of 250 is narrower and reported exactly as measured: in every one of
+these 250 independently reseeded cohorts, at least one of our two strategies
+beat every baseline; no baseline has ever taken a cohort outright in this
+run. That claim is checked, not assumed — `npm run eval:robust` rebuilds the
+cohorts and the agents from scratch every time, so a regression that broke
+it would show up as a number less than 250, not as a paragraph someone forgot
+to update.
 
 ### Does the answer depend on your annoyance price?
 
@@ -113,12 +113,18 @@ judgement call and the most attackable number here. So rather than defend it,
 point, for both agents:
 
 > **Told what annoyance costs, the adaptive agent posts the highest net value
-> at every price from ₹0 to ₹100, in all 5 scenarios — no exceptions.**
+> at every price from ₹0 to ₹100 in 4 of 5 scenarios, with one narrow
+> exception: baseline week flips to the reason-aware agent at exactly ₹5 a
+> point (a ~3% margin, 15-seed average), reverting to the adaptive agent at
+> every other price tested (₹0, ₹10, ₹20, ₹30, ₹50, ₹75, ₹100).**
 
 The ₹20 figure is an input, not a thumb on the scale: rebuilding the agent at
-each price rather than holding one number fixed is what makes that a clean
-sweep instead of a coincidence. A strategy that wins at every price only
-because the sweep never rebuilds it would be a different, weaker claim.
+each price rather than holding one number fixed is what makes that a real
+sweep instead of a coincidence — and it is also what caught this flip. A
+strategy that wins at every price only because the sweep never rebuilds it
+would be a different, weaker claim; a sweep that never once disagreed with
+itself would be the more suspicious result. This one narrow exception is
+reported because the sweep found it, not because it was expected.
 
 That sweep also caught itself being wrong once. See
 [the engineering log, entry 9](docs/ENGINEERING-LOG.md). The full story of how
@@ -423,12 +429,15 @@ short version:
 4. **DND was over-blocking.** TRAI's registry covers telecom, not email. Being
    over-strict on compliance is just a different way of being wrong, and it costs
    the merchant money.
-5. **Neither agent wins everywhere.** Across 250 independently seeded cohorts,
-   one baseline takes a single run outright (249/250, not 250/250), and the
-   annoyance-price sweep hands two of five scenarios to the reason-aware agent
-   at the high end of the price range. Documented rather than tuned away — a
-   strategy that wins every run and every price is a strategy overfitted to
-   the runs and prices you happened to write.
+5. **Neither of our two strategies wins every individual cohort or every
+   price point, even though one of them wins every cohort against the
+   baselines.** Across 250 independently seeded cohorts, the reason-aware
+   agent takes 39 of them outright over the adaptive agent (never the reverse
+   direction: no baseline ever wins a cohort outright), and the
+   annoyance-price sweep hands one of five scenarios (baseline week, at
+   exactly ₹5 a point) to the reason-aware agent. Documented rather than
+   tuned away — a strategy that wins every single run and every single price
+   is a strategy overfitted to the runs and prices you happened to write.
 6. **`STOP` was quietly doing the job of `WAIT`.** A receivable with an
    unbroken promise-to-pay was being closed forever the moment the promise was
    made, because the only "pause" primitive available was the same one used
@@ -472,10 +481,11 @@ cases, never blended with the ₹ numbers above:
 npm run eval:novelty
 ```
 
-Tests (219, including an adversarial policy that cannot breach any limit, the
-kill switch, the loss-type layer, and a boundary suite that checks every new
+Tests (254, including an adversarial policy that cannot breach any limit, the
+kill switch, the loss-type layer, a boundary suite that checks every new
 policy file for a ground-truth import the same way the original two were
-checked):
+checked, and an escalation-compliance suite proving a human escalation can
+never bypass consent, DND, or quiet hours):
 
 ```bash
 npm test

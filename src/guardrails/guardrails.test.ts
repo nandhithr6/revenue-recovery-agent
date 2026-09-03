@@ -9,8 +9,15 @@ import { generateCohort } from '../sim/generator.js';
 import { Rng } from '../sim/rng.js';
 import { DEFAULT_COSTS, SCENARIO_IDS, getScenario } from '../sim/scenario.js';
 import { createRulesAgent } from '../policies/rules-agent.js';
-import { DEFAULT_COMPLIANCE, evaluateCompliance, nextPermittedContactTime, QUIET_HOURS } from './compliance.js';
+import {
+  DEFAULT_COMPLIANCE,
+  evaluateCompliance,
+  evaluateEscalationCompliance,
+  nextPermittedContactTime,
+  QUIET_HOURS,
+} from './compliance.js';
 import { DEFAULT_LIMITS } from './limits.js';
+import { gate, DEFAULT_GUARDRAILS } from './index.js';
 
 const IST = 330;
 
@@ -107,6 +114,154 @@ describe('permission rules', () => {
     // Inside quiet hours AND on DND. The permanent rule must win, otherwise the
     // agent would queue a contact it may never legally make.
     expect(verdict.kind).toBe('block');
+  });
+});
+
+/**
+ * `escalate_human` closes the compliance gap found in the final submission
+ * audit: it is priced (`action-registry.ts:escalateSpec`) and simulated
+ * (`eval/engine.ts`) as a real customer touch -- a person calling the
+ * customer, at the same annoyance tier as a voice contact -- but `gate()`
+ * used to wave it straight through with no consent, DND, or quiet-hours
+ * check at all. `evaluateEscalationCompliance` closes that gap by applying
+ * the same permission/timing rules a `voice` contact would face, without
+ * double-governing the separate `MAX_HUMAN_ESCALATIONS` volume cap.
+ */
+describe('escalate_human is not exempt from consent, DND, or quiet hours', () => {
+  it('blocks escalation for a customer who has not consented to voice contact', () => {
+    const verdict = evaluateEscalationCompliance(
+      customer({ consent: { email: true, sms: true, whatsapp: true, voice: false } }),
+      ist(14),
+    );
+    expect(verdict.kind).toBe('block');
+    if (verdict.kind === 'block') expect(verdict.rule).toBe('NO_CONSENT');
+  });
+
+  it('blocks escalation for a DND-registered customer, same as an automated voice call', () => {
+    const verdict = evaluateEscalationCompliance(customer({ dndRegistered: true }), ist(14));
+    expect(verdict.kind).toBe('block');
+    if (verdict.kind === 'block') expect(verdict.rule).toBe('DND_REGISTERED');
+  });
+
+  it('defers, does not block, an escalation that would land inside quiet hours', () => {
+    const verdict = evaluateEscalationCompliance(customer(), ist(22));
+    expect(verdict.kind).toBe('defer');
+    if (verdict.kind === 'defer') {
+      expect(verdict.rule).toBe('QUIET_HOURS');
+      expect(localHour(verdict.notBefore)).toBe(QUIET_HOURS.endHour);
+    }
+  });
+
+  it('allows a consented, non-DND escalation inside permitted hours', () => {
+    expect(evaluateEscalationCompliance(customer(), ist(14)).kind).toBe('allow');
+  });
+
+  it('a permission failure blocks even if it would also be inside quiet hours -- waiting cannot fix consent', () => {
+    const verdict = evaluateEscalationCompliance(customer({ dndRegistered: true }), ist(3));
+    expect(verdict.kind).toBe('block');
+  });
+
+  it('gate() routes escalate_human through the SAME evaluation, not a bypass path', () => {
+    const escalate = { kind: 'escalate_human' as const, delayMs: 0, rationale: 'test' };
+    const blockedByConsent = gate(
+      {
+        action: escalate,
+        customer: customer({ consent: { email: true, sms: true, whatsapp: true, voice: false } }),
+        at: ist(14),
+        caseOpenedAt: ist(14),
+        history: [],
+      },
+      DEFAULT_GUARDRAILS,
+    );
+    expect(blockedByConsent.kind).toBe('block');
+
+    const blockedByDnd = gate(
+      {
+        action: escalate,
+        customer: customer({ dndRegistered: true }),
+        at: ist(14),
+        caseOpenedAt: ist(14),
+        history: [],
+      },
+      DEFAULT_GUARDRAILS,
+    );
+    expect(blockedByDnd.kind).toBe('block');
+
+    const deferredByQuietHours = gate(
+      { action: escalate, customer: customer(), at: ist(22), caseOpenedAt: ist(14), history: [] },
+      DEFAULT_GUARDRAILS,
+    );
+    expect(deferredByQuietHours.kind).toBe('defer');
+
+    const allowed = gate(
+      { action: escalate, customer: customer(), at: ist(14), caseOpenedAt: ist(14), history: [] },
+      DEFAULT_GUARDRAILS,
+    );
+    expect(allowed.kind).toBe('allow');
+  });
+
+  it('the existing 1-per-case escalation limit still applies on top of the new compliance check', () => {
+    const escalate = { kind: 'escalate_human' as const, delayMs: 0, rationale: 'test' };
+    const priorEscalation = [
+      { at: ist(10), action: escalate, succeeded: false },
+    ];
+    const verdict = gate(
+      { action: escalate, customer: customer(), at: ist(14), caseOpenedAt: ist(10), history: priorEscalation },
+      DEFAULT_GUARDRAILS,
+    );
+    expect(verdict.kind).toBe('block');
+    if (verdict.kind === 'block') expect(verdict.rule).toBe('MAX_HUMAN_ESCALATIONS');
+  });
+
+  it('end to end: a policy that always escalates can never make a human call a DND-registered or non-consenting customer', () => {
+    const alwaysEscalate: Strategy = {
+      id: 'always-escalate',
+      name: 'Always escalate',
+      description: 'Adversarial: proposes escalate_human on every decision.',
+      decide: () => ({ kind: 'escalate_human', delayMs: 0, rationale: 'escalate every time' }),
+    };
+
+    for (const c of [
+      customer({ dndRegistered: true }),
+      customer({ consent: { email: true, sms: true, whatsapp: true, voice: false } }),
+    ]) {
+      const ledger = new Ledger();
+      const result = runCase(
+        lossEvent({ customer: c, amountPaise: 500_000 }),
+        alwaysEscalate,
+        DEFAULT_COSTS,
+        new Rng(7),
+        ledger,
+      );
+      expect(result.humanEscalations).toBe(0);
+
+      const executedEscalations = ledger
+        .all()
+        .filter((e) => e.outcome === 'executed' && e.actionKind === 'escalate_human');
+      expect(executedEscalations).toHaveLength(0);
+
+      const blocked = ledger.all().filter((e) => e.actionKind === 'escalate_human' && e.outcome === 'blocked');
+      expect(blocked.length).toBeGreaterThan(0);
+      expect(blocked.every((e) => e.rule === 'DND_REGISTERED' || e.rule === 'NO_CONSENT')).toBe(true);
+    }
+  });
+
+  it('a consented, non-DND customer inside permitted hours CAN still be escalated -- the fix does not loosen or remove the action', () => {
+    const alwaysEscalate: Strategy = {
+      id: 'always-escalate',
+      name: 'Always escalate',
+      description: 'Proposes escalate_human on every decision.',
+      decide: () => ({ kind: 'escalate_human', delayMs: 0, rationale: 'escalate every time' }),
+    };
+    const ledger = new Ledger();
+    const result = runCase(
+      lossEvent({ occurredAt: ist(14), amountPaise: 500_000 }),
+      alwaysEscalate,
+      DEFAULT_COSTS,
+      new Rng(7),
+      ledger,
+    );
+    expect(result.humanEscalations).toBe(1); // capped by MAX_HUMAN_ESCALATIONS, not by the new compliance check
   });
 });
 

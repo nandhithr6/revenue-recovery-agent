@@ -186,6 +186,68 @@ export function evaluateCompliance(
 }
 
 /**
+ * Evaluate a proposed human escalation.
+ *
+ * `escalate_human` means a person calling the customer -- `action-registry.ts`
+ * prices it with `SPAM_POINTS.voice` (the same annoyance tier as an actual
+ * voice contact) and `eval/engine.ts` resolves it against the same
+ * `respondsToNudge` mechanic a landed contact uses. It is a real customer
+ * touch, not an internal routing action, so it must clear the same
+ * permission and quiet-hours bar `contact_customer` on `voice` would --
+ * checked here explicitly rather than left to `gate()` to wave it through.
+ *
+ * Deliberately narrower than `evaluateCompliance`: no daily/weekly contact
+ * cap and no inter-contact cooldown, because those count `contact_customer`
+ * volume specifically and escalation already has its own separate,
+ * independently-enforced ceiling (`MAX_HUMAN_ESCALATIONS` in
+ * `guardrails/limits.ts`, one per case). Adding the contact caps on top
+ * would double-govern the same restraint two different ways; the permission
+ * (consent, DND) and timing (quiet hours) rules do not have that overlap and
+ * apply exactly as they would to a real voice call.
+ *
+ * @param customer  who a human would be calling
+ * @param at        when the call would happen
+ */
+export function evaluateEscalationCompliance(
+  customer: CustomerProfile,
+  at: Timestamp,
+): ComplianceVerdict {
+  const VOICE: Channel = 'voice';
+
+  if (customer.dndRegistered && DND_RESTRICTED_CHANNELS.includes(VOICE)) {
+    return {
+      kind: 'block',
+      rule: 'DND_REGISTERED',
+      explanation:
+        'Customer is on the TRAI do-not-disturb registry, which covers voice calls. A human escalation would call them directly, so it is blocked the same as an automated voice contact.',
+    };
+  }
+
+  if (!customer.consent[VOICE]) {
+    return {
+      kind: 'block',
+      rule: 'NO_CONSENT',
+      explanation:
+        'Customer has not opted in to voice contact. Escalating to a human who would call them is a consent violation on the same basis as an automated voice contact.',
+    };
+  }
+
+  const permittedFrom = nextPermittedContactTime(at, customer.utcOffsetMinutes);
+  if (permittedFrom > at) {
+    const { hour, minute } = localTime(at, customer.utcOffsetMinutes);
+    const clock = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    return {
+      kind: 'defer',
+      notBefore: permittedFrom,
+      rule: 'QUIET_HOURS',
+      explanation: `A human call would land at ${clock} local, inside quiet hours (${QUIET_HOURS.startHour}:00-0${QUIET_HOURS.endHour}:00). Deferred to the next permitted window rather than dropped.`,
+    };
+  }
+
+  return { kind: 'allow' };
+}
+
+/**
  * Customer-annoyance weighting.
  *
  * Rupee cost alone cannot justify restraint: recovered amounts dwarf per-message

@@ -39,6 +39,47 @@ describe('no policy file reads ground truth', () => {
   }
 });
 
+/**
+ * A narrower, complementary boundary from the final submission audit:
+ * `CaseContext.event` is the literal `LossEvent` passed to a policy, and
+ * `LossEvent.customer` (a full `CustomerProfile`) carries `respondsToNudge`
+ * -- documented in `domain/types.ts` as "Simulation-only ground truth; the
+ * agent never sees it", but structurally REACHABLE as
+ * `ctx.event.customer.respondsToNudge` from inside any policy function,
+ * with no import required. The import-boundary checks above cannot catch
+ * that: reading a field already sitting on an object you were handed needs
+ * no new `import` line, so a future edit could leak it in without ever
+ * tripping the checks above. This grep-based check closes exactly that gap,
+ * the same mechanical way `hinglish-voice.test.ts` proves the Hinglish
+ * transcript module is never imported by the decision layer -- checking the
+ * actual source text of every file a decision passes through, not trusting
+ * a comment or an import list to stay complete.
+ */
+const DECISION_LAYER_FILES = [
+  ...POLICY_FILES.map((f) => `./${f}`),
+  '../llm/unknown-error.ts',
+] as const;
+
+describe('no decision-layer file reads customer.respondsToNudge, even without an import', () => {
+  for (const file of DECISION_LAYER_FILES) {
+    it(`${file} does not reference respondsToNudge anywhere in its source`, async () => {
+      const src = await readFile(new URL(file, import.meta.url), 'utf8');
+      expect(src.includes('respondsToNudge')).toBe(false);
+    });
+  }
+
+  it('the field genuinely exists on what a policy is handed -- this is a real, checked boundary, not a vacuous pass', async () => {
+    // Guards against the test suite drifting out of sync with the domain
+    // model (e.g. the field getting renamed) and this check silently
+    // passing for the wrong reason. If this ever fails, `respondsToNudge`
+    // no longer exists on `CustomerProfile` under this name and the checks
+    // above need to be re-pointed at whatever replaced it.
+    const types = await readFile(new URL('../domain/types.ts', import.meta.url), 'utf8');
+    expect(types.includes('respondsToNudge')).toBe(true);
+    expect(types.includes('Simulation-only ground truth')).toBe(true);
+  });
+});
+
 describe('the optional LLM interpreter cannot exceed its authority', () => {
   it('a cached entry can never carry HIGH confidence -- the type itself only allows low/medium', async () => {
     const cache = new UnknownErrorCache();

@@ -3,6 +3,7 @@ import type { HistoryEntry } from '../policies/types.js';
 import {
   DEFAULT_COMPLIANCE,
   evaluateCompliance,
+  evaluateEscalationCompliance,
   type ComplianceConfig,
 } from './compliance.js';
 import { DEFAULT_LIMITS, evaluateLimits, type LimitConfig } from './limits.js';
@@ -78,8 +79,16 @@ export function gate(input: GateInput, config: GuardrailConfig = DEFAULT_GUARDRA
     return evaluateCompliance(action.channel, customer, at, history, config.compliance);
   }
 
-  // Silent retries and human escalations do not touch the customer, so consent
-  // and quiet hours do not apply to them. A DND-registered customer can still
-  // have their payment retried; we simply may not message them about it.
+  if (action.kind === 'escalate_human') {
+    // A human escalation is a real customer touch (a phone call) -- it must
+    // clear the same consent/DND/quiet-hours bar `contact_customer` on
+    // `voice` would. See `evaluateEscalationCompliance` for why this is
+    // narrower than the full contact-cap logic.
+    return evaluateEscalationCompliance(customer, at);
+  }
+
+  // Silent retries do not touch the customer at all, so consent and quiet
+  // hours do not apply to them. A DND-registered customer can still have
+  // their payment retried; we simply may not message or call them about it.
   return { kind: 'allow' };
 }
