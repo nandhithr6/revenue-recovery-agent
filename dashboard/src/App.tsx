@@ -256,12 +256,12 @@ export default function App() {
         </p>
         <a
           className="cite-badge"
-          href="https://inc42.com/buzz/technical-glitches-on-upi-have-fallen-below-1/"
+          href="https://www.pib.gov.in/PressReleasePage.aspx?PRID=2114335"
           target="_blank"
           rel="noreferrer"
         >
-          ↗ NPCI's CEO on UPI technical declines (PTI, via Inc42) — 0.7–0.8% now, down
-          from 8–10% in 2016
+          ↗ Government of India, Ministry of Finance — PIB press release, 24 Mar 2025 (Release
+          2114335): banks are paid only if technical decline stays under 0.75%
         </a>
         <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
           Same direction as NPCI's target — business-side outweighs technical — but less skewed:
@@ -489,16 +489,19 @@ export default function App() {
           <code>reason</code> codes are Razorpay's own, from their{' '}
           <a href="https://razorpay.com/docs/errors/payments/cards/">card</a> and{' '}
           <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. The failure
-          mix isn't invented either, at least in shape:{' '}
-          <a href="https://inc42.com/buzz/technical-glitches-on-upi-have-fallen-below-1/">
-            NPCI's own reported UPI decline rates
+          mix isn't invented either, at least in shape: a{' '}
+          <a href="https://www.pib.gov.in/PressReleasePage.aspx?PRID=2114335">
+            Government of India, Ministry of Finance press release
           </a>{' '}
-          put technical declines under 1% and customer-side declines under 5% of all
-          transactions — business-side failures dominate by design. Restricted to the two classes
-          that framework covers (see the cohort breakdown above — abandonment and hard declines
-          sit outside it), ours land at 36.2% technical / 63.8% customer-side: same direction,
-          found independently before that circular did, though less skewed than NPCI's real
-          ~5-to-1 — a gap we're stating, not closing.
+          ties real payouts under a ₹1,500-crore UPI scheme to acquiring banks keeping technical
+          declines under 0.75% — a paid performance bar, not just an aspiration. NPCI's own wider
+          framework (Circular OC-149, named here but not linkable — its own PDF paths are dead)
+          sets technical declines under 1% and customer-side declines under 5% industry-wide;
+          business-side failures dominate by design. Restricted to the two classes that framework
+          covers (see the cohort breakdown above — abandonment and hard declines sit outside it),
+          ours land at 36.2% technical / 63.8% customer-side: same direction, found independently
+          before we found either source, though less skewed than NPCI's real ~5-to-1 — a gap
+          we're stating, not closing.
           Everything finer than that split — recovery curves, the cost model, the exact weight of
           each reason — is a stated assumption, listed in <code>docs/SOURCES.md</code>.
         </p>

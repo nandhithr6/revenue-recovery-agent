@@ -135,9 +135,27 @@ export function LiveFeed({ entries }: { entries: readonly LiveFeedEntry[] }) {
         {playing && <span className="lf-live-dot" aria-label="playing" />}
       </div>
 
-      <div className="live-feed-panel" ref={feedRef}>
+      <div className={`live-feed-panel ${window_.length === 0 ? 'lf-idle' : ''}`} ref={feedRef}>
         {window_.length === 0 && (
-          <p className="lf-empty">Press play — this replays the real, full decision log for this cohort.</p>
+          <>
+            <div className="lf-idle-banner">
+              ▶ press play to replay the first of {entries.length.toLocaleString('en-IN')} real
+              decisions
+            </div>
+            {entries.slice(0, 8).map((e) => (
+              <div key={e.seq} className="lf-row lf-preview">
+                <span className="lf-time">{clock(e.at)}</span>
+                <span className="lf-case">{e.caseId}</span>
+                <span className="lf-amt">{inr(e.amountPaise)}</span>
+                <span className="lf-reason">{e.reasonCode ?? e.recoveryClass}</span>
+                <span className="lf-action">
+                  {verb(e.actionKind)}
+                  {e.channel ? ` · ${e.channel}` : ''}
+                </span>
+                <span className="lf-outcome">— waiting</span>
+              </div>
+            ))}
+          </>
         )}
         {window_.map((e) => (
           <div key={e.seq} className={`lf-row lf-${e.outcome}`}>

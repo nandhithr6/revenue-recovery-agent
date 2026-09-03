@@ -30,28 +30,32 @@ sought it — see the note at the end of this file on why we didn't try. But NPC
 (the body that runs UPI) publishes **aggregate, non-confidential, system-wide**
 failure statistics, and those are legitimate to cite:
 
-- **NPCI Operating Circular OC-149** (13 May 2022, addendum 15 June 2022) — the
-  official mandate to member banks. It defines the two failure categories that
-  matter here and sets targets for each:
-  - **Technical Decline (TD)** — failure on the bank/NPCI infrastructure side
-    (systems unavailable, network issues). Target: **below 1%**.
-  - **Business Decline (BD)** — failure on the customer side (wrong PIN, invalid
-    beneficiary, insufficient balance, limits exceeded). Target: **below 5%**.
-  - We cite this circular by name and cannot link it directly: NPCI's own PDF
-    paths for it 404 or are blocked, and their circular index page returns
-    blank — checked with a real browser navigation on three separate URLs, not
-    assumed. The targets are independently reported in the sources below.
-- **Reported actual TD rate**: approximately **0.7–0.8%** of all UPI
-  transactions as of 2025, down from 8–10% in 2016, per NPCI MD & CEO Dilip
-  Asbe at the 11th SBI Banking & Economics Conclave (19 Nov 2024), PTI wire
-  report — <https://inc42.com/buzz/technical-glitches-on-upi-have-fallen-below-1/>.
-  This is the citation actually linked from the dashboard and from this
-  document; it is a named individual quoted by a wire service, not an
-  anonymous blog post.
+- **Government of India, Ministry of Finance, Press Information Bureau, Release
+  ID 2114335 (24 March 2025)** — "₹1,500 Cr Incentive Scheme for Low-Value
+  BHIM-UPI Transactions." This is the citation actually linked from the
+  dashboard and from this document —
+  <https://www.pib.gov.in/PressReleasePage.aspx?PRID=2114335>. Verified live in
+  a real browser, page text read directly, not inferred from a search snippet.
+  It is a primary government document, not a news article: a Cabinet-approved,
+  ₹1,500-crore scheme, and the figure below is a **paid performance
+  criterion** in it, not merely a reported statistic. The release states
+  plainly: *"10% of the admitted claim will be paid only if the acquiring
+  bank's technical decline rate (failed transactions due to technical issues
+  on their side) is less than 0.75%."* Real government payouts are contingent
+  on banks hitting that number.
+- **NPCI Operating Circular OC-149** (13 May 2022, addendum 15 June 2022) is
+  named for context — the industry-wide framework this scheme's 0.75%
+  threshold sits inside, defining Technical Decline (infra-side) and Business
+  Decline (customer-side, wrong PIN, insufficient balance, limits) with
+  targets of under 1% and under 5% respectively. We name it but do not link
+  it: NPCI's own PDF paths for it 404 or are blocked, and their circular index
+  page returns blank — checked with a real browser navigation on three
+  separate URLs, not assumed. The PIB release above is the number we actually
+  cite and link; OC-149 is background for where that number's framework comes
+  from.
 - NPCI also publishes live per-bank BD/TD figures at
   <https://www.npci.org.in/statistics/bd-td-and-uptime>, a JS-rendered dashboard
-  we could not scrape into a fixed citation; the reported TD figure above is
-  what we cite instead.
+  we could not scrape into a fixed citation.
 
 **What this does and does not let us claim.** NPCI's TD/BD framework covers only
 *completed-and-declined* transactions. Two of our six recovery classes fall
