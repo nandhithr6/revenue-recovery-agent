@@ -37,6 +37,7 @@ export const noveltyEvent = (id: string, amountPaise: number, over: Partial<Loss
   method: 'card',
   reasonCode: undefined,
   occurredAt: AT,
+  debitStatus: 'no_debit',
   ...over,
 });
 

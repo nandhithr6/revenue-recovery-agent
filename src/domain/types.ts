@@ -48,6 +48,34 @@ export interface CustomerProfile {
   readonly respondsToNudge: boolean;
 }
 
+/**
+ * Whether the customer's money actually left their account before this
+ * failure was recorded -- a real, distinct question from "did the payment
+ * succeed," and one this codebase did not previously represent at all
+ * (there was no field for it anywhere; auditing it honestly meant adding
+ * one, not inferring it after the fact from `recovered`).
+ *
+ *   - `no_debit`: the bank/network gave a DEFINITIVE refusal (or the
+ *     customer never reached authorisation at all). No capture occurred.
+ *     This is how card and UPI authorisation actually works -- a decline
+ *     response means the hold/capture step was never reached -- and is
+ *     true for the large majority of this taxonomy's reason codes.
+ *   - `uncertain`: no definitive response was ever received. The
+ *     authorisation may have completed asynchronously on the bank's side
+ *     after the merchant's request timed out; whether it did is genuinely
+ *     unknown at the moment this failure is recorded. `payment_timed_out`
+ *     is the one reason code in this taxonomy that means this, and only
+ *     when there is a real charge behind it to retry (a
+ *     `checkout_abandonment` timeout never reached authorisation in the
+ *     first place, so it carries no such risk).
+ *   - `debited`: money left the account and the failure is downstream of
+ *     that (a decline, chargeback, or reversal after capture). This
+ *     simulator does not currently generate any case in this state -- see
+ *     the note on `deriveDebitStatus` in `sim/generator.ts` for why, said
+ *     plainly rather than left implicit.
+ */
+export type DebitStatus = 'no_debit' | 'uncertain' | 'debited';
+
 /** A unit of revenue at risk. The input to the whole pipeline. */
 export interface LossEvent {
   readonly id: string;
@@ -59,6 +87,7 @@ export interface LossEvent {
   /** Razorpay failure reason code. Absent for abandonment-style losses. */
   readonly reasonCode: string | undefined;
   readonly occurredAt: Timestamp;
+  readonly debitStatus: DebitStatus;
 }
 
 /** What the agent decided to do. */

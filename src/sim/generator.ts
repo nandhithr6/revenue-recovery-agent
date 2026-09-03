@@ -7,6 +7,7 @@ import {
   CHANNELS,
   type Channel,
   type CustomerProfile,
+  type DebitStatus,
   type LossEvent,
   type LossType,
 } from '../domain/types.js';
@@ -75,6 +76,32 @@ const ABANDONMENT_CODES: Readonly<Record<PaymentMethod, readonly string[]>> = {
   upi: ['payment_cancelled', 'payment_timed_out', 'payment_collect_request_expired'],
 };
 
+/**
+ * Whether this failure's `reason` code represents a DEFINITIVE decline
+ * response, or a genuine timeout where no response was ever received --
+ * see `DebitStatus`'s own doc comment in `domain/types.ts` for the full
+ * reasoning. Deliberately not a per-reason-code lookup table: only
+ * `payment_timed_out` means "no response," and only when there was a real
+ * charge behind it to retry in the first place. A `checkout_abandonment`
+ * timeout never reached authorisation, so it carries no duplicate-debit
+ * risk regardless of sharing the same reason string.
+ *
+ * NOTE (said plainly, not left implicit): this simulator has no case in
+ * `'debited'` state. Every loss type it models is a payment that never
+ * captured -- a declined authorisation, an abandoned checkout, an
+ * unattempted receivable. Recovering money that was already captured and
+ * later reversed (a chargeback, a post-capture dispute) is a different
+ * problem with a different mechanic (a dispute/settlement process, not a
+ * retry-or-nudge one), and this codebase has never modelled it. Naming
+ * that boundary explicitly is more honest than a `debited` branch that
+ * would never actually be reached by anything the generator produces.
+ */
+function deriveDebitStatus(lossType: LossType, reasonCode: string): DebitStatus {
+  const canRetryCharge = lossType === 'payment_failure' || lossType === 'subscription_mandate';
+  if (!canRetryCharge) return 'no_debit';
+  return reasonCode === 'payment_timed_out' ? 'uncertain' : 'no_debit';
+}
+
 export function generateCohort(scenario: Scenario, startAt: number): LossEvent[] {
   const rng = new Rng(scenario.seed);
   const events: LossEvent[] = [];
@@ -119,6 +146,7 @@ export function generateCohort(scenario: Scenario, startAt: number): LossEvent[]
       method,
       reasonCode,
       occurredAt: startAt + Math.floor(rng.next() * scenario.windowMs),
+      debitStatus: deriveDebitStatus(lossType, reasonCode),
     });
   }
 

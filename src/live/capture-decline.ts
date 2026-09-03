@@ -127,6 +127,10 @@ async function capture(client: RazorpayClient, linkId: string): Promise<void> {
     method: 'card',
     reasonCode,
     occurredAt,
+    // See domain/types.ts:DebitStatus and sim/generator.ts:deriveDebitStatus
+    // for the full reasoning; same rule applied here since a real decline
+    // is being fed through the identical taxonomy.
+    debitStatus: reasonCode === 'payment_timed_out' ? 'uncertain' : 'no_debit',
     customer: {
       id: 'live_cust_decline',
       dndRegistered: false,

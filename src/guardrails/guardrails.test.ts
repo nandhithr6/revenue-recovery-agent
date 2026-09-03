@@ -38,6 +38,7 @@ const lossEvent = (over: Partial<LossEvent> = {}): LossEvent => ({
   method: 'card',
   reasonCode: 'bank_technical_error',
   occurredAt: ist(12),
+  debitStatus: 'no_debit',
   ...over,
 });
 

@@ -26,6 +26,7 @@ const event = (over: Partial<LossEvent> = {}): LossEvent => ({
   method: 'card',
   reasonCode: 'insufficient_funds',
   occurredAt: AT,
+  debitStatus: 'no_debit',
   ...over,
 });
 
@@ -294,5 +295,51 @@ describe('no decision after recovery', () => {
     // Sanity: the fixture actually exercises real recoveries, not just an
     // always-fails case that trivially never triggers the check.
     expect(recoveredCasesSeen).toBeGreaterThan(0);
+  });
+});
+
+describe('duplicate-debit verification on uncertain debit status', () => {
+  it('holds the earliest retry offer back to the verification window for a case whose original authorisation outcome is unconfirmed', () => {
+    const e = event({ reasonCode: 'payment_timed_out', debitStatus: 'uncertain' });
+    const cands = candidatesFor(e); // now = event.occurredAt, i.e. elapsed = 0
+    const retries = cands.filter((c) => c.action.kind === 'retry_payment');
+    expect(retries.length).toBeGreaterThan(0);
+    // The EARLIEST offer (shortest delay) is the one that would otherwise
+    // fire before verification completes -- that one must be held, and say
+    // why. Later offsets that already exceed the window are untouched.
+    const earliest = retries.reduce((a, b) => (b.action.delayMs < a.action.delayMs ? b : a));
+    expect(earliest.action.delayMs).toBeGreaterThanOrEqual(30 * 60_000);
+    expect(earliest.action.rationale).toContain('duplicate-debit verification');
+  });
+
+  it('does NOT hold back a retry once the debit status is known (no_debit)', () => {
+    const e = event({ reasonCode: 'payment_timed_out', debitStatus: 'no_debit' });
+    const cands = candidatesFor(e);
+    const retries = cands.filter((c) => c.action.kind === 'retry_payment');
+    expect(retries.length).toBeGreaterThan(0);
+    for (const r of retries) {
+      expect(r.action.rationale).not.toContain('duplicate-debit verification');
+    }
+  });
+
+  it('does NOT hold back a retry once one has already been attempted -- only the unconfirmed FIRST attempt is at risk', () => {
+    const e = event({ reasonCode: 'payment_timed_out', debitStatus: 'uncertain' });
+    // A real, already-executed retry in history -- this is what
+    // `attemptsSoFar` actually counts (derived from history, not a raw
+    // counter field), so this is the correct way to simulate "one retry
+    // has already happened."
+    const priorHistory = [
+      {
+        at: AT,
+        action: { kind: 'retry_payment' as const, delayMs: 0, rationale: 'prior' },
+        succeeded: false,
+      },
+    ];
+    const cands = candidatesFor(e, { history: priorHistory });
+    const retries = cands.filter((c) => c.action.kind === 'retry_payment');
+    expect(retries.length).toBeGreaterThan(0);
+    for (const r of retries) {
+      expect(r.action.rationale).not.toContain('duplicate-debit verification');
+    }
   });
 });

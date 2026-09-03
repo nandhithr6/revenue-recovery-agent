@@ -40,6 +40,7 @@ const event = (amountPaise: number, over: Partial<LossEvent> = {}): LossEvent =>
   method: 'card',
   reasonCode: 'insufficient_funds',
   occurredAt: AT,
+  debitStatus: 'no_debit',
   ...over,
 });
 

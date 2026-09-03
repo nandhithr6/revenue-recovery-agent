@@ -82,6 +82,7 @@ describe('the optional LLM interpreter cannot exceed its authority', () => {
         method: 'card',
         reasonCode: 'insufficient_funds',
         occurredAt: Date.now(),
+        debitStatus: 'no_debit',
       },
       now: Date.now(),
       history: [],

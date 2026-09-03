@@ -128,6 +128,12 @@ async function main(): Promise<void> {
       method: 'card',
       reasonCode: seed.reasonCode,
       occurredAt,
+      // See domain/types.ts:DebitStatus / sim/generator.ts:deriveDebitStatus.
+      debitStatus:
+        (seed.lossType === 'payment_failure' || seed.lossType === 'subscription_mandate') &&
+        seed.reasonCode === 'payment_timed_out'
+          ? 'uncertain'
+          : 'no_debit',
       customer: {
         id: `live_cust_${index + 1}`,
         dndRegistered: false,

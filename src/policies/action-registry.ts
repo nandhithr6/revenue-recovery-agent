@@ -1,5 +1,5 @@
 import type { RecoveryClass } from '../domain/failure-taxonomy.js';
-import { DAY, HOUR, type Action, type ActionKind, type Channel, type Paise } from '../domain/types.js';
+import { DAY, HOUR, MINUTE, type Action, type ActionKind, type Channel, type Paise } from '../domain/types.js';
 import { SPAM_POINTS } from '../guardrails/compliance.js';
 import type { CostModel } from '../sim/scenario.js';
 import {
@@ -94,6 +94,19 @@ const HUMAN_LAST_RESORT_ODDS = 0.05;
 const ASSUMED_NUDGE_RESPONSE_DELAY_MS = 20 * 60_000;
 
 /**
+ * How long the FIRST retry on a `debitStatus: 'uncertain'` case is held
+ * back before the agent will re-attempt the charge, so any asynchronous
+ * settlement of the original authorisation has time to resolve first.
+ * 30 minutes: a stated, defensible assumption (most gateway/bank
+ * asynchronous callbacks resolve well inside this window), not derived
+ * from anything the simulator's ground truth reveals -- the point of
+ * this hold is exactly that the agent does NOT get to know whether the
+ * original cleared, only that it should wait long enough that duplicate
+ * debit becomes very unlikely before trying again.
+ */
+const DUPLICATE_DEBIT_VERIFICATION_MS = 30 * MINUTE;
+
+/**
  * Each additional contact on the SAME case is believed to annoy the
  * customer more than the last, not the same amount -- a third message in
  * a week reads differently to the person receiving it than the first did.
@@ -163,17 +176,37 @@ const retrySpec: ActionSpec = {
       ];
     }
 
+    // A `debitStatus: 'uncertain'` case never received a definitive
+    // response the FIRST time -- the authorisation may still resolve
+    // asynchronously on the bank's side. Retrying immediately risks the
+    // original attempt clearing later and the retry ALSO clearing:
+    // duplicate debit, which is the one outcome this action must never
+    // reach. Blocked by holding every offer for the first retry back by a
+    // fixed verification window (long enough for the great majority of
+    // asynchronous settlements to resolve one way or the other), rather
+    // than a special "verify" action -- the existing candidate-timing
+    // mechanism already expresses "not yet" without inventing a new one.
+    // Only the FIRST attempt is held back: once one retry has actually
+    // happened, the case is no longer sitting on an unconfirmed original.
+    const verificationHoldMs =
+      ctx.event.debitStatus === 'uncertain' && state.attemptsSoFar === 0 ? DUPLICATE_DEBIT_VERIFICATION_MS : 0;
+
     return CANDIDATE_OFFSETS_MS[recoveryClass].map((offset) => {
-      const delayMs = Math.max(0, offset - elapsed);
-      const atElapsed = Math.max(elapsed, offset);
+      const effectiveOffset = Math.max(offset, verificationHoldMs);
+      const delayMs = Math.max(0, effectiveOffset - elapsed);
+      const atElapsed = Math.max(elapsed, effectiveOffset);
       const p = believedRetryOdds(recoveryClass, atElapsed, state.attemptsSoFar, false);
       let cost = costs.retryCostPaise + opportunityCost(delayMs);
       if (recoveryClass === 'HARD_DECLINE') cost += costs.hardDeclineRetryPenaltyPaise;
+      const heldNote =
+        effectiveOffset > offset
+          ? ` -- held back to +${(verificationHoldMs / MINUTE).toFixed(0)}m for duplicate-debit verification (original authorisation outcome unconfirmed)`
+          : '';
       return candidate(
         {
           kind: 'retry_payment' as const,
           delayMs,
-          rationale: `${recoveryClass}: retry at +${(offset / HOUR).toFixed(1)}h, believed P=${p.toFixed(2)} -- ${curveReasoning(recoveryClass)}`,
+          rationale: `${recoveryClass}: retry at +${(offset / HOUR).toFixed(1)}h, believed P=${p.toFixed(2)} -- ${curveReasoning(recoveryClass)}${heldNote}`,
         },
         ctx.event.amountPaise * p,
         cost,
