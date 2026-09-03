@@ -50,8 +50,9 @@ export type UnknownReasonInterpreter = (input: {
 // --------------------------------------------------------------------------
 // Part B: deterministic fallback for an unrecognised reason code.
 //
-// This is fuzzy STRING matching, nothing more -- token overlap against the 21
-// documented codes' own vocabulary, plus a consistency check against the
+// This is fuzzy STRING matching, nothing more -- token overlap against the
+// documented codes' own vocabulary (see VOCABULARY.length below), plus a
+// consistency check against the
 // bank/gateway/customer/network `source` those codes carry. It is not
 // learning, not embeddings, not semantic similarity in any statistical sense;
 // calling it that would be exactly the kind of overclaim this project has

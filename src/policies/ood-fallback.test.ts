@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CustomerProfile, LossEvent } from '../domain/types.js';
-import { createAdaptiveAgent, explain } from './adaptive-agent.js';
+import { createAdaptiveAgent, explain, type AdaptiveAgentOptions } from './adaptive-agent.js';
+import type { UnknownReasonInterpreter } from './assessment.js';
 import { DEFAULT_COSTS } from '../sim/scenario.js';
 import type { CaseContext } from './types.js';
 
@@ -58,8 +59,8 @@ const ctx = (e: LossEvent, over: Partial<CaseContext> = {}): CaseContext => ({
 
 const agent = createAdaptiveAgent(DEFAULT_COSTS);
 
-function decisionFor(e: LossEvent, over: Partial<CaseContext> = {}) {
-  return explain(ctx(e, over), DEFAULT_COSTS, 2000);
+function decisionFor(e: LossEvent, over: Partial<CaseContext> = {}, options: AdaptiveAgentOptions = {}) {
+  return explain(ctx(e, over), DEFAULT_COSTS, 2000, options);
 }
 
 // A pool of reason-code strings that share NOTHING in common with each
@@ -185,5 +186,86 @@ describe('out-of-distribution fallback: never-seen reason codes', () => {
         expect(result.action.channel).toBe('email');
       }
     }
+  });
+});
+
+describe('cross-bucket adversarial case: same guessed class, different string identity, DIFFERENT correct behaviour', () => {
+  // The strongest version of "not a hidden reason -> action rule" is not
+  // "two unseen strings agree with each other" (already covered above) --
+  // it's this: construct an UNSEEN code that resolves to the EXACT SAME
+  // recoveryClass as a REAL, documented code (same "guess," same
+  // observable class identity), give both cases identical amount, consent
+  // and elapsed time, and show the two nonetheless act DIFFERENTLY, for a
+  // principled reason (status/confidence), not because of which string
+  // was on the case. If the agent secretly kept a reason -> action table,
+  // "same guessed class" would be enough to make both cases behave
+  // identically (retry, since that's what a real TRANSIENT_INFRA case
+  // does) -- it is not, and that gap IS the proof.
+  //
+  // `interpretUnknown` is the one seam an LLM-backed interpreter is
+  // allowed to plug into (see UnknownReasonInterpreter's own doc comment)
+  // -- using it directly here, rather than relying on the deterministic
+  // fuzzy matcher to happen to land on the class we want, makes the
+  // "same observable class" premise exact rather than approximate.
+  const forceTransientInfra: UnknownReasonInterpreter = () => ({
+    recoveryClass: 'TRANSIENT_INFRA',
+    confidence: 'medium',
+    evidence: ['forced for adversarial test: resolves to the same class as a real TRANSIENT_INFRA code'],
+  });
+
+  const sharedContext = { amountPaise: 5_000_00, method: 'card' as const }; // Rs 5,000, identical for both
+
+  it('a genuinely documented TRANSIENT_INFRA code retries; an unseen code FORCED to guess the identical class does not -- same class, opposite correct behaviour', () => {
+    const known = decisionFor(event({ reasonCode: 'bank_technical_error', ...sharedContext }));
+    const unseenForced = decisionFor(
+      event({ reasonCode: 'zzz_completely_alien_code_never_documented_000', ...sharedContext }),
+      {},
+      { interpretUnknown: forceTransientInfra },
+    );
+
+    // The premise: both cases genuinely share the same observable
+    // recoveryClass -- one directly, one only via a forced guess.
+    expect(known.assessment.recoveryClass).toBe('TRANSIENT_INFRA');
+    expect(unseenForced.assessment.recoveryClass).toBe('TRANSIENT_INFRA');
+
+    // The observable difference that actually exists, and actually
+    // drives the divergent behaviour below: status and confidence, never
+    // promoted past medium for a guess (see llm/unknown-error.ts and
+    // ADR 0009 -- this is enforced independently of which interpreter is
+    // plugged in).
+    expect(known.assessment.status).toBe('known');
+    expect(known.assessment.confidence).toBe('high');
+    expect(unseenForced.assessment.status).toBe('inferred');
+    expect(unseenForced.assessment.confidence).toBe('medium');
+
+    // The actual proof: identical guessed class, identical amount/consent
+    // /elapsed, but OPPOSITE actions -- because retrySpec requires
+    // status === 'known' (action-registry.ts) and TRANSIENT_INFRA has no
+    // contact causal path (contactHasCausalPath), so the guessed case has
+    // nothing left but stop. A hidden reason -> action table keyed on
+    // "guessed class" alone would make these agree; they do not.
+    expect(known.action.kind).toBe('retry_payment');
+    expect(unseenForced.action.kind).toBe('stop');
+  });
+
+  it('two DIFFERENT unseen strings, forced to the SAME guessed class via the interpreter seam, produce the IDENTICAL decision to each other', () => {
+    // The complementary half: the STRING fed to the interpreter is
+    // irrelevant once it resolves to the same (class, confidence) --
+    // proven directly via the seam rather than relying on the fuzzy
+    // matcher's own vocabulary overlap to coincidentally agree.
+    const a = decisionFor(
+      event({ reasonCode: 'alpha_string_one_xyz', ...sharedContext }),
+      {},
+      { interpretUnknown: forceTransientInfra },
+    );
+    const b = decisionFor(
+      event({ reasonCode: 'totally_unrelated_string_two_987', ...sharedContext }),
+      {},
+      { interpretUnknown: forceTransientInfra },
+    );
+    expect(a.action.kind).toBe(b.action.kind);
+    expect(a.action.channel).toBe(b.action.channel);
+    expect(a.assessment.status).toBe(b.assessment.status);
+    expect(a.assessment.confidence).toBe(b.assessment.confidence);
   });
 });
