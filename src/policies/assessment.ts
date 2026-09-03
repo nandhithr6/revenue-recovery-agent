@@ -119,7 +119,7 @@ export function deterministicFallback(
       recoveryClass: null,
       confidence: 'low',
       evidence: [
-        `"${reasonCode}" shares no meaningful vocabulary with any of the 21 documented reason codes` +
+        `"${reasonCode}" shares no meaningful vocabulary with any of the ${VOCABULARY.length} documented reason codes` +
           (best ? ` (closest: "${best.code}" at ${(best.score * 100).toFixed(0)}% token overlap, below threshold)` : ''),
       ],
     };

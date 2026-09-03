@@ -343,3 +343,70 @@ describe('duplicate-debit verification on uncertain debit status', () => {
     }
   });
 });
+
+describe('causal credit: an inert intervention cannot be credited with a recovery it could not have caused', () => {
+  it('a contact that lands (customer engages) does NOT recover a TRANSIENT_INFRA case -- only the SUBSEQUENT retry, once the outage itself has actually cleared, does', async () => {
+    // TRANSIENT_INFRA (a bank/gateway outage) has no causal path from a
+    // customer nudge at all -- the customer did nothing wrong, so there
+    // is nothing a message can persuade them to fix (see
+    // action-registry.ts:contactHasCausalPath, which is exactly why the
+    // real policy never even offers contact for this class). This test
+    // does not trust that gate alone -- it goes around the policy layer
+    // entirely with a rigged strategy that ALWAYS proposes voice contact
+    // first, to prove the ENGINE's own ground truth (not the policy's
+    // restraint) is what refuses to credit an inert action, structurally.
+    const { runCase } = await import('../eval/engine.js');
+    const { Ledger } = await import('../ledger/ledger.js');
+    const { Rng } = await import('../sim/rng.js');
+
+    let contactTried = false;
+    const forceContactThenRetry = {
+      id: 'test-inert-contact',
+      name: 'test',
+      description: 'always contacts once, then retries',
+      decide(context: CaseContext) {
+        if (!contactTried) {
+          contactTried = true;
+          return { kind: 'contact_customer' as const, channel: 'voice' as const, delayMs: 0, rationale: 'forced' };
+        }
+        return { kind: 'retry_payment' as const, delayMs: 0, rationale: 'forced' };
+      },
+    };
+
+    const e = event({ reasonCode: 'bank_technical_error', lossType: 'payment_failure' }); // TRANSIENT_INFRA
+    // Try several seeds: the voice contact WILL sometimes "land"
+    // (customer engages, succeeded=true on that ledger entry) since
+    // landing odds are real -- the claim under test is narrower and must
+    // hold regardless: landing never sets `recovered`, for this class.
+    for (let seed = 1; seed <= 15; seed++) {
+      contactTried = false;
+      const ledger = new Ledger();
+      const result = runCase(e, forceContactThenRetry, DEFAULT_COSTS, new Rng(seed), ledger);
+      const entries = ledger.forCase(e.id);
+      const contactEntry = entries.find((en) => en.actionKind === 'contact_customer');
+      if (contactEntry?.succeeded === true) {
+        // The contact landed. It must still not be the thing that
+        // recovered the case -- if `recovered` is true here, it can only
+        // be because the FOLLOWING retry (the outage clearing on its
+        // own, unrelated to the contact) succeeded, not the contact.
+        if (result.recovered) {
+          const retryEntry = entries.find((en) => en.actionKind === 'retry_payment' && en.succeeded === true);
+          expect(retryEntry).toBeDefined();
+        }
+      }
+    }
+  });
+
+  it('a contact_customer candidate is never even PRICED for a class with no causal path -- structurally excluded, not merely low-value', () => {
+    // The policy-layer half of the same guarantee: for TRANSIENT_INFRA
+    // under a retryable loss type, contact_customer must not appear in
+    // the candidate list AT ALL (not "appear but lose the argmax" --
+    // genuinely absent), because `action-registry.ts:contactHasCausalPath`
+    // returns false and every contactSpec returns `[]` before pricing
+    // anything.
+    const e = event({ reasonCode: 'bank_technical_error', lossType: 'payment_failure' });
+    const cands = candidatesFor(e);
+    const contactCandidates = cands.filter((c) => c.action.kind === 'contact_customer');
+    expect(contactCandidates.length).toBe(0);
+  });
+});

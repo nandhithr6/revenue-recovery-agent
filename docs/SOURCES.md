@@ -23,6 +23,30 @@ Using the real vocabulary means this system speaks the same language as a live
 Razorpay integration: the taxonomy would not need rewriting to point it at a
 production webhook feed.
 
+## A scope limitation, stated explicitly rather than left implicit
+
+**Payment amount, amount genuinely at risk, and amount actually recovered
+are the SAME number for every case in this simulator.** `LossEvent.amountPaise`
+is used for all three: it is what was attempted, all of it is at risk if
+nothing is done, and if `recovered` becomes true, that exact figure is what
+lands (`recoveredPaise: recovered ? event.amountPaise : 0`, `eval/engine.ts`)
+-- never more, never less, never partial.
+
+This is a real simplification, not an oversight papered over: recovery here
+is binary (all-or-nothing) by construction. A production system can have
+these three diverge -- a partial capture, a partially-successful settlement,
+a fee or penalty that shrinks what's actually recoverable below the original
+amount. None of that is modelled. Every loss type this project covers
+(`payment_failure`, `checkout_abandonment`, `subscription_mandate`,
+`receivable`) is, by the taxonomy's own definition, a case where NOTHING was
+captured yet (see `domain/types.ts:DebitStatus` and
+`sim/generator.ts:deriveDebitStatus`) -- so "the genuinely recoverable amount"
+and "the original payment amount" really are the same question for the
+population this simulator generates. Modelling a partial-recovery scenario
+(a captured-then-disputed payment, a part-refund) would be a different,
+legitimate extension; it has never been built, and this file says so rather
+than letting the binary model imply more precision than it has.
+
 ## What is grounded in published, non-confidential statistics
 
 Real *merchant* transaction data is confidential and we neither have it nor
