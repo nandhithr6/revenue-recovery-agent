@@ -3,6 +3,7 @@ import { GroupedBars, HorizontalBars, Legend, strategyColor } from './charts';
 import { CaseInspector } from './CaseInspector';
 import { LiveFeed } from './LiveFeed';
 import { LiveSection, NoveltySection, RobustnessSection, SensitivitySection } from './Evidence';
+import { OutcomeBreakdown } from './OutcomeBreakdown';
 import { VoiceShowcase } from './VoiceShowcase';
 import { TimingRibbon, type ClassTrack } from './TimingRibbon';
 import type { Bundle, ScenarioResult } from './types';
@@ -127,6 +128,10 @@ export default function App() {
         .reduce((m, c) => m + c.retries, 0),
     0,
   );
+
+  const missedOpportunities =
+    scenario.outcomeAudit.categories.find((c) => c.category === 'wrong_action_missed_opportunity')?.count ?? 0;
+  const nonRecoveredCount = scenario.outcomeAudit.nonRecoveredCases;
 
   const names = scenario.strategies.map((s) => s.name);
 
@@ -396,6 +401,17 @@ export default function App() {
           </div>
         </div>
 
+        <p className="recovery-clarify">
+          <b>{pct(agent.metrics.recoveryRate)} recovered is not the same as {nonRecoveredCount} agent
+          failures.</b> Only <b>{missedOpportunities} / {agent.metrics.casesTotal}</b> cases in this
+          cohort were verified missed opportunities — a rejected candidate with real, ground-truth
+          positive expected value the agent should have taken and didn't. The other{' '}
+          {nonRecoveredCount - missedOpportunities} were correctly stopped once the real odds went
+          to zero, genuinely unrecoverable from the start, waiting on a customer action that never
+          came, unsafe to push further (a dispute or an unresolved duplicate-debit check), or a real
+          attempt that simply lost the odds. Full case-by-case breakdown below.
+        </p>
+
         <p className="note" style={{ marginTop: 26 }}>
           The reason it wins: each baseline is fast <em>or</em> patient, never both. Naive retry
           does well on abandonment and badly on outages; fixed dunning is the reverse. Neither
@@ -403,6 +419,17 @@ export default function App() {
         </p>
         <Legend items={names} />
         <GroupedBars rows={rateRows} maxValue={1} />
+
+        <h3 className="sub-h" style={{ marginTop: 30 }}>
+          What the {pct(1 - agent.metrics.recoveryRate)} non-recovered actually breaks down to
+        </h3>
+        <p className="note" style={{ marginLeft: 0 }}>
+          A recovery rate is not a success rate for the agent's decisions -- most of the rest was
+          never realistically getable, or was correctly stopped once the real odds went to zero.
+          Every non-recovered case in this cohort, reclassified against ground truth (not the
+          agent's own belief). Click a row for named cases.
+        </p>
+        <OutcomeBreakdown audit={scenario.outcomeAudit} />
       </section>
 
       {/* ---------------------------------------------------------- 03 */}

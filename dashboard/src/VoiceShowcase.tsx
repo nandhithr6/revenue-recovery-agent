@@ -70,9 +70,12 @@ export function VoiceShowcase({ data }: { data: VoiceShowcaseData | null }) {
             {margin !== undefined && margin > 0
               ? `Voice cleared the bar by ${inr(margin)} of expected value over the next-best channel — watch the highlighted row below.`
               : 'Watch the highlighted row for why voice cleared the bar here.'}{' '}
-            "Customer said" is generated from the case's structured outcome for readability — the
-            engine itself only ever sees the structured signal (<code>promise_to_pay</code>,{' '}
-            <code>refused</code>, …), never a sentence.
+            "Customer said" — including the simulated Hinglish transcript and detected-intent line
+            below it — is generated from the case's structured outcome for readability. The engine
+            itself only ever sees the structured signal (<code>promise_to_pay</code>,{' '}
+            <code>refused</code>, …), never a sentence in any language, and neither transcript can
+            change what the agent decides — see the candidate table on the highlighted step, priced
+            off the same signal before either sentence exists.
           </p>
           {data.trace.recovered && recoversViaLink && (
             <p className="note" style={{ marginLeft: 0, marginTop: 8 }}>

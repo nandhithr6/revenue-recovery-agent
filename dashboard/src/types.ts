@@ -181,6 +181,36 @@ export interface ScenarioResult {
   sampleAuditTrail: LedgerEntry[];
   inspectableCases: InspectableCase[];
   liveFeed: LiveFeedEntry[];
+  outcomeAudit: OutcomeAudit;
+}
+
+export interface NonRecoveredCase {
+  eventId: string;
+  amountPaise: number;
+  recoveryClass: string;
+  stoppedReason: string;
+  category: string;
+  note: string;
+  missedAction?: string;
+  missedRealEvPaise?: number;
+}
+
+export interface OutcomeCategorySummary {
+  category: string;
+  label: string;
+  count: number;
+  atRiskPaise: number;
+  byClass: Record<string, number>;
+  examples: NonRecoveredCase[];
+}
+
+export interface OutcomeAudit {
+  totalCases: number;
+  recoveredCases: number;
+  recoveryRate: number;
+  nonRecoveredCases: number;
+  nonRecoveredAtRiskPaise: number;
+  categories: OutcomeCategorySummary[];
 }
 
 export interface LossProfileView {

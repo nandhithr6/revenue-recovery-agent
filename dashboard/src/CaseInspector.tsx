@@ -78,6 +78,62 @@ const SIGNAL_LABEL: Record<string, string> = {
   no_answer: "Call didn't connect — no new information, agent continues as before",
 };
 
+/**
+ * Hinglish rendering of the SAME structured `CustomerSignal`, for the
+ * Hinglish voice-recovery track direction -- a second, independently
+ * written rendering of exactly the signal `SIGNAL_LABEL` above already
+ * renders in English, same purpose (readability for a human looking at the
+ * trace), same source of truth (`step.signal.kind`, the only thing any
+ * policy or the engine itself ever sees). No fabricated line for
+ * `no_answer`: there was no conversation, only an unanswered call.
+ *
+ * Deliberately hand-written here rather than imported from
+ * `src/domain/hinglish-voice.ts`: the dashboard reads only the JSON bundle
+ * `eval:all` produces and never imports simulation/policy source, the same
+ * boundary every other dictionary in this file (`SIGNAL_LABEL`,
+ * `CLASS_LABEL`, `CLASS_PLAIN`, ...) already keeps.
+ */
+const HINGLISH_OPENING = {
+  hinglish: 'Namaste! Aapka payment complete nahi ho paya tha, main isi baare mein call kar rahi/raha hoon.',
+  english: "Hello! Your payment didn't go through, I'm calling about that.",
+};
+
+const HINGLISH_CUSTOMER_LINE: Record<string, { hinglish: string; english: string }> = {
+  promise_to_pay: {
+    hinglish: 'Haan haan, main jaldi hi pay kar dunga, thoda time dijiye.',
+    english: "Yes yes, I'll pay soon, just give me some time.",
+  },
+  funds_available_now: {
+    hinglish: 'Ab account mein paisa aa gaya hai, aap abhi try kar sakte hain.',
+    english: 'The funds are in my account now, you can try again.',
+  },
+  instrument_fixed: {
+    hinglish: 'Maine card/UPI theek kar diya hai, ab chalega.',
+    english: "I've fixed the card/UPI, it'll work now.",
+  },
+  disputes_charge: {
+    hinglish: 'Yeh charge maine kiya hi nahi tha, isko cancel kijiye.',
+    english: "I never made this charge, please cancel it.",
+  },
+  refused: {
+    hinglish: 'Mujhe interest nahi hai, please dobara call mat kijiye.',
+    english: "I'm not interested, please don't call again.",
+  },
+  no_answer: {
+    hinglish: '(Call not answered / voicemail — ring gaya par koi jawab nahi mila)',
+    english: '(Call not answered / voicemail)',
+  },
+};
+
+const INTENT_LABEL_HINGLISH: Record<string, string> = {
+  promise_to_pay: 'Vaada kiya hai (promise to pay)',
+  funds_available_now: 'Paisa ab available hai (funds available now)',
+  instrument_fixed: 'Instrument theek ho gaya (instrument fixed)',
+  disputes_charge: 'Charge dispute kiya (disputes charge)',
+  refused: 'Mana kar diya (refused)',
+  no_answer: 'Call nahi utha (no answer)',
+};
+
 /** One decision, in three columns: what it saw, what it chose, what happened. */
 export function Step({ step }: { step: TraceStep }) {
   const { seen, decided, verdict } = step;
@@ -184,9 +240,28 @@ export function Step({ step }: { step: TraceStep }) {
           </p>
         )}
         {step.signal && (
-          <p className="ruletext" style={{ marginTop: 8 }}>
-            <strong>Customer said:</strong> {SIGNAL_LABEL[step.signal.kind] ?? step.signal.kind}
-          </p>
+          <div className="ruletext" style={{ marginTop: 8 }}>
+            <p style={{ margin: 0 }}>
+              <strong>Customer said:</strong> {SIGNAL_LABEL[step.signal.kind] ?? step.signal.kind}
+            </p>
+            <div className="voice-transcript" style={{ marginTop: 6 }}>
+              <p style={{ margin: '0 0 3px', fontStyle: 'italic' }}>Simulated Hinglish voice transcript:</p>
+              <p style={{ margin: '0 0 2px' }}>
+                <strong>Agent:</strong> {HINGLISH_OPENING.hinglish}{' '}
+                <span style={{ opacity: 0.7 }}>({HINGLISH_OPENING.english})</span>
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Customer:</strong>{' '}
+                {(HINGLISH_CUSTOMER_LINE[step.signal.kind] ?? HINGLISH_CUSTOMER_LINE.no_answer)!.hinglish}{' '}
+                <span style={{ opacity: 0.7 }}>
+                  ({(HINGLISH_CUSTOMER_LINE[step.signal.kind] ?? HINGLISH_CUSTOMER_LINE.no_answer)!.english})
+                </span>
+              </p>
+              <p style={{ margin: '4px 0 0' }}>
+                <strong>Detected intent:</strong> {INTENT_LABEL_HINGLISH[step.signal.kind] ?? step.signal.kind}
+              </p>
+            </div>
+          </div>
         )}
       </div>
 

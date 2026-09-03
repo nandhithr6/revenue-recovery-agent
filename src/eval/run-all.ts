@@ -10,6 +10,7 @@ import { generateCohort, summariseCohort } from '../sim/generator.js';
 import { DEFAULT_COSTS, SCENARIO_IDS, getScenario } from '../sim/scenario.js';
 import { DEFAULT_GUARDRAILS } from '../guardrails/index.js';
 import { runCase, runCohort } from './engine.js';
+import { auditOutcomes } from './outcome-audit.js';
 import { breakdownByClass, score } from './metrics.js';
 import { TraceSink, type CandidateSummary, type CaseTrace } from './trace.js';
 import { Ledger } from '../ledger/ledger.js';
@@ -476,6 +477,17 @@ async function main(): Promise<void> {
         ).all(),
       ),
       inspectableCases: buildInspectableCases(events, strategies, scenario.seed + 1),
+      // A SEPARATE, third run of the same cohort (see the comment on
+      // `liveFeed` above for why this pattern is already established) --
+      // classifies every non-recovered case so the dashboard can show an
+      // outcome breakdown instead of a bare recovery-rate percentage. Never
+      // feeds `strategies[].metrics`.
+      outcomeAudit: auditOutcomes(
+        events,
+        strategies.find((s) => s.id === 'agent-adaptive')!,
+        DEFAULT_COSTS,
+        scenario.seed + 1,
+      ),
     };
   });
 
