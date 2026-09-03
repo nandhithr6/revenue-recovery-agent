@@ -1225,3 +1225,24 @@ footer code {
     white-space: normal;
   }
 }
+
+/* -------------------------------------------------- citation badge */
+
+.cite-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 8px 14px;
+  text-decoration: none;
+  max-width: 100%;
+}
+.cite-badge:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+}

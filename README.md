@@ -290,9 +290,12 @@ asked.**
 - **Grounded, not measured:** the shape of the failure mix. NPCI's own UPI
   operating targets (Circular OC-149) put technical/infrastructure declines
   below 1% and customer-side declines below 5% of all transactions —
-  business-side failures dominate technical ones by design. Our baseline mix
-  lands at 23.3% technical / 76.7% customer-side, the same direction,
-  independently arrived at before we found that circular. The exact weight of
+  business-side failures dominate technical ones by design. Restricted to the
+  two failure classes that framework actually covers (abandonment and hard
+  declines fall outside it), our baseline mix lands at 36.2% technical / 63.8%
+  customer-side — same direction, independently arrived at before we found that
+  circular, though less skewed than NPCI's real ~5-to-1. We say so rather than
+  adjusting the numbers to close the gap. The exact weight of
   each individual reason inside that split is still ours.
 - **Ours:** the mapping from reason to recovery class, the recovery-probability
   curves, the cost model, and the exact per-reason weights. Each is a named,

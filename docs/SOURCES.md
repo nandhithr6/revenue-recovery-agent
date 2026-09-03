@@ -46,20 +46,35 @@ failure statistics, and those are legitimate to cite:
   we could not scrape into a fixed citation; the OC-149 targets and the reported
   TD figure above are what we cite instead.
 
-**What this does and does not let us claim.** NPCI's percentages are measured
-over *all attempted transactions* (success and failure together). Our
-`failureMix` in `src/sim/scenario.ts` is a distribution over an *already-failed*
-cohort — a different denominator, and the two numbers cannot be pasted into each
-other directly. What transfers honestly is the **shape**, not the digits: NPCI's
-own targets imply business/customer-side declines outnumber technical/infra
-declines by roughly 5-to-1 or more. Our baseline mix, summed by category, comes
-out to **23.3% technical** (`bank_technical_error` + `gateway_technical_error`)
-against **76.7% business/customer-side** (everything else) — the same direction,
-independently arrived at before this citation existed, not fitted to it
-afterward. We are stating that consistency, not manufacturing false precision:
-the exact split *within* the business/customer-side 76.7% (how much is
-insufficient funds vs. an expired card vs. abandonment) remains our own reasoned
-assumption, unsourced.
+**What this does and does not let us claim.** NPCI's TD/BD framework covers only
+*completed-and-declined* transactions. Two of our six recovery classes fall
+outside that framework entirely and have to be excluded from any comparison:
+`ABANDONMENT` (the customer left before completing anything — not a decline at
+all) and `HARD_DECLINE` (fraud/risk refusals, which NPCI does not publish under
+either TD or BD). An earlier version of this document lumped both into
+"business decline," which overstated the business-side share. That was a real
+mistake, corrected here rather than quietly edited away.
+
+Restricted to the two classes NPCI's framework actually covers —
+`TRANSIENT_INFRA` (technical) against `TRANSIENT_FUNDS` + `AUTH_FAILURE` +
+`CUSTOMER_ACTION_REQUIRED` (business/customer-side) — our baseline mix comes
+out to **36.2% technical / 63.8% business-side**. Direction matches NPCI's
+targets (business dominates technical); magnitude does not — NPCI's targets
+imply roughly 5-to-1 or steeper, ours is closer to 1.8-to-1. We have not
+adjusted the mix to close that gap, because doing so *after* citing the source
+would undercut the one claim worth making here: this ratio existed before we
+found the circular, and we would rather report the comparison honestly,
+including where it falls short, than tune the numbers to fit it.
+
+Also worth naming: NPCI's own percentages are measured over *all attempted*
+transactions; ours are over an *already-failed* cohort. Different denominators.
+Nothing above converts one into the other — only the qualitative direction of
+the ratio transfers, and that is all we claim.
+
+The exact weight of each individual reason within the business-side 63.8% is
+still our own reasoned assumption, unsourced. So is the entire treatment of
+abandonment and hard declines, which sit outside NPCI's framework by
+definition.
 
 One more figure worth naming and flagging as weaker: a **92–96% blended
 merchant-side success rate** shows up in payments-industry writeups. It is

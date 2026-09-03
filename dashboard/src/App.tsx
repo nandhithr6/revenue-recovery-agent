@@ -134,6 +134,21 @@ export default function App() {
     .sort((a, b) => b[1] - a[1])
     .map(([rule, n]) => ({ label: rule, value: n, display: String(n), colorIndex: 3 }));
 
+  // NPCI's Technical/Business Decline framework only covers completed-and-
+  // declined transactions. ABANDONMENT (customer never completed anything) and
+  // HARD_DECLINE (fraud/risk, not published under TD or BD) sit outside it and
+  // must be excluded from the comparison rather than folded into "business" --
+  // an earlier version of this page made exactly that mistake.
+  const rc = scenario.cohort.byRecoveryClass;
+  const npciInfra = rc.TRANSIENT_INFRA ?? 0;
+  const npciBusiness = (rc.TRANSIENT_FUNDS ?? 0) + (rc.AUTH_FAILURE ?? 0) + (rc.CUSTOMER_ACTION_REQUIRED ?? 0);
+  const npciAbandonment = rc.ABANDONMENT ?? 0;
+  const npciHardDecline = rc.HARD_DECLINE ?? 0;
+  const npciComparable = npciInfra + npciBusiness;
+  const npciTechPct = npciComparable === 0 ? 0 : (npciInfra / npciComparable) * 100;
+  const npciBizPct = 100 - npciTechPct;
+  const npciRatio = npciInfra === 0 ? null : npciBusiness / npciInfra;
+
   return (
     <div className="sheet">
       <div className="masthead">
@@ -236,6 +251,37 @@ export default function App() {
             the rule that stopped it and the time it moved to.
           </p>
         </div>
+
+        <h3 className="sub-h">This cohort's actual mix, checked against a real citation</h3>
+        <p className="note" style={{ marginLeft: 0 }}>
+          Of {scenario.cohort.count} cases in <b>{scenario.name}</b>: <b>{npciInfra}</b> technical
+          (bank/gateway down), <b>{npciBusiness}</b> business/customer-side (funds, auth, dead
+          instrument), <b>{npciAbandonment}</b> abandonment and <b>{npciHardDecline}</b> hard
+          decline. NPCI's own UPI framework covers only the first two —{' '}
+          <b>
+            {npciTechPct.toFixed(1)}% technical / {npciBizPct.toFixed(1)}% business-side
+          </b>{' '}
+          in this cohort — because abandonment isn't a decline at all and hard declines aren't
+          published under NPCI's Technical/Business Decline categories.
+        </p>
+        <a
+          className="cite-badge"
+          href="https://www.npci.org.in/PDF/npci/upi/circular/2022/UPI-OC-149-Reduction-of-business-decline-in-UPI.pdf"
+          target="_blank"
+          rel="noreferrer"
+        >
+          ↗ NPCI Circular OC-149 — Technical Decline &lt;1%, Business Decline &lt;5% of all UPI
+          transactions
+        </a>
+        <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
+          Same direction as NPCI's target — business-side outweighs technical — but less skewed:
+          NPCI's own network runs at roughly 5-to-1 or steeper; this scenario computes to{' '}
+          <b>{npciRatio === null ? 'no technical cases to compare' : `${npciRatio.toFixed(1)}-to-1`}</b>.
+          Live-computed from this cohort, not a fixed claim — switch scenarios above and the ratio
+          moves with it. We're stating that gap, not closing it: adjusting the underlying mix now,
+          after finding this source, would undercut the point of citing it. Full reasoning,
+          including a correction we made to this comparison, in <code>docs/SOURCES.md</code>.
+        </p>
       </section>
 
       {/* ---------------------------------------------------------- 02 */}
@@ -458,8 +504,11 @@ export default function App() {
             NPCI's own UPI targets
           </a>{' '}
           put technical declines under 1% and customer-side declines under 5% of all
-          transactions — business-side failures dominate by design. Ours land at 23.3% technical /
-          76.7% customer-side, the same direction, found independently before that circular did.
+          transactions — business-side failures dominate by design. Restricted to the two classes
+          that framework covers (see the cohort breakdown above — abandonment and hard declines
+          sit outside it), ours land at 36.2% technical / 63.8% customer-side: same direction,
+          found independently before that circular did, though less skewed than NPCI's real
+          ~5-to-1 — a gap we're stating, not closing.
           Everything finer than that split — recovery curves, the cost model, the exact weight of
           each reason — is a stated assumption, listed in <code>docs/SOURCES.md</code>.
         </p>

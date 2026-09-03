@@ -81,16 +81,19 @@ export const DEFAULT_COSTS: CostModel = {
  * The everyday mix. UPI-dominant, as Indian digital payments are, with
  * insufficient funds and bank downtime as the two most common failure reasons.
  *
- * The technical-vs-business split here (bank_technical_error +
- * gateway_technical_error = 23.3% of the mix; everything else = 76.7%) is not
- * an arbitrary guess: NPCI's own operating targets for UPI (Circular OC-149)
- * put Technical Decline below 1% and Business Decline below 5% of all
- * transactions -- business/customer-side failures dominate technical ones by
- * design. Our split lands in the same direction, independently arrived at
- * before we found that circular, not fitted to it afterward. The exact weight
- * of each individual reason within that 76.7% is still our own assumption.
- * See docs/SOURCES.md for the full citation and what NPCI's numbers do and do
- * not let us claim (different denominator: all transactions vs. an
+ * The technical-vs-business split (TRANSIENT_INFRA vs. TRANSIENT_FUNDS +
+ * AUTH_FAILURE + CUSTOMER_ACTION_REQUIRED -- ABANDONMENT and HARD_DECLINE
+ * excluded, since NPCI's framework does not cover either) is not an arbitrary
+ * guess: NPCI's own operating targets for UPI (Circular OC-149) put Technical
+ * Decline below 1% and Business Decline below 5% of all transactions --
+ * business/customer-side failures dominate technical ones by design. Our
+ * split, on the same restricted comparison, is 36.2% technical / 63.8%
+ * business-side: the same direction, independently arrived at before we found
+ * that circular, not fitted to it afterward, but noticeably less skewed than
+ * NPCI's real ~5-to-1. That gap is stated, not closed -- adjusting the numbers
+ * now would undercut the independence of the comparison. See docs/SOURCES.md
+ * for the full citation, the correction this replaced, and what NPCI's numbers
+ * do and do not let us claim (different denominator: all transactions vs. an
  * already-failed cohort).
  */
 const BASELINE_FAILURE_MIX: Record<string, number> = {
