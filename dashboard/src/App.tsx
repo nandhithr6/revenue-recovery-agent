@@ -452,9 +452,16 @@ export default function App() {
           merchant-confidential — but the vocabulary is not invented: the 21 failure{' '}
           <code>reason</code> codes are Razorpay's own, from their{' '}
           <a href="https://razorpay.com/docs/errors/payments/cards/">card</a> and{' '}
-          <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. Everything
-          else — recovery curves, the cost model, the failure mix — is a stated assumption, listed
-          in <code>docs/SOURCES.md</code>.
+          <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. The failure
+          mix isn't invented either, at least in shape:{' '}
+          <a href="https://www.npci.org.in/PDF/npci/upi/circular/2022/UPI-OC-149-Reduction-of-business-decline-in-UPI.pdf">
+            NPCI's own UPI targets
+          </a>{' '}
+          put technical declines under 1% and customer-side declines under 5% of all
+          transactions — business-side failures dominate by design. Ours land at 23.3% technical /
+          76.7% customer-side, the same direction, found independently before that circular did.
+          Everything finer than that split — recovery curves, the cost model, the exact weight of
+          each reason — is a stated assumption, listed in <code>docs/SOURCES.md</code>.
         </p>
       </section>
 

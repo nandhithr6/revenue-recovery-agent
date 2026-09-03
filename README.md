@@ -287,9 +287,16 @@ asked.**
 - **Real:** every failure `reason` code, taken from Razorpay's published card and
   UPI error documentation. Cards *and* UPI, because UPI is how India actually
   pays.
+- **Grounded, not measured:** the shape of the failure mix. NPCI's own UPI
+  operating targets (Circular OC-149) put technical/infrastructure declines
+  below 1% and customer-side declines below 5% of all transactions —
+  business-side failures dominate technical ones by design. Our baseline mix
+  lands at 23.3% technical / 76.7% customer-side, the same direction,
+  independently arrived at before we found that circular. The exact weight of
+  each individual reason inside that split is still ours.
 - **Ours:** the mapping from reason to recovery class, the recovery-probability
-  curves, the cost model, and the failure mix. Each is a named, commented
-  constant with its reasoning attached.
+  curves, the cost model, and the exact per-reason weights. Each is a named,
+  commented constant with its reasoning attached.
 
 These results demonstrate **policy quality** on identical seeded cohorts. They
 are not a prediction of production rupees, and anyone claiming that from
