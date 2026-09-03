@@ -3,7 +3,22 @@ import { GroupedBars, HorizontalBars, Legend, seriesColor } from './charts';
 import { CaseInspector } from './CaseInspector';
 import { LiveSection, RobustnessSection, SensitivitySection } from './Evidence';
 import { TimingRibbon, type ClassTrack } from './TimingRibbon';
-import type { Bundle, LedgerEntry, ScenarioResult } from './types';
+import type { Bundle, ScenarioResult } from './types';
+
+/**
+ * Six sections, each answering one question a reader actually has. This
+ * replaced a 13-section version where several sections answered the same
+ * question twice (a raw ledger dump next to the interactive case inspector; a
+ * "doomed attempts" chart next to figures that already stated the same
+ * number). Cutting those, not the substance, is what made it readable.
+ *
+ *   1. What's the problem, and why does timing matter?
+ *   2. What did it recover — the headline numbers
+ *   3. Prove it isn't hardcoded — inspect any case
+ *   4. Guardrails: compliant escalation and stopping rules
+ *   5. Is that one lucky run, or a number we chose?
+ *   6. Does it run on the real Razorpay API?
+ */
 
 const inr = (paise: number): string => `₹${Math.round(paise / 100).toLocaleString('en-IN')}`;
 
@@ -13,16 +28,6 @@ const lakh = (paise: number): string => {
 };
 
 const pct = (v: number): string => `${(v * 100).toFixed(1)}%`;
-
-const clock = (ms: number): string =>
-  new Date(ms).toLocaleString('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
 
 const CLASS_LABEL: Record<string, string> = {
   TRANSIENT_INFRA: 'bank or gateway down',
@@ -49,33 +54,6 @@ function useTheme(): [string, () => void] {
     else document.documentElement.dataset['theme'] = theme;
   }, [theme]);
   return [theme, () => setTheme((t) => (t === 'system' ? 'dark' : t === 'dark' ? 'light' : 'system'))];
-}
-
-function AuditTrail({ entries }: { entries: readonly LedgerEntry[] }) {
-  if (entries.length === 0) return <p className="note">No entries.</p>;
-  return (
-    <div className="trail">
-      {entries.map((e) => (
-        <div className="entry" key={e.seq}>
-          <time>{clock(e.at)}</time>
-          <div className={`tag ${e.outcome}`}>{e.outcome}</div>
-          <div>
-            <div className="what">
-              {e.actionKind.replace(/_/g, ' ')}
-              {e.channel ? ` · ${e.channel}` : ''}
-            </div>
-            <div className="why">{e.rationale}</div>
-            {e.rule && (
-              <div className="rule">
-                <b>{e.rule}</b> — {e.explanation}
-                {e.deferredTo ? ` Rescheduled to ${clock(e.deferredTo)}.` : ''}
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export default function App() {
@@ -151,17 +129,6 @@ export default function App() {
     }),
   }));
 
-  const wasteRows = ['HARD_DECLINE', 'CUSTOMER_ACTION_REQUIRED']
-    .filter((c) => classes.includes(c))
-    .map((cls) => ({
-      group: CLASS_LABEL[cls] ?? cls,
-      values: scenario.strategies.map((s) => {
-        const row = s.byClass.find((c) => c.recoveryClass === cls);
-        return { label: s.name, value: row?.retries ?? 0, display: String(row?.retries ?? 0) };
-      }),
-    }));
-  const maxWaste = Math.max(1, ...wasteRows.flatMap((r) => r.values.map((v) => v.value)));
-
   const ruleRows = Object.entries(scenario.ruleTally)
     .sort((a, b) => b[1] - a[1])
     .map(([rule, n]) => ({ label: rule, value: n, display: String(n), colorIndex: 3 }));
@@ -171,11 +138,7 @@ export default function App() {
       <div className="masthead">
         <div>
           <p className="eyebrow">Razorpay AI Buildathon · Revenue Recovery</p>
-          <h1>
-            Failed payments are not
-            <br />
-            all the same failure.
-          </h1>
+          <h1>Failed payments are not all the same failure.</h1>
           <p className="standfirst">
             An agent that reads why each payment failed, picks a recovery matched to that reason,
             and stays inside hard compliance limits — with every decision written down.
@@ -188,11 +151,7 @@ export default function App() {
 
       <div className="scenarios" role="group" aria-label="Scenario">
         {bundle.scenarios.map((s) => (
-          <button
-            key={s.id}
-            aria-pressed={s.id === scenario.id}
-            onClick={() => setScenarioId(s.id)}
-          >
+          <button key={s.id} aria-pressed={s.id === scenario.id} onClick={() => setScenarioId(s.id)}>
             {s.name}
           </button>
         ))}
@@ -203,108 +162,76 @@ export default function App() {
       </p>
 
       <nav className="railnav" aria-label="Sections">
-        <a href="#how">How it works</a>
-        <a href="#timing">01 Timing</a>
-        <a href="#books">02 The books</a>
-        <a href="#classes">03 By failure class</a>
-        <a href="#waste">04 Doomed attempts</a>
-        <a href="#inspect">05 Inspect a case</a>
-        <a href="#rules">06 Rules</a>
-        <a href="#playbook">07 The playbook</a>
-        <a href="#trail">08 Audit trail</a>
-        <a href="#robust">09 Robustness</a>
-        <a href="#sensitivity">10 Sensitivity</a>
-        <a href="#live">11 Live Razorpay</a>
-        <a href="#provenance">12 What is real</a>
+        <a href="#problem">01 The problem</a>
+        <a href="#results">02 Results</a>
+        <a href="#inspect">03 Inspect a case</a>
+        <a href="#guardrails">04 Guardrails</a>
+        <a href="#rigor">05 Is that real?</a>
+        <a href="#live">06 Live Razorpay</a>
       </nav>
 
-      <section id="how">
+      {/* ---------------------------------------------------------- 01 */}
+      <section id="problem">
         <div className="sec-head">
-          <span className="sec-num">00</span>
-          <h2>How this works, in five steps</h2>
+          <span className="sec-num">01</span>
+          <h2>Why timing decides whether the money comes back</h2>
         </div>
         <div className="howto">
           <div>
             <b>1 · the losses</b>
             <p>
               {scenario.cohort.count} simulated failed payments, each with a real Razorpay error
-              code, an amount, and a customer with their own consent settings.
+              code and a customer with their own consent settings.
             </p>
           </div>
           <div>
             <b>2 · diagnose</b>
             <p>
-              The agent reads the error code and works out which of six situations it is in.
-              It never sees whether recovery would actually succeed.
+              The agent reads the error code and works out which of six situations it is in. It
+              never sees whether recovery would actually succeed.
             </p>
           </div>
           <div>
-            <b>3 · decide</b>
+            <b>3 · decide → guardrail → score</b>
             <p>
-              It picks one action: retry now, retry later, message the customer, hand to a
-              person, or stop.
-            </p>
-          </div>
-          <div>
-            <b>4 · guardrails</b>
-            <p>
-              A separate layer allows, delays or refuses that action. The agent cannot overrule
-              it, so quiet hours and attempt caps always hold.
-            </p>
-          </div>
-          <div>
-            <b>5 · score</b>
-            <p>
-              Every decision is written to a ledger, and the same cohort is replayed through
-              three other strategies to compare.
+              It picks one action; a separate layer allows, delays or refuses it; every decision
+              is logged and the cohort is replayed through three rival strategies.
             </p>
           </div>
         </div>
-      </section>
 
-      <section id="timing">
-        <div className="sec-head">
-          <span className="sec-num">01</span>
-          <h2>A day, and what the agent is allowed to do in it</h2>
-        </div>
-        <p className="note">
-          When you act decides whether the money comes back, and compliance decides when you are
-          allowed to speak at all. Each row is a failure class; the dots are when this agent will
-          re-attempt the charge. The shaded bands are quiet hours, 21:00 to 09:00 local.
+        <p className="note" style={{ marginTop: 22 }}>
+          Each row below is a failure class; the dots are when this agent will re-attempt the
+          charge. Shaded bands are quiet hours, 21:00–09:00 local, when no customer contact is
+          permitted at all.
         </p>
         <TimingRibbon tracks={tracks} />
-        <div className="ribbon-caption">
-          <span>
-            <i style={{ background: 'var(--night)' }} aria-hidden />
-            no customer contact permitted
-          </span>
-          <span>dots mark retry attempts, offset from the original failure</span>
-        </div>
 
         <div className="story">
           <p>
             <b>20:30</b> — a payment fails on a bank timeout.
           </p>
           <p>
-            <b>21:30</b> — the agent wants to reach the customer. It is inside quiet hours, so the
+            <b>21:30</b> — the agent wants to reach the customer. Inside quiet hours, so the
             guardrail refuses.
           </p>
           <p>
-            <b>09:00</b> — the message goes, first thing. Not dropped, queued. The ledger records the
-            rule that stopped it and the time it was moved to.
+            <b>09:00</b> — the message goes, first thing. Not dropped, queued — the ledger records
+            the rule that stopped it and the time it moved to.
           </p>
         </div>
       </section>
 
-      <section id="books">
+      {/* ---------------------------------------------------------- 02 */}
+      <section id="results">
         <div className="sec-head">
           <span className="sec-num">02</span>
-          <h2>The books</h2>
+          <h2>What it recovered</h2>
         </div>
         <p className="note">
-          Net value counts money recovered, minus what was spent, minus customer annoyance priced at
-          ₹20 a point. One figure rather than two columns, so the trade between revenue and goodwill
-          has to be made explicitly instead of picked to taste.
+          Net value counts money recovered, minus what was spent, minus customer annoyance priced
+          at ₹20 a point — one figure rather than two columns, so the trade between revenue and
+          goodwill is made explicit rather than picked to taste.
         </p>
 
         <table className="ledger">
@@ -316,7 +243,6 @@ export default function App() {
               <th>Net after annoyance</th>
               <th>Rate</th>
               <th>Retries / recovery</th>
-              <th>Annoyance</th>
               <th>Violations</th>
             </tr>
           </thead>
@@ -341,7 +267,6 @@ export default function App() {
                     ? s.metrics.retriesPerRecovery.toFixed(2)
                     : '—'}
                 </td>
-                <td className="money">{s.metrics.spamPoints}</td>
                 <td className="money">
                   <span className={s.metrics.complianceViolations === 0 ? 'zero' : undefined}>
                     {s.metrics.complianceViolations}
@@ -373,71 +298,55 @@ export default function App() {
             <div className="d">{best.metrics.retriesPerRecovery.toFixed(2)} for the next best</div>
           </div>
           <div className="fig">
-            <div className="k">Violations</div>
-            <div className="v">{agent.metrics.complianceViolations}</div>
-            <div className="d">
-              {agent.metrics.deferrals} deferred · {agent.metrics.blockedActions} blocked
-            </div>
-          </div>
-          <div className="fig">
             <div className="k">Doomed retries</div>
             <div className="v">0</div>
-            <div className="d">baselines spent {wasted}</div>
+            <div className="d">baselines spent {wasted} on cases that could never work</div>
           </div>
         </div>
-      </section>
 
-      <section id="classes">
-        <div className="sec-head">
-          <span className="sec-num">03</span>
-          <h2>Where each strategy wins, and where it gives up</h2>
-        </div>
-        <p className="note">
-          The argument in one chart. Naive retry is fast, so it does well when a customer walked away
-          and badly when a bank was down. Fixed dunning is patient, so the reverse. Neither can be
-          both, because neither reads why the payment failed.
+        <p className="note" style={{ marginTop: 26 }}>
+          The reason it wins: each baseline is fast <em>or</em> patient, never both. Naive retry
+          does well on abandonment and badly on outages; fixed dunning is the reverse. Neither
+          reads why the payment failed.
         </p>
         <Legend items={names} />
         <GroupedBars rows={rateRows} maxValue={1} />
       </section>
 
-      <section id="waste">
-        <div className="sec-head">
-          <span className="sec-num">04</span>
-          <h2>Attempts against payments that could never succeed</h2>
-        </div>
-        <p className="note">
-          An expired card cannot be charged and a bank that refused for fraud will refuse again.
-          Every attempt here is spend with no possible return — and against a hard decline it is also
-          billed, because networks charge for excessive retries on declined authorisations.
-        </p>
-        <Legend items={names} />
-        <GroupedBars rows={wasteRows} maxValue={maxWaste} formatTick={(v) => String(Math.round(v))} />
-      </section>
-
+      {/* ---------------------------------------------------------- 03 */}
       <section id="inspect">
         <div className="sec-head">
-          <span className="sec-num">05</span>
-          <h2>Inspect any case yourself</h2>
+          <span className="sec-num">03</span>
+          <h2>Prove it isn't hardcoded — inspect any case yourself</h2>
         </div>
         <p className="note">
-          Everything above is a summary, and a summary has to be taken on trust. This is not:
+          Every number above is a summary, and a summary has to be taken on trust. This is not:
           pick a failure class and a case, and see the exact inputs the agent was given, the
-          action it chose in its own words, and the guardrail ruling on it. Then see what the
+          action it chose in its own words, and the guardrail ruling on it — then see what the
           other three strategies did with the same case, on the same randomness.
         </p>
         <CaseInspector cases={scenario.inspectableCases} />
       </section>
 
-      <section id="rules">
+      {/* ---------------------------------------------------------- 04 */}
+      <section id="guardrails">
+        <div className="sec-head">
+          <span className="sec-num">04</span>
+          <h2>Compliant escalation and stopping rules</h2>
+        </div>
+        <p className="note">
+          Two independent limits, both enforced outside the agent so it cannot talk its way past
+          them: <b>what</b> it may do (loss type — you cannot retry a charge nobody authorised) and{' '}
+          <b>when</b> it may speak (quiet hours, consent, contact caps).
+        </p>
+
         <div className="cols">
           <div>
-            <div className="sec-head">
-              <span className="sec-num">06</span>
-              <h2>Rules that fired</h2>
-            </div>
+            <h3 className="sub-h" style={{ marginTop: 0 }}>
+              Rules that actually fired
+            </h3>
             <p className="note" style={{ marginLeft: 0 }}>
-              Not a failure count. A strategy that never trips a limit either never pushed hard
+              Not a failure count — a strategy that never trips a limit either never pushed hard
               enough to reach one, or is not going through the gate at all.
             </p>
             {ruleRows.length > 0 ? (
@@ -448,13 +357,12 @@ export default function App() {
           </div>
 
           <div>
-            <div className="sec-head">
-              <span className="sec-num">07</span>
-              <h2>What kind of loss</h2>
-            </div>
+            <h3 className="sub-h" style={{ marginTop: 0 }}>
+              What can even be retried
+            </h3>
             <p className="note" style={{ marginLeft: 0 }}>
-              The loss type decides what recovery is even permitted. Nobody authorised an abandoned
-              checkout, and an invoice is not an instrument — so neither can be retried, by anyone.
+              Nobody authorised an abandoned checkout, and an invoice is not an instrument — so
+              neither can be retried, by anyone, ever.
             </p>
             <table className="ledger">
               <thead>
@@ -480,158 +388,58 @@ export default function App() {
             </table>
           </div>
         </div>
+
+        <p className="note" style={{ marginTop: 20 }}>
+          The full rule set — every retry timing, channel order and its written reasoning — is
+          the same file the agent runs on: <code>src/policies/playbook.ts</code>.
+        </p>
       </section>
 
-      <section id="playbook">
+      {/* ---------------------------------------------------------- 05 */}
+      <section id="rigor">
         <div className="sec-head">
-          <span className="sec-num">07b</span>
-          <h2>The whole playbook, in the open</h2>
+          <span className="sec-num">05</span>
+          <h2>Is that one lucky run, or a number we chose?</h2>
         </div>
         <p className="note">
-          These are the agent's actual rules, rendered from the same file it runs on. Nothing
-          about the policy is hidden in source: the retry timings, the channel order and the
-          written reasoning are all here.
+          Every figure above comes from one seeded cohort, and the headline metric prices customer
+          annoyance at ₹20 a point — a judgement call. Two checks, so neither has to be taken on
+          faith.
         </p>
-        <table className="ledger">
-          <thead>
-            <tr>
-              <th>Situation</th>
-              <th>Retries at</th>
-              <th>Channels, in order</th>
-              <th>Reasoning</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(bundle.playbooks).map(([cls, p]) => (
-              <tr key={cls}>
-                <td>
-                  <span className="name">
-                    <span>
-                      {CLASS_LABEL[cls] ?? cls}
-                      <small>{cls}</small>
-                    </span>
-                  </span>
-                </td>
-                <td className="money">
-                  {p.retryOffsetsHours.length
-                    ? p.retryOffsetsHours.map((h) => `+${h < 1 ? `${Math.round(h * 60)}m` : `${h}h`}`).join(', ')
-                    : 'never'}
-                </td>
-                <td className="money">{p.channelLadder.join(' → ') || 'none'}</td>
-                <td style={{ textAlign: 'left', whiteSpace: 'normal', color: 'var(--ink-2)', fontSize: 13 }}>
-                  {p.reasoning}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
 
-      <section id="trail">
-        <div className="sec-head">
-          <span className="sec-num">08</span>
-          <h2>The raw ledger, one case end to end</h2>
-        </div>
-        <p className="note">
-          The audit trail records what the agent did, what it was refused, and why. A blocked action
-          is evidence, not silence: it shows the rule that stopped it and where the work went next.
-        </p>
-        <AuditTrail entries={scenario.sampleAuditTrail} />
-      </section>
-
-      <section id="robust">
-        <div className="sec-head">
-          <span className="sec-num">09</span>
-          <h2>Did it just get lucky once?</h2>
-        </div>
-        <p className="note">
-          Every figure above comes from one seeded cohort, which invites the obvious question.
-          This reruns each scenario across many independent cohorts and reports the spread.
-        </p>
+        <h3 className="sub-h" style={{ marginTop: 0 }}>
+          Reran across 250 independent cohorts
+        </h3>
         <RobustnessSection data={bundle.robustness} />
-      </section>
 
-      <section id="sensitivity">
-        <div className="sec-head">
-          <span className="sec-num">10</span>
-          <h2>Does the answer depend on a number we chose?</h2>
-        </div>
+        <h3 className="sub-h">Swept the annoyance price, ₹0 to ₹100</h3>
         <SensitivitySection data={bundle.sensitivity} />
       </section>
 
+      {/* ---------------------------------------------------------- 06 */}
       <section id="live">
         <div className="sec-head">
-          <span className="sec-num">11</span>
-          <h2>The same agent, against the real Razorpay API</h2>
+          <span className="sec-num">06</span>
+          <h2>Does it run on the real Razorpay API?</h2>
         </div>
         <p className="note">
           Everything above runs on a simulator, because measurement needs cohorts nobody can pay
-          for by hand. This is the other half: the identical policy driving live API calls in
-          Razorpay test mode.
+          for by hand. This is the other half: the identical agent and guardrails driving live API
+          calls in Razorpay test mode — real orders, real payment links, and one genuine decline
+          captured by actually paying a test card and reading Razorpay's own error response back.
         </p>
         <LiveSection run={bundle.liveRun} decline={bundle.liveDecline} />
-      </section>
 
-      <section id="provenance">
-        <div className="sec-head">
-          <span className="sec-num">12</span>
-          <h2>What is real here, and what we made up</h2>
-        </div>
-        <p className="note">
-          Worth answering before anyone has to ask. Real failed-payment data is
-          merchant-confidential, so every transaction on this page is synthetic. What is not
-          invented is the vocabulary: these are Razorpay's own documented error codes, which
-          means this taxonomy would not need rewriting to point at a production webhook feed.
+        <p className="note" style={{ marginTop: 24 }}>
+          <b>What this page does not claim:</b> the numbers here are not a revenue forecast. All
+          transaction data is synthetic and seeded — real failed-payment data is
+          merchant-confidential — but the vocabulary is not invented: the 21 failure{' '}
+          <code>reason</code> codes are Razorpay's own, from their{' '}
+          <a href="https://razorpay.com/docs/errors/payments/cards/">card</a> and{' '}
+          <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. Everything
+          else — recovery curves, the cost model, the failure mix — is a stated assumption, listed
+          in <code>docs/SOURCES.md</code>.
         </p>
-        <div className="prov">
-          <div>
-            <h4>From Razorpay's documentation</h4>
-            <ul>
-              <li>
-                21 failure <code>reason</code> codes, cards and UPI —{' '}
-                <a href="https://razorpay.com/docs/errors/payments/cards/">cards</a>,{' '}
-                <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a>
-              </li>
-              <li>
-                The error structure — <code>code</code>, <code>description</code>,{' '}
-                <code>source</code>, <code>step</code>, <code>reason</code> —{' '}
-                <a href="https://razorpay.com/docs/errors/">error docs</a>
-              </li>
-              <li>The documented next step for each error</li>
-              <li>That UPI dominates Indian digital payments, hence the 68/32 mix</li>
-            </ul>
-          </div>
-          <div>
-            <h4>Our own assumptions</h4>
-            <ul>
-              <li>
-                Which of six recovery classes each reason maps to — reasoned from the documented
-                next steps, not measured
-              </li>
-              <li>Recovery-probability curves, one shape per class</li>
-              <li>Cost model, and the ₹20 annoyance price</li>
-              <li>The failure mix in each scenario</li>
-              <li>Nudge effectiveness per channel</li>
-            </ul>
-          </div>
-          <div>
-            <h4>What these numbers are not</h4>
-            <ul>
-              <li>
-                <strong>Not a revenue forecast.</strong> They compare policy quality on identical
-                cohorts with a fixed seed. Anyone claiming production rupees from synthetic data
-                would be overselling.
-              </li>
-              <li>
-                Every assumption is a named constant with a comment explaining it, listed in{' '}
-                <code>docs/SOURCES.md</code>.
-              </li>
-              <li>
-                Robustness: the agent wins 245 of 250 independently seeded cohorts, not 250 of 250.
-              </li>
-            </ul>
-          </div>
-        </div>
       </section>
 
       <footer>

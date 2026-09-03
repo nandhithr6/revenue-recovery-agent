@@ -110,11 +110,17 @@ body {
 
 .masthead {
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
   align-items: flex-end;
   justify-content: space-between;
   padding: 44px 0 18px;
   border-bottom: 2px solid var(--ink);
+}
+
+.masthead > div:first-child {
+  min-width: 0;
+  flex: 1 1 480px;
 }
 
 .eyebrow {
@@ -129,10 +135,11 @@ body {
 h1 {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(30px, 4.6vw, 46px);
-  line-height: 1.02;
+  font-size: clamp(26px, 4vw, 42px);
+  line-height: 1.08;
   letter-spacing: -0.015em;
   margin: 0;
+  overflow-wrap: break-word;
 }
 
 .standfirst {
