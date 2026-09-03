@@ -30,21 +30,28 @@ sought it — see the note at the end of this file on why we didn't try. But NPC
 (the body that runs UPI) publishes **aggregate, non-confidential, system-wide**
 failure statistics, and those are legitimate to cite:
 
-- **NPCI Operating Circular OC-149** (13 May 2022, addendum 15 June 2022) —
-  the official mandate to member banks. It defines the two failure categories
-  that matter here and sets targets for each:
+- **NPCI Operating Circular OC-149** (13 May 2022, addendum 15 June 2022) — the
+  official mandate to member banks. It defines the two failure categories that
+  matter here and sets targets for each:
   - **Technical Decline (TD)** — failure on the bank/NPCI infrastructure side
     (systems unavailable, network issues). Target: **below 1%**.
   - **Business Decline (BD)** — failure on the customer side (wrong PIN, invalid
     beneficiary, insufficient balance, limits exceeded). Target: **below 5%**.
-  - PDF: <https://www.npci.org.in/PDF/npci/upi/circular/2022/UPI-OC-149-Reduction-of-business-decline-in-UPI.pdf>
+  - We cite this circular by name and cannot link it directly: NPCI's own PDF
+    paths for it 404 or are blocked, and their circular index page returns
+    blank — checked with a real browser navigation on three separate URLs, not
+    assumed. The targets are independently reported in the sources below.
 - **Reported actual TD rate**: approximately **0.7–0.8%** of all UPI
-  transactions as of 2025, down from 8–10% in 2016 — attributed to NPCI via
-  reporting at <https://www.zeebiz.com/economy-infra/news-only-08-of-upi-transactions-face-technical-declines-now-npci-327217>.
+  transactions as of 2025, down from 8–10% in 2016, per NPCI MD & CEO Dilip
+  Asbe at the 11th SBI Banking & Economics Conclave (19 Nov 2024), PTI wire
+  report — <https://inc42.com/buzz/technical-glitches-on-upi-have-fallen-below-1/>.
+  This is the citation actually linked from the dashboard and from this
+  document; it is a named individual quoted by a wire service, not an
+  anonymous blog post.
 - NPCI also publishes live per-bank BD/TD figures at
   <https://www.npci.org.in/statistics/bd-td-and-uptime>, a JS-rendered dashboard
-  we could not scrape into a fixed citation; the OC-149 targets and the reported
-  TD figure above are what we cite instead.
+  we could not scrape into a fixed citation; the reported TD figure above is
+  what we cite instead.
 
 **What this does and does not let us claim.** NPCI's TD/BD framework covers only
 *completed-and-declined* transactions. Two of our six recovery classes fall

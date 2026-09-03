@@ -256,11 +256,11 @@ export default function App() {
         </p>
         <a
           className="cite-badge"
-          href="https://www.zeebiz.com/economy-infra/news-only-08-of-upi-transactions-face-technical-declines-now-npci-327217"
+          href="https://inc42.com/buzz/technical-glitches-on-upi-have-fallen-below-1/"
           target="_blank"
           rel="noreferrer"
         >
-          ↗ NPCI's CEO on UPI technical declines (PTI, via Zee Business) — 0.7–0.8% now, down
+          ↗ NPCI's CEO on UPI technical declines (PTI, via Inc42) — 0.7–0.8% now, down
           from 8–10% in 2016
         </a>
         <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
@@ -490,7 +490,7 @@ export default function App() {
           <a href="https://razorpay.com/docs/errors/payments/cards/">card</a> and{' '}
           <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. The failure
           mix isn't invented either, at least in shape:{' '}
-          <a href="https://www.zeebiz.com/economy-infra/news-only-08-of-upi-transactions-face-technical-declines-now-npci-327217">
+          <a href="https://inc42.com/buzz/technical-glitches-on-upi-have-fallen-below-1/">
             NPCI's own reported UPI decline rates
           </a>{' '}
           put technical declines under 1% and customer-side declines under 5% of all
