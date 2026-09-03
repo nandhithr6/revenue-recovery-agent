@@ -95,6 +95,102 @@ function outcomeText(entry: LiveFeedEntry): string {
   return 'Executed';
 }
 
+type StageStatus = 'done' | 'active' | 'skipped' | 'pending';
+
+interface PipelineStage {
+  readonly key: string;
+  readonly label: string;
+  readonly status: StageStatus;
+}
+
+/**
+ * The agent's own real decision path, rendered as a strip -- not a generic
+ * flowchart. Every stage's status is derived from this ONE real ledger
+ * entry's actual fields, nothing invented for the visual:
+ *
+ *   OBSERVE / ASSESS  -- always reached; there is no ledger entry without a
+ *                        case having been read and classified first.
+ *   CANDIDATES/SCORE  -- reached only when `entry.candidates` is present and
+ *                        non-empty. Absent means the decision short-circuited
+ *                        (a terminal rule, a voice-signal reaction, a
+ *                        promise window) -- genuinely nothing was priced,
+ *                        shown as SKIPPED rather than faked as reached.
+ *   GUARDRAIL         -- always evaluated; its own state colours the badge
+ *                        (allow / defer / block), shown via `entry.outcome`.
+ *   ACT / WAIT / STOP -- the actual `actionKind`, labelled dynamically.
+ *   OUTCOME           -- reached only when the action actually executed
+ *                        (`entry.outcome === 'executed'`); a blocked or
+ *                        deferred action has no outcome yet -- it is
+ *                        rescheduled or refused, not resolved -- so this
+ *                        stage stays PENDING, not falsely marked done.
+ */
+function pipelineStages(entry: LiveFeedEntry | undefined): readonly PipelineStage[] {
+  if (!entry) {
+    return [
+      { key: 'observe', label: 'OBSERVE', status: 'pending' },
+      { key: 'assess', label: 'ASSESS', status: 'pending' },
+      { key: 'candidates', label: 'CANDIDATES', status: 'pending' },
+      { key: 'score', label: 'SCORE', status: 'pending' },
+      { key: 'guardrail', label: 'GUARDRAIL', status: 'pending' },
+      { key: 'act', label: 'ACT', status: 'pending' },
+      { key: 'outcome', label: 'OUTCOME', status: 'pending' },
+    ];
+  }
+
+  const priced = !!entry.candidates && entry.candidates.length > 0;
+  const actLabel = entry.actionKind === 'wait' ? 'WAIT' : entry.actionKind === 'stop' ? 'STOP' : 'ACT';
+  const guardrailStatus: StageStatus =
+    entry.outcome === 'blocked' ? 'active' : entry.outcome === 'deferred' ? 'active' : 'done';
+  const actReached = entry.outcome === 'executed' || entry.outcome === 'stopped';
+  const outcomeReached = entry.outcome === 'executed';
+
+  return [
+    { key: 'observe', label: 'OBSERVE', status: 'done' },
+    { key: 'assess', label: 'ASSESS', status: 'done' },
+    { key: 'candidates', label: 'CANDIDATES', status: priced ? 'done' : 'skipped' },
+    { key: 'score', label: 'SCORE', status: priced ? 'done' : 'skipped' },
+    { key: 'guardrail', label: 'GUARDRAIL', status: guardrailStatus },
+    { key: 'act', label: actLabel, status: actReached ? (outcomeReached ? 'done' : 'active') : 'pending' },
+    { key: 'outcome', label: 'OUTCOME', status: outcomeReached ? 'active' : 'pending' },
+  ];
+}
+
+function DecisionPipeline({ entry }: { entry: LiveFeedEntry | undefined }) {
+  const stages = pipelineStages(entry);
+  // The current stage is whichever one is 'active', or the last 'done' one
+  // if the pipeline ran clean through to OUTCOME -- keep it in view on a
+  // narrow screen where all 7 stages don't fit at once, so a mobile viewer
+  // never has to manually scroll sideways mid-playback to see what's
+  // actually happening right now.
+  const activeRef = useRef<HTMLSpanElement>(null);
+  const highlightIdx = (() => {
+    const active = stages.findIndex((s) => s.status === 'active');
+    if (active >= 0) return active;
+    for (let i = stages.length - 1; i >= 0; i--) if (stages[i]!.status === 'done') return i;
+    return -1;
+  })();
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [entry?.seq, highlightIdx]);
+
+  return (
+    <div className="pipeline" role="img" aria-label="Decision pipeline stage">
+      {stages.map((s, i) => (
+        <div className="pipeline-stage-wrap" key={s.key}>
+          <span
+            ref={i === highlightIdx ? activeRef : undefined}
+            className={`pipeline-stage pipeline-${s.status}`}
+          >
+            {s.label}
+          </span>
+          {i < stages.length - 1 && <span className={`pipeline-connector pipeline-connector-${s.status}`} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /**
  * The economic reasoning behind the currently-playing decision: every
  * candidate the agent actually priced, its believed recovery, its cost, its
@@ -123,6 +219,7 @@ function CurrentDecision({
   if (!entry) {
     return (
       <div className="decision-panel">
+        <DecisionPipeline entry={undefined} />
         <div className="decision-head">
           <span className={`state-badge state-${state.key}`}>{state.label}</span>
           <span className="decision-case mono">—</span>
@@ -146,9 +243,14 @@ function CurrentDecision({
   const chosen = sorted?.find((c) => c.chosen);
   const runnerUp = sorted?.find((c) => !c.chosen);
   const gap = chosen && runnerUp ? chosen.expectedValuePaise - runnerUp.expectedValuePaise : 0;
+  // Bar width is relative to the best candidate's EV, floored at 0 -- a
+  // losing candidate with negative EV simply shows an empty bar rather than
+  // a bar reading the wrong direction.
+  const maxEv = sorted ? Math.max(...sorted.map((c) => c.expectedValuePaise), 1) : 1;
 
   return (
     <div className="decision-panel">
+      <DecisionPipeline entry={entry} />
       <div className="decision-head">
         <span className={`state-badge state-${state.key}`}>{state.label}</span>
         <span className="decision-case mono">{entry.caseId}</span>
@@ -175,7 +277,7 @@ function CurrentDecision({
                 <tbody>
                   {sorted.map((c, i) => (
                     <tr
-                      key={i}
+                      key={`${entry.seq}-${i}`}
                       className={c.chosen ? 'why-chosen' : c.dominated ? 'why-dominated' : undefined}
                     >
                       <td>
@@ -185,7 +287,15 @@ function CurrentDecision({
                       <td className="mono">{inr(c.grossRecoveryPaise)}</td>
                       <td className="mono">{inr(c.costPaise)}</td>
                       <td className="mono">{c.spamPoints}pt</td>
-                      <td className="mono why-net">{inr(c.expectedValuePaise)}</td>
+                      <td className="mono why-net">
+                        <span className="why-bar-wrap">
+                          <span
+                            className="why-bar-fill"
+                            style={{ width: `${Math.max(0, (c.expectedValuePaise / maxEv) * 100)}%` }}
+                          />
+                          <span className="why-bar-text">{inr(c.expectedValuePaise)}</span>
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -232,7 +342,16 @@ const SPEEDS = [
   { label: '60x', entriesPerTick: 60, tickMs: 120 },
 ] as const;
 
-export function LiveFeed({ entries }: { entries: readonly LiveFeedEntry[] }) {
+export function LiveFeed({
+  entries,
+  cohortSize,
+}: {
+  entries: readonly LiveFeedEntry[];
+  /** Total cases in this scenario's cohort -- for the "Case N / cohortSize"
+   *  counter. Purely a denominator for display; never used to derive any
+   *  number that feeds a metric. */
+  cohortSize: number;
+}) {
   const [shown, setShown] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speedIdx, setSpeedIdx] = useState(1);
@@ -295,6 +414,16 @@ export function LiveFeed({ entries }: { entries: readonly LiveFeedEntry[] }) {
 
   return (
     <div className="live-feed">
+      <div className="live-feed-status">
+        <span className={`agent-status ${playing ? 'agent-status-active' : done ? 'agent-status-done' : 'agent-status-idle'}`}>
+          <span className="agent-status-dot" aria-hidden="true" />
+          {playing ? 'AGENT ACTIVE' : done ? 'RUN COMPLETE' : 'IDLE'}
+        </span>
+        <span className="agent-case-counter">
+          Case <b>{stats.casesSeen.toLocaleString('en-IN')}</b>
+          <span className="agent-case-counter-of"> / {cohortSize.toLocaleString('en-IN')}</span>
+        </span>
+      </div>
       <div className="live-feed-stats">
         <div className="lf-stat">
           <span className="lf-k">Decisions played</span>

@@ -4,6 +4,7 @@ import { CaseInspector } from './CaseInspector';
 import { LiveFeed } from './LiveFeed';
 import { LiveSection, NoveltySection, RobustnessSection, SensitivitySection } from './Evidence';
 import { OutcomeBreakdown } from './OutcomeBreakdown';
+import { WhyAdaptive } from './WhyAdaptive';
 import { VoiceShowcase } from './VoiceShowcase';
 import { TimingRibbon, type ClassTrack } from './TimingRibbon';
 import type { Bundle, ScenarioResult } from './types';
@@ -209,7 +210,7 @@ export default function App() {
           payments one at a time: what it saw, what it decided, and whether a guardrail stepped
           in.
         </p>
-        <LiveFeed entries={scenario.liveFeed} />
+        <LiveFeed entries={scenario.liveFeed} cohortSize={scenario.cohort.count} />
 
         <VoiceShowcase data={bundle.voiceShowcase} />
 
@@ -260,48 +261,52 @@ export default function App() {
         </p>
         <TimingRibbon tracks={tracks} />
 
-        <div className="story">
-          <p>
-            <b>20:30</b> — a payment fails on a bank timeout.
-          </p>
-          <p>
-            <b>21:30</b> — the agent wants to reach the customer. Inside quiet hours, so the
-            guardrail refuses.
-          </p>
-          <p>
-            <b>09:00</b> — the message goes, first thing. Not dropped, queued — the ledger records
-            the rule that stopped it and the time it moved to.
-          </p>
-        </div>
+        <details className="why-panel">
+          <summary>Why this matters — a worked example and the source behind the failure mix</summary>
 
-        <h3 className="sub-h">This cohort's actual mix, checked against a real citation</h3>
-        <p className="note" style={{ marginLeft: 0 }}>
-          Of {scenario.cohort.count} cases in <b>{scenario.name}</b>: <b>{npciInfra}</b> technical
-          (bank/gateway down), <b>{npciBusiness}</b> business/customer-side (funds, auth, dead
-          instrument), <b>{npciAbandonment}</b> abandonment and <b>{npciHardDecline}</b> hard
-          decline. NPCI's own UPI framework covers only the first two —{' '}
-          <b>
-            {npciTechPct.toFixed(1)}% technical / {npciBizPct.toFixed(1)}% business-side
-          </b>{' '}
-          in this cohort — because abandonment isn't a decline at all and hard declines aren't
-          published under NPCI's Technical/Business Decline categories.
-        </p>
-        <a
-          className="cite-badge"
-          href="https://www.pib.gov.in/PressReleasePage.aspx?PRID=2114335"
-          target="_blank"
-          rel="noreferrer"
-        >
-          ↗ Government of India, Ministry of Finance — PIB press release, 24 Mar 2025 (Release
-          2114335): banks are paid only if technical decline stays under 0.75%
-        </a>
-        <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
-          Same direction as NPCI's target — business-side outweighs technical — but less skewed:
-          NPCI's own network runs at roughly 5-to-1 or steeper; this scenario computes to{' '}
-          <b>{npciRatio === null ? 'no technical cases to compare' : `${npciRatio.toFixed(1)}-to-1`}</b>,
-          live-computed and moving with the scenario picked above. We're stating that gap, not
-          closing it. Full reasoning in <code>docs/SOURCES.md</code>.
-        </p>
+          <div className="story">
+            <p>
+              <b>20:30</b> — a payment fails on a bank timeout.
+            </p>
+            <p>
+              <b>21:30</b> — the agent wants to reach the customer. Inside quiet hours, so the
+              guardrail refuses.
+            </p>
+            <p>
+              <b>09:00</b> — the message goes, first thing. Not dropped, queued — the ledger records
+              the rule that stopped it and the time it moved to.
+            </p>
+          </div>
+
+          <h3 className="sub-h">This cohort's actual mix, checked against a real citation</h3>
+          <p className="note" style={{ marginLeft: 0 }}>
+            Of {scenario.cohort.count} cases in <b>{scenario.name}</b>: <b>{npciInfra}</b> technical
+            (bank/gateway down), <b>{npciBusiness}</b> business/customer-side (funds, auth, dead
+            instrument), <b>{npciAbandonment}</b> abandonment and <b>{npciHardDecline}</b> hard
+            decline. NPCI's own UPI framework covers only the first two —{' '}
+            <b>
+              {npciTechPct.toFixed(1)}% technical / {npciBizPct.toFixed(1)}% business-side
+            </b>{' '}
+            in this cohort — because abandonment isn't a decline at all and hard declines aren't
+            published under NPCI's Technical/Business Decline categories.
+          </p>
+          <a
+            className="cite-badge"
+            href="https://www.pib.gov.in/PressReleasePage.aspx?PRID=2114335"
+            target="_blank"
+            rel="noreferrer"
+          >
+            ↗ Government of India, Ministry of Finance — PIB press release, 24 Mar 2025 (Release
+            2114335): banks are paid only if technical decline stays under 0.75%
+          </a>
+          <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
+            Same direction as NPCI's target — business-side outweighs technical — but less skewed:
+            NPCI's own network runs at roughly 5-to-1 or steeper; this scenario computes to{' '}
+            <b>{npciRatio === null ? 'no technical cases to compare' : `${npciRatio.toFixed(1)}-to-1`}</b>,
+            live-computed and moving with the scenario picked above. We're stating that gap, not
+            closing it. Full reasoning in <code>docs/SOURCES.md</code>.
+          </p>
+        </details>
       </section>
 
       {/* ---------------------------------------------------------- 02 */}
@@ -411,6 +416,11 @@ export default function App() {
           came, unsafe to push further (a dispute or an unresolved duplicate-debit check), or a real
           attempt that simply lost the odds. Full case-by-case breakdown below.
         </p>
+
+        <h3 className="sub-h" style={{ marginTop: 26 }}>
+          Same case, same randomness, different economics
+        </h3>
+        <WhyAdaptive cases={scenario.inspectableCases} />
 
         <p className="note" style={{ marginTop: 26 }}>
           The reason it wins: each baseline is fast <em>or</em> patient, never both. Naive retry
@@ -555,17 +565,19 @@ export default function App() {
         </p>
         <LiveSection run={bundle.liveRun} decline={bundle.liveDecline} />
 
-        <p className="note" style={{ marginTop: 24 }}>
-          <b>What this page does not claim:</b> the numbers here are not a revenue forecast. All
-          transaction data is synthetic and seeded — real failed-payment data is
-          merchant-confidential — but the vocabulary is not invented: the 34 failure{' '}
-          <code>reason</code> codes are Razorpay's own, from their{' '}
-          <a href="https://razorpay.com/docs/errors/payments/cards/">card</a> and{' '}
-          <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. The failure
-          mix isn't invented either — see the NPCI/PIB comparison in section 01. Everything finer
-          than that — recovery curves, the cost model, the exact weight of each reason — is a
-          stated assumption, listed in <code>docs/SOURCES.md</code>.
-        </p>
+        <details className="why-panel" style={{ marginTop: 24 }}>
+          <summary>What this page does not claim</summary>
+          <p className="note" style={{ marginLeft: 0 }}>
+            The numbers here are not a revenue forecast. All transaction data is synthetic and
+            seeded — real failed-payment data is merchant-confidential — but the vocabulary is not
+            invented: the 34 failure <code>reason</code> codes are Razorpay's own, from their{' '}
+            <a href="https://razorpay.com/docs/errors/payments/cards/">card</a> and{' '}
+            <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. The
+            failure mix isn't invented either — see the NPCI/PIB comparison in section 01.
+            Everything finer than that — recovery curves, the cost model, the exact weight of each
+            reason — is a stated assumption, listed in <code>docs/SOURCES.md</code>.
+          </p>
+        </details>
       </section>
 
       <footer>

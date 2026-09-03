@@ -377,20 +377,27 @@ export function LiveSection({
           </div>
 
           <p className="note" style={{ marginLeft: 0, marginTop: 20 }}>
-            <strong>This is not a measurement.</strong> Five hand-driven cases cannot support a
-            recovery rate; the statistics come from the seeded simulator. What this shows is that
-            the same policy drives real API calls — initial failure reasons are seeded here since
-            driving a browser per case isn't automatable, but every recovery <em>action</em> is a
-            real call. Test mode throughout; no money moved.
+            <strong>Not a measurement:</strong> five hand-driven cases cannot support a recovery
+            rate — the statistics come from the seeded simulator above. Test mode throughout; no
+            money moved.
           </p>
-          <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
-            <strong>Why voice never appears above:</strong> Razorpay's Payment Links API can notify
-            on email and WhatsApp, so there's a real endpoint to hit — it offers no outbound voice
-            calling at all, so this customer's consent is <code>voice: false</code> for the live
-            path and the agent never proposes it here. Voice stays simulated everywhere in this
-            project (<code>sim/voice-signal-model.ts</code>), not by choice but because there's
-            nothing to build against — and no paid third-party calling service is used either way.
-          </p>
+          <details className="why-panel" style={{ marginTop: 4 }}>
+            <summary>What this run does and doesn't prove, and why voice never appears here</summary>
+            <p className="note" style={{ marginLeft: 0 }}>
+              What this shows is that the same policy drives real API calls — initial failure
+              reasons are seeded here since driving a browser per case isn't automatable, but every
+              recovery <em>action</em> is a real call.
+            </p>
+            <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
+              <strong>Why voice never appears above:</strong> Razorpay's Payment Links API can
+              notify on email and WhatsApp, so there's a real endpoint to hit — it offers no
+              outbound voice calling at all, so this customer's consent is{' '}
+              <code>voice: false</code> for the live path and the agent never proposes it here.
+              Voice stays simulated everywhere in this project (
+              <code>sim/voice-signal-model.ts</code>), not by choice but because there's nothing to
+              build against — and no paid third-party calling service is used either way.
+            </p>
+          </details>
         </>
       )}
     </>

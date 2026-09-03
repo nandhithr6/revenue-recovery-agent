@@ -519,7 +519,7 @@ src/
   llm/         provider-agnostic client, schema validation
   eval/        engine, metrics, report, CLI
 docs/
-  adr/         six architecture decision records
+  adr/         nine architecture decision records
   SOURCES.md   what is real, what is assumed
   ENGINEERING-LOG.md
   PAYMENTS-PRIMER.md
