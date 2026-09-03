@@ -152,33 +152,20 @@ export default function App() {
         </div>
       </div>
 
-      <div className="scenarios" role="group" aria-label="Scenario">
-        {bundle.scenarios.map((s) => (
-          <button key={s.id} aria-pressed={s.id === scenario.id} onClick={() => setScenarioId(s.id)}>
-            {s.name}
-          </button>
-        ))}
-      </div>
-      <p className="scenario-line">
-        {scenario.description} <b>{scenario.cohort.count}</b> loss events,{' '}
-        <b>{lakh(scenario.cohort.totalAtRiskPaise)}</b> at risk. Seed <b>{scenario.seed}</b>.
-      </p>
+      <section id="watch" className="hero-card">
+        <div className="scenarios" role="group" aria-label="Scenario">
+          {bundle.scenarios.map((s) => (
+            <button key={s.id} aria-pressed={s.id === scenario.id} onClick={() => setScenarioId(s.id)}>
+              {s.name}
+            </button>
+          ))}
+        </div>
+        <p className="scenario-line">
+          {scenario.description} <b>{scenario.cohort.count}</b> loss events,{' '}
+          <b>{lakh(scenario.cohort.totalAtRiskPaise)}</b> at risk. Seed <b>{scenario.seed}</b>.
+        </p>
 
-      <nav className="railnav" aria-label="Sections">
-        <a href="#watch" className="railnav-live">
-          <span className="dot" aria-hidden />
-          Watch it work
-        </a>
-        <a href="#problem">01 The problem</a>
-        <a href="#results">02 Results</a>
-        <a href="#inspect">03 Inspect a case</a>
-        <a href="#guardrails">04 Guardrails</a>
-        <a href="#rigor">05 Is that real?</a>
-        <a href="#live">06 Live Razorpay</a>
-      </nav>
-
-      <section id="watch">
-        <div className="sec-head">
+        <div className="sec-head" style={{ marginTop: 26 }}>
           <span className="sec-num">LIVE</span>
           <h2>Watch the agent work through {scenario.name.toLowerCase()}</h2>
         </div>
@@ -189,6 +176,15 @@ export default function App() {
           in.
         </p>
         <LiveFeed entries={scenario.liveFeed} />
+
+        <nav className="railnav" aria-label="Jump to a section">
+          <a href="#problem">01 The problem</a>
+          <a href="#results">02 Results</a>
+          <a href="#inspect">03 Inspect a case</a>
+          <a href="#guardrails">04 Guardrails</a>
+          <a href="#rigor">05 Is that real?</a>
+          <a href="#live">06 Live Razorpay</a>
+        </nav>
       </section>
 
       {/* ---------------------------------------------------------- 01 */}

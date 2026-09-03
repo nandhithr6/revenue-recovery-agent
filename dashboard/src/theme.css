@@ -168,7 +168,7 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 22px 0 0;
+  margin: 0;
   width: fit-content;
 }
 
@@ -558,17 +558,16 @@ footer code {
  * one clear "pick a scenario" control up top, one quiet "jump to a section"
  * strip below it.
  */
+/* Quiet jump-to-section strip at the foot of the hero card -- not sticky, not
+   a second header. Just a way down off the live feed to the rest of the page. */
 .railnav {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 2px;
-  background: var(--paper);
-  padding: 10px 0;
-  margin: 4px 0 20px;
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+  margin-top: 26px;
 }
 
 .railnav a {
@@ -584,24 +583,6 @@ footer code {
 .railnav a:hover {
   color: var(--ink);
   background: var(--rule);
-}
-
-.railnav a.railnav-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--accent);
-  font-weight: 600;
-}
-.railnav a.railnav-live:hover {
-  background: var(--accent-soft);
-}
-.railnav a.railnav-live .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ef4444;
-  flex: none;
 }
 
 /* ------------------------------------------------ how it works */
