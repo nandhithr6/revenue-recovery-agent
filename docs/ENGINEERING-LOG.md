@@ -721,3 +721,58 @@ contacted), one proving -- against the real engine and ledger, not just
 the pricing layer -- that no ledger entry of any kind exists after the
 entry that actually recovered a case, across 40 varied real cases with a
 nonzero number of genuine recoveries among them.
+
+## 19. A general 2-step planner: tried, measured against a pre-registered bar, failed it, discarded
+
+The last open question from entries 16-18: does the channel-level
+lookahead principle generalise to the TOP-LEVEL choice itself (retry vs.
+contact vs. escalate vs. stop), not just to which contact channel to try
+first? Built as a genuinely isolated feasibility experiment, exactly as
+asked -- a separate strategy (`policies/adaptive-agent-2step.ts`,
+`agent-adaptive-2step-experimental`) that never touched
+`adaptive-agent.ts`, never entered `ACTION_REGISTRY`, `eval:all`,
+`eval:robust`, `eval:sensitivity`, or the dashboard bundle. For every
+top-level candidate, it back-derived a believed resolution probability
+from that candidate's own gross-recovery estimate, simulated the case one
+step further assuming that candidate failed (advancing time, appending a
+failed attempt to history, and repricing from there via the exact same
+`buildCandidates`), and blended the continuation value in.
+
+The bar was fixed BEFORE running it, not chosen afterward to fit whatever
+came out: keep it only if it produces a statistically meaningful net-value
+improvement while preserving or improving recovery, spend, annoyance, and
+compliance -- discard it otherwise. Ran a dedicated, isolated comparison
+script (`eval/experiment-2step.ts`, also not shipped) pairing the
+experimental agent against `agent-adaptive` on the IDENTICAL 250 seeded
+cohorts `eval:robust` uses (5 scenarios x 50 seeds x 500 cases), so the
+comparison is apples to apples, not cherry-picked.
+
+**Result: failed the bar on every axis that matters, not just one.**
+
+- Mean net-value delta: +Rs 990 -- inside the noise (paired t = 0.28,
+  nowhere near the p<0.05 threshold of ~1.96). Not a real effect.
+- Win rate: experimental wins 113/250 (45.2%), LOSES 135/250 (54%). It is
+  worse than the shipped agent more often than it is better.
+- Cost: Rs 3,872 to Rs 4,034 -- WORSE, not preserved.
+- Annoyance: 1,070 to 1,110 spam points -- WORSE, not preserved.
+- Recovery rate: 51.7% to 51.8% -- flat, no real gain to offset the losses
+  above.
+- One scenario (month-end-squeeze) shows a large, real regression: mean
+  delta -Rs 17,634, winning only 15/50 seeds.
+
+**Discarded.** Both files removed rather than merged, guarded behind a
+flag, or left half-integrated -- keeping code for a mechanism the data
+said no to would be exactly the kind of thing this log exists to prevent.
+The likely cause, consistent with entry 17's finding: back-deriving a
+resolution probability from a candidate's own gross-recovery number
+conflates "expected value of this path" with "probability this path
+terminates," which are not the same quantity, and a `2*HOUR` fixed
+resolution-time assumption for the continuation repricing does not fit
+every recovery class's own curve shape. A more careful version of this
+idea might exist, but it would need its own honest measurement before
+being trusted, exactly like this one got -- there is no shortcut where
+"the theory sounds right" substitutes for the full-cohort rerun.
+
+`agent-adaptive`, unmodified, remains the shipped policy. Its numbers
+(59.8% recovery, 91.3%+ lift over fixed dunning depending on which entry's
+regeneration is most recent) are untouched by this entry.
