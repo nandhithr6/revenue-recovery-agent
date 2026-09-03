@@ -1,17 +1,13 @@
 /*
- * Design direction: a clean, bright operations console.
- *
- * Earlier version was a dark accounting-ledger look. It read as murky and
- * hard to parse, so the surface flipped to a light, card-based, modern
- * dashboard: white cards on a soft grey canvas, one confident accent colour,
- * generous spacing. The one place that stays deliberately dark is the live
- * feed panel -- a terminal-style console is the right metaphor for "watch it
- * work," and the contrast against the bright page makes it the visual anchor.
+ * Design direction: a clean, bright operations console. Light mode only,
+ * deliberately -- one theme is one fewer thing to be confused by. The live
+ * feed panel stays dark on purpose: a terminal is the right metaphor for
+ * "watch it work," and the contrast against the bright page anchors it.
  *
  * Chart series values are the validated reference palette: the four categorical
  * slots clear the colourblind-separation, lightness-band, chroma and
- * normal-vision gates in both modes. The light-mode contrast warning on aqua and
- * yellow obliges visible direct labels, which every chart here carries.
+ * normal-vision gates. The contrast warning on aqua and yellow obliges visible
+ * direct labels, which every chart here carries.
  */
 
 :root {
@@ -48,54 +44,6 @@
   --display: 'Zilla Slab', Georgia, serif;
   --body: 'IBM Plex Sans', system-ui, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --paper: #0c0d13;
-    --paper-2: #15161f;
-    --surface: #15161f;
-    --rule: #262838;
-    --rule-strong: #383b52;
-    --ink: #f2f2f7;
-    --ink-2: #b4b7c8;
-    --ink-3: #7d8098;
-    --accent: #8b83f5;
-    --accent-ink: #0c0d13;
-    --accent-soft: #201e3d;
-    --night: #1c1e2c;
-
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --good-text: #34c759;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
-  }
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --paper: #0c0d13;
-  --paper-2: #15161f;
-  --surface: #15161f;
-  --rule: #262838;
-  --rule-strong: #383b52;
-  --ink: #f2f2f7;
-  --ink-2: #b4b7c8;
-  --ink-3: #7d8098;
-  --accent: #8b83f5;
-  --accent-ink: #0c0d13;
-  --accent-soft: #201e3d;
-  --night: #1c1e2c;
-
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-4: #c98500;
-  --good-text: #34c759;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -163,25 +111,6 @@ h1 {
   margin: 12px 0 0;
   max-width: 54ch;
   font-size: 15.5px;
-}
-
-.theme-toggle {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  background: var(--surface);
-  border: 1px solid var(--rule-strong);
-  border-radius: 999px;
-  padding: 8px 16px;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: var(--shadow);
-}
-.theme-toggle:hover {
-  color: var(--ink);
-  border-color: var(--accent);
 }
 
 /* ------------------------------------------------------- sections */
@@ -622,20 +551,24 @@ footer code {
 
 /* ------------------------------------------------- sticky nav */
 
+/*
+ * Deliberately plain -- this is a table of contents, not a second control
+ * bar. It used to be styled as a bordered pill card identical to .scenarios
+ * above it, which read as a confusing second header. Flat text links fix that:
+ * one clear "pick a scenario" control up top, one quiet "jump to a section"
+ * strip below it.
+ */
 .railnav {
   position: sticky;
-  top: 12px;
+  top: 0;
   z-index: 10;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  box-shadow: var(--shadow);
-  padding: 6px;
-  margin: 20px 0 24px;
-  width: fit-content;
+  align-items: center;
+  gap: 2px;
+  background: var(--paper);
+  padding: 10px 0;
+  margin: 4px 0 20px;
 }
 
 .railnav a {
@@ -643,14 +576,32 @@ footer code {
   font-size: 10.5px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--ink-2);
+  color: var(--ink-3);
   text-decoration: none;
-  padding: 7px 13px;
-  border-radius: 999px;
+  padding: 5px 10px;
+  border-radius: 6px;
 }
 .railnav a:hover {
-  color: var(--accent-ink);
-  background: var(--accent);
+  color: var(--ink);
+  background: var(--rule);
+}
+
+.railnav a.railnav-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.railnav a.railnav-live:hover {
+  background: var(--accent-soft);
+}
+.railnav a.railnav-live .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex: none;
 }
 
 /* ------------------------------------------------ how it works */

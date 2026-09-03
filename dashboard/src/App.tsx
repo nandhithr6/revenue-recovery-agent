@@ -48,20 +48,10 @@ const CLASS_NOTE: Record<string, string> = {
   HARD_DECLINE: 'stop — retrying is billed',
 };
 
-function useTheme(): [string, () => void] {
-  const [theme, setTheme] = useState('light');
-  useEffect(() => {
-    if (theme === 'system') delete document.documentElement.dataset['theme'];
-    else document.documentElement.dataset['theme'] = theme;
-  }, [theme]);
-  return [theme, () => setTheme((t) => (t === 'system' ? 'dark' : t === 'dark' ? 'light' : 'system'))];
-}
-
 export default function App() {
   const [bundle, setBundle] = useState<Bundle | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scenarioId, setScenarioId] = useState('baseline-week');
-  const [theme, cycleTheme] = useTheme();
 
   useEffect(() => {
     fetch('/all-results.json')
@@ -160,9 +150,6 @@ export default function App() {
             and stays inside hard compliance limits — with every decision written down.
           </p>
         </div>
-        <button className="theme-toggle" onClick={cycleTheme}>
-          {theme}
-        </button>
       </div>
 
       <div className="scenarios" role="group" aria-label="Scenario">
@@ -178,7 +165,10 @@ export default function App() {
       </p>
 
       <nav className="railnav" aria-label="Sections">
-        <a href="#watch">Watch it work</a>
+        <a href="#watch" className="railnav-live">
+          <span className="dot" aria-hidden />
+          Watch it work
+        </a>
         <a href="#problem">01 The problem</a>
         <a href="#results">02 Results</a>
         <a href="#inspect">03 Inspect a case</a>
@@ -266,12 +256,12 @@ export default function App() {
         </p>
         <a
           className="cite-badge"
-          href="https://www.npci.org.in/PDF/npci/upi/circular/2022/UPI-OC-149-Reduction-of-business-decline-in-UPI.pdf"
+          href="https://www.zeebiz.com/economy-infra/news-only-08-of-upi-transactions-face-technical-declines-now-npci-327217"
           target="_blank"
           rel="noreferrer"
         >
-          ↗ NPCI Circular OC-149 — Technical Decline &lt;1%, Business Decline &lt;5% of all UPI
-          transactions
+          ↗ NPCI's CEO on UPI technical declines (PTI, via Zee Business) — 0.7–0.8% now, down
+          from 8–10% in 2016
         </a>
         <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
           Same direction as NPCI's target — business-side outweighs technical — but less skewed:
@@ -500,8 +490,8 @@ export default function App() {
           <a href="https://razorpay.com/docs/errors/payments/cards/">card</a> and{' '}
           <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. The failure
           mix isn't invented either, at least in shape:{' '}
-          <a href="https://www.npci.org.in/PDF/npci/upi/circular/2022/UPI-OC-149-Reduction-of-business-decline-in-UPI.pdf">
-            NPCI's own UPI targets
+          <a href="https://www.zeebiz.com/economy-infra/news-only-08-of-upi-transactions-face-technical-declines-now-npci-327217">
+            NPCI's own reported UPI decline rates
           </a>{' '}
           put technical declines under 1% and customer-side declines under 5% of all
           transactions — business-side failures dominate by design. Restricted to the two classes
