@@ -209,3 +209,90 @@ describe('voice pricing uses the real cost/spam/landing constants, not invented 
     expect(voice!.action.rationale).toContain('voice');
   });
 });
+
+describe('cumulative annoyance across repeated contacts', () => {
+  it('prices the SAME channel choice as more annoying (in rupee-equivalent spam points) the more times this customer has already been contacted', () => {
+    const e = event({ reasonCode: 'card_expired' });
+    const freshCands = candidatesFor(e, { now: AT + 30 * 60_000 });
+    const freshWhatsapp = freshCands.find((c) => c.action.kind === 'contact_customer' && c.action.channel === 'whatsapp');
+    expect(freshWhatsapp).toBeDefined();
+
+    // A prior, already-executed contact on a DIFFERENT channel -- so
+    // whatsapp is still eligible, but `contactsSoFar` is now 1.
+    const priorHistory = [
+      {
+        at: AT,
+        action: { kind: 'contact_customer' as const, channel: 'email' as const, delayMs: 0, rationale: 'prior' },
+        succeeded: false,
+      },
+    ];
+    const wornCands = candidatesFor(e, { now: AT + 30 * 60_000, history: priorHistory, channelsUsed: ['email'] });
+    const wornWhatsapp = wornCands.find((c) => c.action.kind === 'contact_customer' && c.action.channel === 'whatsapp');
+    expect(wornWhatsapp).toBeDefined();
+
+    // Same channel, same case, same elapsed time -- the only thing that
+    // changed is contact history. The second contact must be priced as
+    // MORE annoying, not the same, or repeated outreach is silently free
+    // past the first message.
+    expect(wornWhatsapp!.spamPoints).toBeGreaterThan(freshWhatsapp!.spamPoints);
+  });
+});
+
+describe('no decision after recovery', () => {
+  // Structural, not a policy convention: `eval/engine.ts`'s own loop
+  // checks `if (recovered) { ...; break; }` immediately after every
+  // execution, before `decide()` can run again. This test exercises the
+  // real engine end-to-end (not just the pricing layer) to prove that
+  // guarantee, directly addressing "the agent must never attempt recovery
+  // on revenue that is already recovered."
+  it('leaves no ledger entry, of any kind, after the entry that recovered the case', async () => {
+    const { runCase } = await import('../eval/engine.js');
+    const { createAdaptiveAgent } = await import('./adaptive-agent.js');
+    const { Ledger } = await import('../ledger/ledger.js');
+    const { Rng } = await import('../sim/rng.js');
+
+    const agent = createAdaptiveAgent(DEFAULT_COSTS);
+    let recoveredCasesSeen = 0;
+
+    for (let seed = 1; seed <= 40; seed++) {
+      const e = event({
+        reasonCode: ['card_expired', 'insufficient_funds', 'payment_timed_out', 'bank_technical_error'][seed % 4],
+        amountPaise: 50_000 + seed * 10_000,
+        occurredAt: AT + seed * 3_600_000,
+      });
+      const ledger = new Ledger();
+      const result = runCase(e, agent, DEFAULT_COSTS, new Rng(seed), ledger);
+      if (!result.recovered) continue;
+      recoveredCasesSeen++;
+      expect(result.stoppedReason).toBe('recovered');
+
+      // The real, on-the-record evidence: the entry that actually
+      // recovered the case (an executed retry or contact that
+      // succeeded, worth the full case amount) must be the LAST entry
+      // for this case in the ledger -- not merely "the last one we
+      // happened to check," the literal final row. If the agent (or
+      // anything else) ever acted again after recovery, it would show up
+      // here as an entry that comes after this one.
+      // A "succeeded" contact does not always mean IT was the recovery
+      // (a landed nudge can succeed without the link-payment behind it
+      // landing too) -- but since the loop provably stops the instant
+      // recovery happens, the recovering entry is always the LAST
+      // matching one, never an earlier one. Search from the end.
+      const entries = ledger.forCase(e.id);
+      let recoveryIdx = -1;
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const en = entries[i]!;
+        if (en.outcome === 'executed' && en.succeeded === true && (en.actionKind === 'retry_payment' || en.actionKind === 'contact_customer')) {
+          recoveryIdx = i;
+          break;
+        }
+      }
+      expect(recoveryIdx).toBeGreaterThanOrEqual(0);
+      expect(entries.length).toBe(recoveryIdx + 1);
+    }
+
+    // Sanity: the fixture actually exercises real recoveries, not just an
+    // always-fails case that trivially never triggers the check.
+    expect(recoveredCasesSeen).toBeGreaterThan(0);
+  });
+});

@@ -93,6 +93,18 @@ const HUMAN_LAST_RESORT_ODDS = 0.05;
  */
 const ASSUMED_NUDGE_RESPONSE_DELAY_MS = 20 * 60_000;
 
+/**
+ * Each additional contact on the SAME case is believed to annoy the
+ * customer more than the last, not the same amount -- a third message in
+ * a week reads differently to the person receiving it than the first did.
+ * 1.4, not tuned to a target number: a round, stated assumption in the
+ * same spirit as `BELIEVED_ATTEMPT_FATIGUE` (0.68) it mirrors, just
+ * escalating instead of decaying. Applied to spam points, which are
+ * priced in rupees via `annoyancePricePaise` downstream, so this changes
+ * real economics, not just a display number.
+ */
+const ANNOYANCE_ESCALATION_PER_CONTACT = 1.4;
+
 function candidate(
   action: Action,
   grossRecoveryPaise: number,
@@ -237,7 +249,14 @@ function priceChannelAlone(
   );
   const grossRecoveryPaise = ctx.event.amountPaise * landingP * retryPAfterNudge;
   const costPaise = costs.contactCostPaise[channel];
-  const spamPoints = SPAM_POINTS[channel] ?? 0;
+  // A customer's third message is not merely as annoying as their first --
+  // `contactFatigue` above already prices repeated contact as less
+  // EFFECTIVE (lower landing odds); this prices it as more COSTLY too,
+  // reusing the same escalation shape in the other direction. Without
+  // this, the pricing under-counted the true annoyance of a long contact
+  // history: a channel's spam price was a flat per-channel constant no
+  // matter how many times this same customer had already been reached.
+  const spamPoints = (SPAM_POINTS[channel] ?? 0) * ANNOYANCE_ESCALATION_PER_CONTACT ** state.contactsSoFar;
   const annoyancePaise = spamPoints * annoyancePricePaise;
   return { channel, landingP, grossRecoveryPaise, costPaise, spamPoints, ownEvPaise: grossRecoveryPaise - costPaise - annoyancePaise };
 }

@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-09-03T15:43:04.178Z",
+  "generatedAt": "2026-09-03T16:04:42.763Z",
   "seeds": 50,
   "cohortSize": 500,
   "totalRuns": 250,
   "customStrategyWins": {
     "agent-rules": 46,
-    "agent-adaptive": 203
+    "agent-adaptive": 204
   },
-  "combinedCustomWins": 249,
+  "combinedCustomWins": 250,
   "totalViolations": 0,
   "scenarios": [
     {
@@ -119,22 +119,22 @@
           "strategyId": "agent-adaptive",
           "strategyName": "Adaptive agent",
           "netValue": {
-            "mean": 53436188.32,
-            "median": 50482007,
-            "p10": 42520104,
-            "p90": 65440778,
-            "min": 40486852,
-            "max": 122231929,
-            "stdDev": 13269425.276353788
+            "mean": 53819269.08,
+            "median": 51266323,
+            "p10": 42661062,
+            "p90": 65472044,
+            "min": 36363936,
+            "max": 118108247,
+            "stdDev": 12883619.515281713
           },
           "recoveryRate": {
-            "mean": 0.56936,
-            "median": 0.572,
-            "p10": 0.546,
+            "mean": 0.56796,
+            "median": 0.57,
+            "p10": 0.538,
             "p90": 0.598,
-            "min": 0.51,
-            "max": 0.62,
-            "stdDev": 0.024207238586835936
+            "min": 0.512,
+            "max": 0.614,
+            "stdDev": 0.022218874859002175
           },
           "wins": 39,
           "runs": 50,
@@ -218,7 +218,7 @@
             "max": 0.6,
             "stdDev": 0.020222759455623237
           },
-          "wins": 1,
+          "wins": 0,
           "runs": 50,
           "complianceViolations": 0
         },
@@ -243,7 +243,7 @@
             "max": 0.642,
             "stdDev": 0.021143320458244023
           },
-          "wins": 10,
+          "wins": 11,
           "runs": 50,
           "complianceViolations": 0
         },
@@ -251,22 +251,22 @@
           "strategyId": "agent-adaptive",
           "strategyName": "Adaptive agent",
           "netValue": {
-            "mean": 64626551.4,
-            "median": 65393442,
-            "p10": 51944353,
-            "p90": 79152400,
-            "min": 45943641,
-            "max": 98425565,
-            "stdDev": 11562655.996598285
+            "mean": 64961637.74,
+            "median": 63290058,
+            "p10": 51356398,
+            "p90": 82090267,
+            "min": 43994715,
+            "max": 103080549,
+            "stdDev": 11645247.115504993
           },
           "recoveryRate": {
-            "mean": 0.6602399999999997,
-            "median": 0.656,
-            "p10": 0.64,
-            "p90": 0.69,
-            "min": 0.62,
-            "max": 0.706,
-            "stdDev": 0.019031090352368146
+            "mean": 0.65912,
+            "median": 0.658,
+            "p10": 0.638,
+            "p90": 0.688,
+            "min": 0.616,
+            "max": 0.7,
+            "stdDev": 0.019096219521151293
           },
           "wins": 39,
           "runs": 50,
@@ -375,7 +375,7 @@
             "max": 0.526,
             "stdDev": 0.018993725279681184
           },
-          "wins": 2,
+          "wins": 1,
           "runs": 50,
           "complianceViolations": 0
         },
@@ -383,24 +383,24 @@
           "strategyId": "agent-adaptive",
           "strategyName": "Adaptive agent",
           "netValue": {
-            "mean": 54163925.62,
-            "median": 53085978,
-            "p10": 47573661,
-            "p90": 61086189,
-            "min": 42997731,
-            "max": 82009370,
-            "stdDev": 7505584.6735943975
+            "mean": 54257563.48,
+            "median": 54170361,
+            "p10": 45264885,
+            "p90": 63936955,
+            "min": 40604332,
+            "max": 82160140,
+            "stdDev": 8034556.983023068
           },
           "recoveryRate": {
-            "mean": 0.6001599999999999,
+            "mean": 0.5967999999999999,
             "median": 0.598,
-            "p10": 0.578,
+            "p10": 0.574,
             "p90": 0.628,
-            "min": 0.554,
-            "max": 0.658,
-            "stdDev": 0.020559533068627813
+            "min": 0.552,
+            "max": 0.648,
+            "stdDev": 0.021651789764358987
           },
-          "wins": 48,
+          "wins": 49,
           "runs": 50,
           "complianceViolations": 0
         }
@@ -507,7 +507,7 @@
             "max": 0.37,
             "stdDev": 0.02157776633481789
           },
-          "wins": 13,
+          "wins": 12,
           "runs": 50,
           "complianceViolations": 0
         },
@@ -515,24 +515,24 @@
           "strategyId": "agent-adaptive",
           "strategyName": "Adaptive agent",
           "netValue": {
-            "mean": 33689081.92,
-            "median": 32619866,
-            "p10": 26007390,
-            "p90": 41623187,
-            "min": 20388631,
-            "max": 61185036,
-            "stdDev": 7645813.905791932
+            "mean": 33428886.5,
+            "median": 32165974,
+            "p10": 26028569,
+            "p90": 38764920,
+            "min": 20484231,
+            "max": 72696352,
+            "stdDev": 9135996.570981195
           },
           "recoveryRate": {
-            "mean": 0.37571999999999994,
-            "median": 0.376,
-            "p10": 0.352,
+            "mean": 0.3751600000000001,
+            "median": 0.372,
+            "p10": 0.354,
             "p90": 0.404,
-            "min": 0.332,
-            "max": 0.432,
-            "stdDev": 0.020614596770249963
+            "min": 0.336,
+            "max": 0.434,
+            "stdDev": 0.020642054161347418
           },
-          "wins": 37,
+          "wins": 38,
           "runs": 50,
           "complianceViolations": 0
         }
@@ -639,7 +639,7 @@
             "max": 0.36,
             "stdDev": 0.017924106672300297
           },
-          "wins": 10,
+          "wins": 11,
           "runs": 50,
           "complianceViolations": 0
         },
@@ -647,24 +647,24 @@
           "strategyId": "agent-adaptive",
           "strategyName": "Adaptive agent",
           "netValue": {
-            "mean": 43895803.76,
-            "median": 42369703,
-            "p10": 32903935,
-            "p90": 58212431,
-            "min": 27999359,
-            "max": 71960928,
-            "stdDev": 9500434.153876355
+            "mean": 42803428,
+            "median": 42160493,
+            "p10": 32403360,
+            "p90": 57440565,
+            "min": 28800266,
+            "max": 63478401,
+            "stdDev": 8647212.71420461
           },
           "recoveryRate": {
-            "mean": 0.4034799999999999,
-            "median": 0.404,
-            "p10": 0.378,
-            "p90": 0.43,
-            "min": 0.358,
-            "max": 0.454,
-            "stdDev": 0.019492808930474847
+            "mean": 0.3906,
+            "median": 0.392,
+            "p10": 0.37,
+            "p90": 0.416,
+            "min": 0.356,
+            "max": 0.438,
+            "stdDev": 0.01777301325043112
           },
-          "wins": 40,
+          "wins": 39,
           "runs": 50,
           "complianceViolations": 0
         }

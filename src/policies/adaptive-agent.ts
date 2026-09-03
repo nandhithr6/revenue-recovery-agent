@@ -183,6 +183,19 @@ export function explain(
       return { assessment, state, action, candidates, shortCircuitReason: 'case-age horizon' };
     }
   }
+
+  // Tried and reverted: a "reprice at +24h, wait instead of stop if that
+  // looks better" rule. It was theoretically motivated (same shape of bug
+  // as entries 15-16, one level up) and passed every existing test, but
+  // the FULL cohort re-eval made net value after annoyance WORSE
+  // (Rs 5.36L -> Rs 5.08L), not better -- waiting consumed engine steps
+  // and case lifetime on cases where the lookahead's isolated repricing
+  // didn't reflect what actually happens when the case is genuinely still
+  // open (contact fatigue, attempt counts and the case-age horizon all
+  // interact with real elapsed history in ways the one-shot lookahead
+  // didn't capture). Measured, not assumed to be safe from the theory
+  // alone -- reverted because the data said no. See engineering log entry
+  // 17 for the full account, including the numbers.
   return { assessment, state, action: best.action, candidates };
 }
 
