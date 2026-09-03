@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { Paise } from '../domain/types.js';
 import { BASELINE_STRATEGIES } from '../policies/baselines.js';
 import { SPAM_POINT_PRICE_PAISE } from '../policies/playbook.js';
+import { createAdaptiveAgent } from '../policies/adaptive-agent.js';
 import { createRulesAgent } from '../policies/rules-agent.js';
 import type { Strategy } from '../policies/types.js';
 import { generateCohort } from '../sim/generator.js';
@@ -86,15 +87,21 @@ function sweep(scenarioId: string, adaptive: boolean): SweepResult {
       const strategies: readonly Strategy[] = [
         ...BASELINE_STRATEGIES,
         createRulesAgent(DEFAULT_COSTS, adaptive ? pricePaise : SPAM_POINT_PRICE_PAISE),
+        createAdaptiveAgent(DEFAULT_COSTS, adaptive ? pricePaise : SPAM_POINT_PRICE_PAISE),
       ];
 
+      let bestCustomValue = Number.NEGATIVE_INFINITY;
       for (const strategy of strategies) {
         const m = score(runCohort(events, strategy, DEFAULT_COSTS, seed + 1));
         const value = m.recoveredPaise - m.costPaise - m.spamPoints * pricePaise;
         totals.set(strategy.id, (totals.get(strategy.id) ?? 0) + value);
         names.set(strategy.id, strategy.name);
-        if (strategy.id === 'agent-rules') agentValues.push(value);
+        if (strategy.id.startsWith('agent-') && value > bestCustomValue) bestCustomValue = value;
       }
+      // Spread of the BETTER of our two strategies each seed -- with two custom
+      // strategies now in the field, tracking just one would understate how
+      // tight the actual result is, since the harness always reports the winner.
+      agentValues.push(bestCustomValue);
     }
 
     const byStrategy: Record<string, number> = {};
@@ -141,12 +148,24 @@ function printTable(headers: readonly string[], rows: readonly (readonly string[
 const lakh = (paise: number): string => `${(paise / 10_000_000).toFixed(2)}L`;
 const rupees = (paise: Paise): string => `Rs ${(paise / 100).toFixed(0)}`;
 
-const STRATEGY_ORDER = ['do-nothing', 'naive-retry', 'fixed-dunning', 'agent-rules'] as const;
-const STRATEGY_NAMES = ['Do nothing', 'Naive retry', 'Fixed dunning', 'Reason-aware agent'];
+const STRATEGY_ORDER = [
+  'do-nothing',
+  'naive-retry',
+  'fixed-dunning',
+  'agent-rules',
+  'agent-adaptive',
+] as const;
+const STRATEGY_NAMES = [
+  'Do nothing',
+  'Naive retry',
+  'Fixed dunning',
+  'Reason-aware agent',
+  'Adaptive agent',
+];
 
 function renderSweep(label: string, result: SweepResult): void {
   printTable(
-    [label, ...STRATEGY_NAMES, 'Winner', '+/- agent'],
+    [label, ...STRATEGY_NAMES, 'Winner', '+/- best'],
     result.points.map((p) => [
       rupees(p.pricePaise),
       ...STRATEGY_ORDER.map((id) => lakh(p.byStrategy[id] ?? 0)),

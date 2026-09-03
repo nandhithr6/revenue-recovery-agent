@@ -62,6 +62,18 @@ export interface LedgerEntry {
   spamPoints: number;
 }
 
+export interface CaseAssessment {
+  status: 'known' | 'inferred' | 'unknown';
+  recoveryClass?: string;
+  confidence: 'high' | 'medium' | 'low';
+  evidence: string[];
+  anomalies: string[];
+}
+
+export interface CustomerSignal {
+  kind: 'promise_to_pay' | 'funds_available_now' | 'instrument_fixed' | 'disputes_charge' | 'refused' | 'no_answer';
+}
+
 export interface AgentView {
   reasonCode?: string;
   derivedRecoveryClass: string;
@@ -75,6 +87,7 @@ export interface AgentView {
   consentedChannels: string[];
   dndRegistered: boolean;
   rulesAlreadyHit: string[];
+  assessment: CaseAssessment;
 }
 
 export interface TraceStep {
@@ -87,6 +100,8 @@ export interface TraceStep {
   succeeded?: boolean;
   costPaise: number;
   spamPoints: number;
+  signal?: CustomerSignal;
+  candidates?: CandidateSummary[];
 }
 
 export interface CaseTrace {
@@ -113,6 +128,17 @@ export interface InspectableCase {
   traces: CaseTrace[];
 }
 
+export interface CandidateSummary {
+  kind: string;
+  channel?: string;
+  grossRecoveryPaise: number;
+  costPaise: number;
+  spamPoints: number;
+  expectedValuePaise: number;
+  dominated?: boolean;
+  chosen: boolean;
+}
+
 export interface LiveFeedEntry {
   seq: number;
   caseId: string;
@@ -128,10 +154,14 @@ export interface LiveFeedEntry {
   costPaise: number;
   spamPoints: number;
   amountPaise: number;
+  method: string;
   reasonCode?: string;
   recoveryClass: string;
   lossType: string;
   isRecoveryMoment: boolean;
+  signal?: CustomerSignal;
+  /** The priced candidate comparison behind this decision -- see `eval/run-all.ts:candidateHook`. Absent for a short-circuited decision (a terminal rule, a voice-signal reaction, a promise window). */
+  candidates?: CandidateSummary[];
 }
 
 export interface ScenarioResult {
@@ -164,7 +194,8 @@ export interface Robustness {
   seeds: number;
   cohortSize: number;
   totalRuns: number;
-  agentWins: number;
+  customStrategyWins: Record<string, number>;
+  combinedCustomWins: number;
   totalViolations: number;
   scenarios: {
     scenarioId: string;
@@ -217,6 +248,36 @@ export interface LiveRun {
   }[];
 }
 
+/**
+ * NOVELTY / SAFETY ROBUSTNESS -- explicitly not the financial benchmark.
+ * Measures safe behaviour on hand-authored adversarial cases, never
+ * recovered revenue. See `eval/novelty.ts`.
+ */
+export interface Novelty {
+  generatedAt: string;
+  label: string;
+  totalCases: number;
+  safe: number;
+  unsafe: number;
+  complianceViolations: number;
+  guardrailBlocks: number;
+  results: {
+    id: string;
+    category: string;
+    description: string;
+    safe: boolean;
+    detail: string;
+  }[];
+}
+
+export interface VoiceShowcase {
+  scenarioId: string;
+  scenarioName: string;
+  event: InspectableCase['event'];
+  trace: CaseTrace;
+  source: 'naturally-occurring' | 'constructed-fixture';
+}
+
 export interface LiveDecline {
   generatedAt: string;
   paymentLinkId: string;
@@ -230,6 +291,8 @@ export interface Bundle {
   generatedAt: string;
   robustness: Robustness | null;
   sensitivity: Sensitivity | null;
+  novelty: Novelty | null;
+  voiceShowcase: VoiceShowcase | null;
   liveRun: LiveRun | null;
   liveDecline: LiveDecline | null;
   costModel: Record<string, unknown>;

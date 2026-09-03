@@ -1,4 +1,4 @@
-import type { ActionKind, Channel, Paise, Timestamp } from '../domain/types.js';
+import type { ActionKind, CandidateSummary, Channel, CustomerSignal, Paise, Timestamp } from '../domain/types.js';
 
 /**
  * Append-only audit ledger.
@@ -42,6 +42,16 @@ export interface LedgerEntry {
   readonly deferredTo: Timestamp | undefined;
   readonly costPaise: Paise;
   readonly spamPoints: number;
+  /** Set only for a voice contact that connected. */
+  readonly signal?: CustomerSignal;
+  /**
+   * The full priced candidate comparison behind this entry -- present ONLY
+   * when the engine was explicitly given a `candidateHook` (see
+   * `eval/engine.ts:runCase`), which no hot path (robustness, sensitivity,
+   * the financial benchmark's own cohort runs) ever does. Every ordinary
+   * ledger entry has none of this and costs nothing extra to produce.
+   */
+  readonly candidates?: readonly CandidateSummary[];
 }
 
 export type NewEntry = Omit<LedgerEntry, 'seq'>;

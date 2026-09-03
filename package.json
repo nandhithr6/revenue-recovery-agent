@@ -12,6 +12,7 @@
     "dashboard:build": "vite build",
     "eval:robust": "tsx src/eval/robustness.ts",
     "eval:sensitivity": "tsx src/eval/sensitivity.ts",
+    "eval:novelty": "tsx src/eval/novelty.ts",
     "live": "tsx src/live/run-live.ts",
     "decline:create": "tsx src/live/capture-decline.ts create",
     "decline:capture": "tsx src/live/capture-decline.ts capture"

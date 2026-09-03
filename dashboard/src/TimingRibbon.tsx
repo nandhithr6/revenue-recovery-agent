@@ -129,7 +129,7 @@ export function TimingRibbon({
                 </g>
               ))}
 
-                            {marks.length === 0 && (
+              {marks.length === 0 && (
                 <line
                   x1={plotL}
                   y1={y}

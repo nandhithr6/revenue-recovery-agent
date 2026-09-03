@@ -1,6 +1,17 @@
 import { lookupReason } from '../domain/failure-taxonomy.js';
-import { HOUR, type Action, type Channel, type Paise, type Timestamp } from '../domain/types.js';
+import {
+  HOUR,
+  type Action,
+  type CandidateSummary,
+  type Channel,
+  type CustomerSignal,
+  type Paise,
+  type Timestamp,
+} from '../domain/types.js';
+import { assess, type CaseAssessment } from '../policies/assessment.js';
 import type { CaseContext } from '../policies/types.js';
+
+export type { CandidateSummary };
 
 /**
  * Decision traces.
@@ -39,6 +50,14 @@ export interface AgentView {
   readonly dndRegistered: boolean;
   /** Guardrail rules already hit on this case, which the policy can read. */
   readonly rulesAlreadyHit: readonly string[];
+  /**
+   * `CaseAssessment` recomputed independently for display -- same
+   * deterministic function every strategy that uses it calls, not something
+   * only `agent-adaptive` sees. Shown here regardless of which strategy
+   * produced this step, so a reader can compare "what the case actually was"
+   * against what a non-adaptive strategy did with it.
+   */
+  readonly assessment: CaseAssessment;
 }
 
 export interface TraceVerdict {
@@ -64,6 +83,16 @@ export interface TraceStep {
   readonly succeeded?: boolean;
   readonly costPaise: Paise;
   readonly spamPoints: number;
+  /** Set only when this step was a voice contact that connected. */
+  readonly signal?: CustomerSignal;
+  /**
+   * The full priced candidate comparison behind this decision -- present
+   * only when the engine was given a `candidateHook` (see `runCase`) and
+   * that hook actually priced something (absent for a short-circuit like a
+   * terminal rule or a voice-signal stop, where there was nothing to
+   * compare; see `policies/adaptive-agent.ts:Explanation`).
+   */
+  readonly candidates?: readonly CandidateSummary[];
 }
 
 export interface CaseTrace {
@@ -100,6 +129,7 @@ export function captureView(ctx: CaseContext): AgentView {
     consentedChannels: consented,
     dndRegistered: event.customer.dndRegistered,
     rulesAlreadyHit: [...rules],
+    assessment: assess(ctx),
   };
 }
 

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { Paise } from '../domain/types.js';
 import { BASELINE_STRATEGIES } from '../policies/baselines.js';
 import { createRulesAgent } from '../policies/rules-agent.js';
+import { createAdaptiveAgent } from '../policies/adaptive-agent.js';
 import type { Strategy } from '../policies/types.js';
 import { generateCohort } from '../sim/generator.js';
 import { DEFAULT_COSTS, SCENARIO_IDS, getScenario } from '../sim/scenario.js';
@@ -170,6 +171,7 @@ async function main(): Promise<void> {
   const strategies: readonly Strategy[] = [
     ...BASELINE_STRATEGIES,
     createRulesAgent(DEFAULT_COSTS),
+    createAdaptiveAgent(DEFAULT_COSTS),
   ];
 
   const started = Date.now();
@@ -197,33 +199,52 @@ async function main(): Promise<void> {
     console.log('');
   }
 
-  // The headline: one number that answers "did you get lucky?"
+  // The headline: one number that answers "did you get lucky?" Reported per
+  // strategy id present, not hardcoded to one -- a second custom strategy
+  // (agent-adaptive) joined after this was first written, and a hardcoded id
+  // here would have silently kept reporting the wrong one's win rate.
   const totalRuns = scenarios.reduce((n, s) => n + s.seeds, 0);
-  const agentWins = scenarios.reduce(
-    (n, s) => n + (s.strategies.find((x) => x.strategyId === 'agent-rules')?.wins ?? 0),
-    0,
-  );
+  const winsById = (id: string): number =>
+    scenarios.reduce((n, s) => n + (s.strategies.find((x) => x.strategyId === id)?.wins ?? 0), 0);
   const totalViolations = scenarios.reduce(
     (n, s) => n + s.strategies.reduce((m, x) => m + x.complianceViolations, 0),
     0,
   );
 
-  console.log('=== Overall ===');
-  console.log(
-    `Reason-aware agent posted the highest net value in ${agentWins} of ${totalRuns} independent cohorts` +
-      ` (${((agentWins / totalRuns) * 100).toFixed(1)}%)`,
+  const customStrategyIds = [...new Set(scenarios.flatMap((s) => s.strategies.map((x) => x.strategyId)))].filter(
+    (id) => id.startsWith('agent-'),
   );
+  const combinedCustomWins = customStrategyIds.reduce((n, id) => n + winsById(id), 0);
+
+  console.log('=== Overall ===');
+  for (const id of customStrategyIds) {
+    const wins = winsById(id);
+    const name = scenarios[0]?.strategies.find((x) => x.strategyId === id)?.strategyName ?? id;
+    console.log(
+      `${name} posted the highest net value in ${wins} of ${totalRuns} independent cohorts` +
+        ` (${((wins / totalRuns) * 100).toFixed(1)}%)`,
+    );
+  }
+  if (customStrategyIds.length > 1) {
+    console.log(
+      `Combined (either of our own strategies beat every baseline): ${combinedCustomWins} of ${totalRuns}` +
+        ` (${((combinedCustomWins / totalRuns) * 100).toFixed(1)}%)`,
+    );
+  }
   console.log(`Compliance violations across every strategy and every run: ${totalViolations}`);
 
-  const losses = scenarios.filter((s) => {
-    const agent = s.strategies.find((x) => x.strategyId === 'agent-rules');
-    return agent ? agent.wins < agent.runs : false;
-  });
-  if (losses.length > 0) {
-    console.log('\nScenarios where the agent did not win every run:');
-    for (const s of losses) {
-      const agent = s.strategies.find((x) => x.strategyId === 'agent-rules')!;
-      console.log(`  ${s.scenarioName}: won ${agent.wins}/${agent.runs}`);
+  for (const id of customStrategyIds) {
+    const name = scenarios[0]?.strategies.find((x) => x.strategyId === id)?.strategyName ?? id;
+    const losses = scenarios.filter((s) => {
+      const strat = s.strategies.find((x) => x.strategyId === id);
+      return strat ? strat.wins < strat.runs : false;
+    });
+    if (losses.length > 0) {
+      console.log(`\n${name} did not win every run:`);
+      for (const s of losses) {
+        const strat = s.strategies.find((x) => x.strategyId === id)!;
+        console.log(`  ${s.scenarioName}: won ${strat.wins}/${strat.runs}`);
+      }
     }
   }
 
@@ -237,7 +258,8 @@ async function main(): Promise<void> {
         seeds,
         cohortSize: COHORT_SIZE,
         totalRuns,
-        agentWins,
+        customStrategyWins: Object.fromEntries(customStrategyIds.map((id) => [id, winsById(id)])),
+        combinedCustomWins,
         totalViolations,
         scenarios,
       },

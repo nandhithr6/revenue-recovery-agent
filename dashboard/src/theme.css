@@ -4,30 +4,38 @@
  * feed panel stays dark on purpose: a terminal is the right metaphor for
  * "watch it work," and the contrast against the bright page anchors it.
  *
+ * Accent is a payments-fintech blue -- evoking the track this was built for
+ * without copying any specific brand's exact hex values or assets; the page
+ * carries no logo or wordmark that isn't its own.
+ *
  * Chart series values are the validated reference palette: the four categorical
  * slots clear the colourblind-separation, lightness-band, chroma and
  * normal-vision gates. The contrast warning on aqua and yellow obliges visible
- * direct labels, which every chart here carries.
+ * direct labels, which every chart here carries. Series colours are left
+ * untouched by the accent change above -- they are validated data-viz
+ * colours, not brand chrome, and re-picking them without re-validating the
+ * colourblind gates would be a real regression, not a refresh.
  */
 
 :root {
   color-scheme: light;
 
-  --paper: #f4f5f9;
+  --paper: #f5f7fb;
   --paper-2: #ffffff;
   --surface: #ffffff;
-  --rule: #e6e8f0;
-  --rule-strong: #d3d7e4;
-  --ink: #14151f;
-  --ink-2: #565a72;
-  --ink-3: #8a8fa3;
+  --rule: #e3e8f2;
+  --rule-strong: #cdd6e8;
+  --ink: #0d1526;
+  --ink-2: #4c5670;
+  --ink-3: #8590a8;
 
-  --accent: #4f46e5;
+  --accent: #1655d1;
   --accent-ink: #ffffff;
-  --accent-soft: #eef0ff;
+  --accent-soft: #e9f0ff;
+  --accent-strong: #0d3ea3;
 
   /* Quiet hours: the band where the agent is not allowed to speak. */
-  --night: #e3e6f5;
+  --night: #e2e7f5;
 
   --series-1: #2a78d6;
   --series-2: #eb6834;
@@ -38,7 +46,7 @@
   --good-text: #0a7d0a;
   --critical: #d03b3b;
 
-  --shadow: 0 1px 2px rgba(20, 21, 31, 0.04), 0 8px 24px rgba(20, 21, 31, 0.06);
+  --shadow: 0 1px 2px rgba(13, 21, 38, 0.05), 0 8px 24px rgba(13, 21, 38, 0.07);
   --radius: 14px;
 
   --display: 'Zilla Slab', Georgia, serif;
@@ -60,15 +68,33 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Laptop/monitor sizes read as too large at native 100% -- `zoom` (not
+ * `transform: scale`) shrinks the whole page AND reflows layout at the
+ * smaller size, so nothing needs separate mobile-style breakpoints for it.
+ * Gated to wider viewports only; phones keep their own natural scale.
+ */
+@media (min-width: 768px) {
+  body {
+    zoom: 0.8;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
 .sheet {
-  max-width: 1080px;
+  max-width: 1760px;
   margin: 0 auto;
-  padding: 0 28px 96px;
+  padding: 0 56px 96px;
+}
+
+@media (max-width: 900px) {
+  .sheet {
+    padding: 0 28px 96px;
+  }
 }
 
 /* ------------------------------------------------------- masthead */
@@ -195,10 +221,19 @@ h2 {
   color: var(--accent-ink);
 }
 
+.scenario-tagline {
+  font-family: var(--display);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 14px 0 0;
+}
+
 .scenario-line {
   color: var(--ink-2);
-  margin: 16px 0 0;
+  margin: 5px 0 0;
   max-width: 80ch;
+  font-size: 13px;
 }
 .scenario-line b {
   color: var(--ink);
@@ -251,8 +286,16 @@ h2 {
 
 /* --------------------------------------------------- ledger rows */
 
+/* Wide tables (the sensitivity sweep runs to 10 columns) scroll inside their
+ * own box on a narrow viewport rather than forcing the whole page wide. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .ledger {
   width: 100%;
+  min-width: max-content;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
@@ -347,6 +390,14 @@ h2 {
 }
 .fig:last-child {
   border-right: none;
+}
+
+.fig-lead .k {
+  color: var(--accent);
+}
+.fig-lead .v {
+  font-size: 44px;
+  color: var(--accent-strong);
 }
 
 .fig .k {
@@ -486,6 +537,29 @@ svg text {
   color: var(--series-4);
 }
 .tag.blocked {
+  border-color: var(--critical);
+  color: var(--critical);
+}
+
+.assess-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-2);
+}
+.assess-badge.assess-known {
+  border-color: var(--good);
+  color: var(--good-text);
+}
+.assess-badge.assess-inferred {
+  border-color: var(--series-4);
+  color: var(--series-4);
+}
+.assess-badge.assess-unknown {
   border-color: var(--critical);
   color: var(--critical);
 }
@@ -991,30 +1065,30 @@ footer code {
 
 .live-feed-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .lf-stat {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   background: var(--paper-2);
   border: 1px solid var(--rule);
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 9px 12px;
 }
 .lf-k {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 9.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 .lf-v {
   font-family: var(--display);
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -1104,14 +1178,21 @@ footer code {
   50% { opacity: 0.35; transform: scale(0.75); }
 }
 
+/*
+ * A fixed `height`, not `max-height`: the box is exactly this tall from the
+ * very first frame, whether it holds zero rows (idle) or a full window of
+ * them, so revealing rows never grows the box and never pushes the rest of
+ * the hero down. Rows scroll inside it instead.
+ */
 .live-feed-panel {
   background: #0b0c14;
-  border-radius: 12px;
-  padding: 6px 0;
-  max-height: 520px;
+  border-radius: 0 0 12px 12px;
+  padding: 4px 0;
+  height: 280px;
   overflow-y: auto;
+  overflow-x: hidden;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 .lf-empty {
@@ -1122,14 +1203,24 @@ footer code {
   font-family: var(--body);
 }
 
+/*
+ * `min-width: 0` on every cell overrides the grid-item default of
+ * `min-width: auto`, which otherwise refuses to shrink a cell below its
+ * text's natural (unwrapped) width -- that's what let a long action/outcome
+ * string silently push the row wider than its box at in-between viewport
+ * widths, with nothing to clip or scroll to it since only the vertical axis
+ * scrolls here. With this, `overflow: hidden` + `text-overflow: ellipsis`
+ * on each cell actually get a chance to fire instead.
+ */
 .lf-row {
   display: grid;
-  grid-template-columns: 92px 92px 76px 1fr 1.3fr 1.4fr;
+  grid-template-columns: 84px 82px 72px 1fr 1.2fr;
+  grid-template-areas: "time case amt action outcome";
   gap: 10px;
   align-items: center;
-  padding: 7px 16px;
+  padding: 6px 14px;
   border-left: 3px solid transparent;
-  color: #d7d9ea;
+  color: #9599b3;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -1138,13 +1229,18 @@ footer code {
 .lf-row.lf-blocked { border-left-color: #ef4444; }
 .lf-row.lf-stopped { border-left-color: #4d5170; }
 
-.lf-time { color: #6b7086; }
-.lf-case { color: #9296b3; }
-.lf-amt { color: #f2f2f7; font-weight: 600; }
-.lf-reason { color: #8b83f5; overflow: hidden; text-overflow: ellipsis; }
-.lf-action { color: #d7d9ea; overflow: hidden; text-overflow: ellipsis; }
+.lf-time, .lf-case, .lf-amt, .lf-action, .lf-outcome {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.lf-outcome { text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.04em; overflow: hidden; text-overflow: ellipsis; }
+.lf-time { grid-area: time; color: #6b7086; }
+.lf-case { grid-area: case; color: #8286a0; }
+.lf-amt { grid-area: amt; color: #dcdde8; font-weight: 600; }
+.lf-action { grid-area: action; color: #b3b6cc; }
+
+.lf-outcome { grid-area: outcome; text-transform: uppercase; font-size: 10px; letter-spacing: 0.04em; }
 .lf-outcome.lf-executed { color: #34c759; }
 .lf-outcome.lf-deferred { color: #eda100; }
 .lf-outcome.lf-blocked { color: #ef4444; }
@@ -1153,8 +1249,12 @@ footer code {
 @media (max-width: 760px) {
   .lf-row {
     grid-template-columns: 1fr 1fr;
-    grid-template-areas: "time case" "amt reason" "action outcome";
+    grid-template-areas: "time case" "amt amt" "action outcome";
     white-space: normal;
+    row-gap: 3px;
+  }
+  .lf-time, .lf-case, .lf-amt, .lf-action, .lf-outcome {
+    white-space: nowrap;
   }
 }
 
@@ -1177,4 +1277,364 @@ footer code {
 .cite-badge:hover {
   background: var(--accent);
   color: var(--accent-ink);
+}
+
+/* -------------------------------------------------- real vs simulated */
+
+.live-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--good-text);
+  background: #e3f6e3;
+  border-radius: 999px;
+  padding: 3px 8px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.live-badge-sim {
+  color: var(--ink-2);
+  background: var(--rule);
+  margin-left: 0;
+  margin-right: 6px;
+}
+
+/* -------------------------------------------------- voice showcase */
+
+.showcase-card {
+  margin-top: 22px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.showcase-toggle {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink-1);
+}
+.showcase-toggle:hover {
+  background: var(--accent-soft);
+}
+.showcase-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.showcase-badge-sim {
+  border-color: var(--rule-strong);
+  color: var(--ink-3);
+}
+.showcase-title {
+  font-weight: 500;
+}
+.showcase-chevron {
+  margin-left: auto;
+  font-family: var(--mono);
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+.showcase-collapsed-line {
+  margin: 0 16px 14px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.showcase-body {
+  padding: 4px 16px 18px;
+  border-top: 1px solid var(--rule-strong);
+}
+.showcase-voice-step {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* -------------------------------------------------- current decision */
+
+/*
+ * `.decision-body` sets a fixed min-height shared by every state it can be
+ * in -- idle, short-circuit, or a full candidate table -- so switching
+ * between them (which happens every ~200ms during playback) never changes
+ * the panel's height and never pushes the page. The candidate table itself
+ * additionally caps at a fixed max-height with internal scroll
+ * (`.decision-table-wrap`), because the number of candidates varies
+ * case-to-case (2 to 7); scrolling inside a fixed box beats a box that
+ * grows and shrinks every tick.
+ */
+.decision-panel {
+  background: var(--paper-2);
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  padding: 18px 20px;
+  overflow-x: hidden;
+  min-width: 0;
+}
+.decision-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  /* Reserves room for a 2-line wrap (long case id + amount + method +
+     reason on a narrow panel) so wrapping doesn't change the panel's total
+     height case to case -- same reasoning as `.decision-body`'s fixed
+     height and `.decision-foot`'s min-height below. 56px, not 44: measured
+     live across real reason codes, a long one (e.g.
+     `payment_collect_request_expired`) genuinely wraps to two lines at
+     44px's floor, which is exactly the kind of case-to-case height
+     difference this rule exists to prevent. */
+  min-height: 56px;
+}
+.state-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: var(--ink-2);
+  background: var(--rule);
+  flex-shrink: 0;
+}
+.state-badge.state-waiting { color: var(--ink-3); background: var(--rule); }
+.state-badge.state-executed { color: var(--accent); background: var(--accent-soft); }
+.state-badge.state-recovered { color: var(--good-text); background: #e3f6e3; }
+.state-badge.state-replanning { color: var(--accent-strong); background: var(--accent-soft); }
+.state-badge.state-no-effect { color: var(--ink-2); background: var(--rule); }
+.state-badge.state-deferred { color: var(--series-4); background: #fdf1dc; }
+.state-badge.state-blocked { color: var(--critical); background: #fbe4e4; }
+.state-badge.state-stopped { color: var(--ink-3); background: var(--rule); }
+
+.decision-case {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.decision-meta {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/*
+ * A fixed `height`, not `min-height`: text length varies per case (the
+ * rationale sentence, the counterfactual line, the expected-recovery
+ * caption all differ in how many lines they wrap to), and a min-height
+ * floor lets content past it change the box's real height every tick --
+ * exactly the jump this panel exists to prevent. Fixed height + one
+ * internal scroll covering the whole body (table AND the notes below it)
+ * means the box is the same height in literally every state, and any case
+ * with unusually long text just scrolls instead of growing the page.
+ */
+.decision-body {
+  display: flex;
+  flex-direction: column;
+  height: 300px;
+  overflow-y: auto;
+  justify-content: flex-start;
+}
+.decision-body-idle {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.decision-idle-text {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--ink-3);
+  font-size: 14px;
+}
+.decision-shortcircuit {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.decision-table-wrap {
+  flex-shrink: 0;
+}
+.decision-table-caption {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+.decision-why {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.decision-why-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-right: 6px;
+}
+.decision-counterfactual {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.decision-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px 28px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  /* Guardrail/outcome sentences vary a lot in length (a deferral names a
+     rule and a reschedule time, a plain "Allowed to run" doesn't) and can
+     wrap to a second line -- reserve room for the worst case so that
+     doesn't change the panel's total height. */
+  min-height: 78px;
+}
+.decision-foot-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 13px;
+  color: var(--ink);
+  min-width: 0;
+  max-width: 100%;
+}
+.decision-foot-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------- activity stream */
+
+.lf-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.lf-main > * {
+  min-width: 0;
+}
+
+.activity-stream {
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.activity-stream-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 9px 14px;
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+}
+.activity-stream-sub {
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.why-table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.why-table th {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-align: right;
+  padding: 0 0 6px 10px;
+  border-bottom: 1px solid var(--rule-strong);
+  white-space: nowrap;
+}
+.why-table th:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+.why-table td {
+  padding: 7px 0 7px 10px;
+  border-bottom: 1px solid var(--rule);
+  text-align: right;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.why-table td:first-child {
+  text-align: left;
+  padding-left: 0;
+  white-space: normal;
+  font-family: var(--body);
+}
+.why-table tr:last-child td {
+  border-bottom: none;
+}
+.why-table tr.why-dominated {
+  color: var(--ink-3);
+  opacity: 0.65;
+}
+.why-table tr.why-chosen {
+  background: var(--accent-soft);
+}
+.why-table tr.why-chosen td:first-child {
+  font-weight: 600;
+  color: var(--accent);
+  border-radius: 8px 0 0 8px;
+}
+.why-table tr.why-chosen td.why-net {
+  font-weight: 600;
+  color: var(--good-text);
+  border-radius: 0 8px 8px 0;
+}
+.why-note {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+.why-table-compact {
+  min-width: 360px;
+  margin-top: 4px;
+}
+.why-table-compact th,
+.why-table-compact td {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 12px;
 }

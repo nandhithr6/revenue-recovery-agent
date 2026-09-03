@@ -99,7 +99,10 @@ describe('B2B receivables', () => {
         ],
       }),
     );
-    expect(action.kind).toBe('stop');
+    // Regression: this used to return `stop`, which does not mean "pause" --
+    // it ends the case on the spot. A promise not yet broken must WAIT until
+    // it is due, then come back, not vanish.
+    expect(action.kind).toBe('wait');
     expect(action.rationale).toContain('commitment');
   });
 

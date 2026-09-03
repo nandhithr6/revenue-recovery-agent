@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { GroupedBars, HorizontalBars, Legend, seriesColor } from './charts';
+import { GroupedBars, HorizontalBars, Legend, strategyColor } from './charts';
 import { CaseInspector } from './CaseInspector';
 import { LiveFeed } from './LiveFeed';
-import { LiveSection, RobustnessSection, SensitivitySection } from './Evidence';
+import { LiveSection, NoveltySection, RobustnessSection, SensitivitySection } from './Evidence';
+import { VoiceShowcase } from './VoiceShowcase';
 import { TimingRibbon, type ClassTrack } from './TimingRibbon';
 import type { Bundle, ScenarioResult } from './types';
 
@@ -48,6 +49,22 @@ const CLASS_NOTE: Record<string, string> = {
   HARD_DECLINE: 'stop — retrying is billed',
 };
 
+/**
+ * A one-line operating-environment gloss per scenario, shown under the
+ * picker. Not a second source of truth: each scenario's own numbers
+ * (cohort mix, at-risk total) still come from `scenario.description` and
+ * `scenario.cohort` below -- this just names in plain English what actually
+ * differs about that cohort's generation, so switching scenarios reads as
+ * changing the agent's environment rather than filtering a table.
+ */
+const SCENARIO_TAGLINE: Record<string, string> = {
+  'baseline-week': 'A normal mix — no single failure mode dominates.',
+  'bank-outage': 'Infrastructure is down — the right move is to wait, not retry.',
+  'month-end-squeeze': 'Payday-driven — recovery windows shift around liquidity.',
+  'risk-spike': 'More hard declines — retrying is billed, so restraint pays.',
+  'stale-instruments': 'Dead cards and mandates — only a nudge can unlock them.',
+};
+
 export default function App() {
   const [bundle, setBundle] = useState<Bundle | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -84,12 +101,23 @@ export default function App() {
 
   if (!bundle || !scenario) return <div className="sheet"><p className="standfirst">Loading…</p></div>;
 
-  const agent = scenario.strategies.find((s) => s.id === 'agent-rules')!;
-  const rivals = scenario.strategies.filter((s) => s.id !== 'agent-rules');
+  const agent = scenario.strategies.find((s) => s.id === 'agent-adaptive')!;
+  const rivals = scenario.strategies.filter((s) => s.id !== 'agent-adaptive');
   const best = rivals.reduce((a, b) =>
     b.metrics.netValueAfterAnnoyancePaise > a.metrics.netValueAfterAnnoyancePaise ? b : a,
   );
-  const lift = agent.metrics.netValueAfterAnnoyancePaise - best.metrics.netValueAfterAnnoyancePaise;
+  const liftVs = (id: string): { lakh: string; pct: number | null } | null => {
+    const rival = rivals.find((s) => s.id === id);
+    if (!rival) return null;
+    const delta = agent.metrics.netValueAfterAnnoyancePaise - rival.metrics.netValueAfterAnnoyancePaise;
+    const p =
+      rival.metrics.netValueAfterAnnoyancePaise > 0
+        ? (delta / rival.metrics.netValueAfterAnnoyancePaise) * 100
+        : null;
+    return { lakh: lakh(delta), pct: p };
+  };
+  const liftVsRules = liftVs('agent-rules');
+  const liftVsFixed = liftVs('fixed-dunning');
 
   const wasted = rivals.reduce(
     (n, s) =>
@@ -160,6 +188,7 @@ export default function App() {
             </button>
           ))}
         </div>
+        <p className="scenario-tagline">{SCENARIO_TAGLINE[scenario.id] ?? scenario.description}</p>
         <p className="scenario-line">
           {scenario.description} <b>{scenario.cohort.count}</b> loss events,{' '}
           <b>{lakh(scenario.cohort.totalAtRiskPaise)}</b> at risk. Seed <b>{scenario.seed}</b>.
@@ -176,6 +205,8 @@ export default function App() {
           in.
         </p>
         <LiveFeed entries={scenario.liveFeed} />
+
+        <VoiceShowcase data={bundle.voiceShowcase} />
 
         <nav className="railnav" aria-label="Jump to a section">
           <a href="#problem">01 The problem</a>
@@ -212,7 +243,7 @@ export default function App() {
             <b>3 · decide → guardrail → score</b>
             <p>
               It picks one action; a separate layer allows, delays or refuses it; every decision
-              is logged and the cohort is replayed through three rival strategies.
+              is logged and the cohort is replayed through four rival strategies.
             </p>
           </div>
         </div>
@@ -262,11 +293,9 @@ export default function App() {
         <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
           Same direction as NPCI's target — business-side outweighs technical — but less skewed:
           NPCI's own network runs at roughly 5-to-1 or steeper; this scenario computes to{' '}
-          <b>{npciRatio === null ? 'no technical cases to compare' : `${npciRatio.toFixed(1)}-to-1`}</b>.
-          Live-computed from this cohort, not a fixed claim — switch scenarios above and the ratio
-          moves with it. We're stating that gap, not closing it: adjusting the underlying mix now,
-          after finding this source, would undercut the point of citing it. Full reasoning,
-          including a correction we made to this comparison, in <code>docs/SOURCES.md</code>.
+          <b>{npciRatio === null ? 'no technical cases to compare' : `${npciRatio.toFixed(1)}-to-1`}</b>,
+          live-computed and moving with the scenario picked above. We're stating that gap, not
+          closing it. Full reasoning in <code>docs/SOURCES.md</code>.
         </p>
       </section>
 
@@ -282,6 +311,7 @@ export default function App() {
           goodwill is made explicit rather than picked to taste.
         </p>
 
+        <div className="table-scroll">
         <table className="ledger">
           <thead>
             <tr>
@@ -296,10 +326,10 @@ export default function App() {
           </thead>
           <tbody>
             {scenario.strategies.map((s, i) => (
-              <tr key={s.id} className={s.id === 'agent-rules' ? 'lead' : undefined}>
+              <tr key={s.id} className={s.id === 'agent-adaptive' ? 'lead' : undefined}>
                 <td>
                   <span className="name">
-                    <i style={{ background: seriesColor(i) }} aria-hidden />
+                    <i style={{ background: strategyColor(i) }} aria-hidden />
                     <span>
                       {s.name}
                       <small>{s.id}</small>
@@ -324,14 +354,28 @@ export default function App() {
             ))}
           </tbody>
         </table>
+        </div>
 
         <div className="figures">
-          <div className="fig">
+          <div className="fig fig-lead">
             <div className="k">Net recovered</div>
             <div className="v">{lakh(agent.metrics.netValueAfterAnnoyancePaise)}</div>
-            <div className="d">
-              <b>+{lakh(lift)}</b> over {best.name.toLowerCase()}
-            </div>
+            {liftVsRules && liftVsRules.pct !== null && liftVsRules.pct > 0 && (
+              <div className="d">
+                <b>
+                  +{liftVsRules.lakh} (+{liftVsRules.pct.toFixed(0)}%)
+                </b>{' '}
+                vs reason-aware agent
+              </div>
+            )}
+            {liftVsFixed && liftVsFixed.pct !== null && liftVsFixed.pct > 0 && (
+              <div className="d">
+                <b>
+                  +{liftVsFixed.lakh} (+{liftVsFixed.pct.toFixed(0)}%)
+                </b>{' '}
+                vs fixed dunning
+              </div>
+            )}
           </div>
           <div className="fig">
             <div className="k">Recovery rate</div>
@@ -346,9 +390,9 @@ export default function App() {
             <div className="d">{best.metrics.retriesPerRecovery.toFixed(2)} for the next best</div>
           </div>
           <div className="fig">
-            <div className="k">Doomed retries</div>
-            <div className="v">0</div>
-            <div className="d">baselines spent {wasted} on cases that could never work</div>
+            <div className="k">Doomed retries avoided</div>
+            <div className="v">{wasted}</div>
+            <div className="d">retries rivals spent on cases a retry could never fix — this agent spent 0</div>
           </div>
         </div>
 
@@ -365,13 +409,12 @@ export default function App() {
       <section id="inspect">
         <div className="sec-head">
           <span className="sec-num">03</span>
-          <h2>Prove it isn't hardcoded — inspect any case yourself</h2>
+          <h2>Prove the decision</h2>
         </div>
         <p className="note">
-          Every number above is a summary, and a summary has to be taken on trust. This is not:
-          pick a failure class and a case, and see the exact inputs the agent was given, the
-          action it chose in its own words, and the guardrail ruling on it — then see what the
-          other three strategies did with the same case, on the same randomness.
+          Pick any case and see exactly what the agent saw, what it considered, what it chose, and
+          what the guardrails allowed — then see what the other four strategies did with the same
+          case, on the same randomness.
         </p>
         <CaseInspector cases={scenario.inspectableCases} />
       </section>
@@ -412,6 +455,7 @@ export default function App() {
               Nobody authorised an abandoned checkout, and an invoice is not an instrument — so
               neither can be retried, by anyone, ever.
             </p>
+            <div className="table-scroll">
             <table className="ledger">
               <thead>
                 <tr>
@@ -434,6 +478,7 @@ export default function App() {
                   ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 
@@ -462,6 +507,9 @@ export default function App() {
 
         <h3 className="sub-h">Swept the annoyance price, ₹0 to ₹100</h3>
         <SensitivitySection data={bundle.sensitivity} />
+
+        <h3 className="sub-h">NOVELTY / SAFETY ROBUSTNESS — a different question, deliberately not blended in above</h3>
+        <NoveltySection data={bundle.novelty} />
       </section>
 
       {/* ---------------------------------------------------------- 06 */}
@@ -471,44 +519,32 @@ export default function App() {
           <h2>Does it run on the real Razorpay API?</h2>
         </div>
         <p className="note">
-          Everything above runs on a simulator, because measurement needs cohorts nobody can pay
-          for by hand. This is the other half: the identical agent and guardrails driving live API
-          calls in Razorpay test mode — real orders, real payment links, and one genuine decline
-          captured by actually paying a test card and reading Razorpay's own error response back.
+          Everything above runs on a simulator (
+          <span className="live-badge live-badge-sim">SIMULATED VOICE RECOVERY</span>), because
+          measurement needs cohorts nobody can pay for by hand. This is the other half: the
+          identical agent and guardrails driving live API calls in Razorpay test mode — real
+          orders, real payment links, and one genuine decline captured by actually paying a test
+          card and reading Razorpay's own error response back.
         </p>
         <LiveSection run={bundle.liveRun} decline={bundle.liveDecline} />
 
         <p className="note" style={{ marginTop: 24 }}>
           <b>What this page does not claim:</b> the numbers here are not a revenue forecast. All
           transaction data is synthetic and seeded — real failed-payment data is
-          merchant-confidential — but the vocabulary is not invented: the 21 failure{' '}
+          merchant-confidential — but the vocabulary is not invented: the 34 failure{' '}
           <code>reason</code> codes are Razorpay's own, from their{' '}
           <a href="https://razorpay.com/docs/errors/payments/cards/">card</a> and{' '}
           <a href="https://razorpay.com/docs/errors/payments/upi/">UPI</a> error docs. The failure
-          mix isn't invented either, at least in shape: a{' '}
-          <a href="https://www.pib.gov.in/PressReleasePage.aspx?PRID=2114335">
-            Government of India, Ministry of Finance press release
-          </a>{' '}
-          ties real payouts under a ₹1,500-crore UPI scheme to acquiring banks keeping technical
-          declines under 0.75% — a paid performance bar, not just an aspiration. NPCI's own wider
-          framework (Circular OC-149, named here but not linkable — its own PDF paths are dead)
-          sets technical declines under 1% and customer-side declines under 5% industry-wide;
-          business-side failures dominate by design. Restricted to the two classes that framework
-          covers (see the cohort breakdown above — abandonment and hard declines sit outside it),
-          ours land at 36.2% technical / 63.8% customer-side: same direction, found independently
-          before we found either source, though less skewed than NPCI's real ~5-to-1 — a gap
-          we're stating, not closing.
-          Everything finer than that split — recovery curves, the cost model, the exact weight of
-          each reason — is a stated assumption, listed in <code>docs/SOURCES.md</code>.
+          mix isn't invented either — see the NPCI/PIB comparison in section 01. Everything finer
+          than that — recovery curves, the cost model, the exact weight of each reason — is a
+          stated assumption, listed in <code>docs/SOURCES.md</code>.
         </p>
       </section>
 
       <footer>
-        All data is synthetic and seeded. The failure reason codes are Razorpay's real documented card
-        and UPI errors; the recovery curves, cost model and failure mix are our own stated
-        assumptions, listed in <code>docs/SOURCES.md</code>. These figures compare policy quality on
-        identical cohorts — they are not a forecast of production revenue. Generated{' '}
-        {new Date(bundle.generatedAt).toLocaleString('en-IN')} by <code>npm run eval:all</code>.
+        These figures compare policy quality on identical cohorts — not a forecast of production
+        revenue. Generated {new Date(bundle.generatedAt).toLocaleString('en-IN')} by{' '}
+        <code>npm run eval:all</code>.
       </footer>
     </div>
   );

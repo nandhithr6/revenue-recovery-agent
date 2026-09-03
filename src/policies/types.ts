@@ -1,4 +1,4 @@
-import type { Action, Channel, LossEvent, Timestamp } from '../domain/types.js';
+import type { Action, Channel, CustomerSignal, LossEvent, Timestamp } from '../domain/types.js';
 
 /** One thing the engine did, and what came of it. */
 export interface HistoryEntry {
@@ -7,6 +7,13 @@ export interface HistoryEntry {
   readonly succeeded: boolean;
   /** Set when a guardrail blocked the action; it then did not execute. */
   readonly blockedBy?: string;
+  /**
+   * Set only for a voice contact that connected: what the customer actually
+   * said, structured. Every other channel resolves to `succeeded` alone --
+   * this is strictly additive, so nothing that reads `succeeded` needs to
+   * change to keep working.
+   */
+  readonly signal?: CustomerSignal;
 }
 
 /**

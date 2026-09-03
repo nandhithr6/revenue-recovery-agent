@@ -1,14 +1,18 @@
-import { seriesColor } from './charts';
-import type { LiveDecline, LiveRun, Robustness, Sensitivity } from './types';
+import type { LiveDecline, LiveRun, Novelty, Robustness, Sensitivity } from './types';
 
 /**
- * The three sections that answer "how do you know?" rather than "what happened?"
+ * The sections that answer "how do you know?" rather than "what happened?"
  *
  * Robustness answers "did you get lucky once?". Sensitivity answers "does your
- * answer depend on a constant you chose?". The live section answers "does any of
+ * answer depend on a constant you chose?". Novelty answers a DIFFERENT
+ * question again -- "what happens on a case shaped like nothing in the five
+ * scenarios above" -- and is deliberately never blended with the other two:
+ * it is a safety measure, not a revenue measure, and its numbers (safe/unsafe
+ * counts on hand-authored adversarial cases) have no ₹ figure to compare
+ * against the financial benchmark's. The live section answers "does any of
  * this touch a real payment system?".
  *
- * All three read from files produced by separate commands. When a command has
+ * All four read from files produced by separate commands. When a command has
  * not been run, the section says so plainly instead of vanishing — a missing
  * proof should be visible, not silently absent.
  */
@@ -16,7 +20,7 @@ import type { LiveDecline, LiveRun, Robustness, Sensitivity } from './types';
 const lakh = (paise: number): string => `₹${(paise / 10_000_000).toFixed(2)}L`;
 const rupees = (paise: number): string => `₹${Math.round(paise / 100).toLocaleString('en-IN')}`;
 
-const STRATEGY_ORDER = ['do-nothing', 'naive-retry', 'fixed-dunning', 'agent-rules'];
+const STRATEGY_ORDER = ['do-nothing', 'naive-retry', 'fixed-dunning', 'agent-adaptive', 'agent-rules'];
 
 function NotRun({ cmd }: { cmd: string }) {
   return (
@@ -27,62 +31,87 @@ function NotRun({ cmd }: { cmd: string }) {
   );
 }
 
+const CUSTOM_STRATEGY_LABEL: Record<string, string> = {
+  'agent-adaptive': 'Adaptive agent',
+  'agent-rules': 'Reason-aware agent',
+};
+
 export function RobustnessSection({ data }: { data: Robustness | null }) {
   if (!data) return <NotRun cmd="npm run eval:robust" />;
 
-  const pct = ((data.agentWins / data.totalRuns) * 100).toFixed(1);
+  const combinedPct = ((data.combinedCustomWins / data.totalRuns) * 100).toFixed(1);
+  const customIds = Object.keys(data.customStrategyWins).sort(
+    (a, b) => STRATEGY_ORDER.indexOf(a) - STRATEGY_ORDER.indexOf(b),
+  );
 
   return (
     <>
       <div className="headline">
         <span className="big">
-          {data.agentWins}<span className="of">/{data.totalRuns}</span>
+          {data.combinedCustomWins}<span className="of">/{data.totalRuns}</span>
         </span>
         <p>
-          independent cohorts where the reason-aware agent posted the highest net value —{' '}
-          <strong>{pct}%</strong>. {data.scenarios.length} scenarios × {data.seeds} seeds ×{' '}
+          independent cohorts where one of our two strategies posted the highest net value —{' '}
+          <strong>{combinedPct}%</strong>. {data.scenarios.length} scenarios × {data.seeds} seeds ×{' '}
           {data.cohortSize} cases, every cohort and every engine roll independently reseeded.
         </p>
       </div>
 
+      <p className="note" style={{ marginLeft: 0 }}>
+        {customIds.map((id, i) => (
+          <span key={id}>
+            {i > 0 ? ', ' : ''}
+            <strong>{CUSTOM_STRATEGY_LABEL[id] ?? id}</strong> won{' '}
+            {((data.customStrategyWins[id]! / data.totalRuns) * 100).toFixed(1)}%
+          </span>
+        ))}{' '}
+        of the 250 on its own.
+      </p>
+
+      <div className="table-scroll">
       <table className="ledger">
         <thead>
           <tr>
             <th>Scenario</th>
-            <th>Agent mean</th>
+            <th>Strategy</th>
+            <th>Mean</th>
             <th>p10</th>
             <th>p90</th>
             <th>Std dev</th>
             <th>Best baseline mean</th>
-            <th>Agent wins</th>
+            <th>Wins</th>
           </tr>
         </thead>
         <tbody>
-          {data.scenarios.map((s) => {
-            const agent = s.strategies.find((x) => x.strategyId === 'agent-rules');
-            const best = s.strategies
-              .filter((x) => x.strategyId !== 'agent-rules')
+          {data.scenarios.flatMap((s) => {
+            const baselineBest = s.strategies
+              .filter((x) => !customIds.includes(x.strategyId))
               .reduce((a, b) => (b.netValue.mean > a.netValue.mean ? b : a));
-            if (!agent) return null;
-            const perfect = agent.wins === agent.runs;
-            return (
-              <tr key={s.scenarioId}>
-                <td>{s.scenarioName}</td>
-                <td className="money">{lakh(agent.netValue.mean)}</td>
-                <td className="money">{lakh(agent.netValue.p10)}</td>
-                <td className="money">{lakh(agent.netValue.p90)}</td>
-                <td className="money">±{lakh(agent.netValue.stdDev)}</td>
-                <td className="money">{lakh(best.netValue.mean)}</td>
-                <td className="money">
-                  <span className={perfect ? 'zero' : undefined}>
-                    {agent.wins}/{agent.runs}
-                  </span>
-                </td>
-              </tr>
-            );
+            return customIds.map((id) => {
+              const strat = s.strategies.find((x) => x.strategyId === id);
+              if (!strat) return null;
+              const perfect = strat.wins === strat.runs;
+              return (
+                <tr key={`${s.scenarioId}-${id}`} className={id === 'agent-adaptive' ? 'lead' : undefined}>
+                  <td>{id === customIds[0] ? s.scenarioName : ''}</td>
+                  <td>{CUSTOM_STRATEGY_LABEL[id] ?? id}</td>
+                  <td className="money">{lakh(strat.netValue.mean)}</td>
+                  <td className="money">{lakh(strat.netValue.p10)}</td>
+                  <td className="money">{lakh(strat.netValue.p90)}</td>
+                  <td className="money">±{lakh(strat.netValue.stdDev)}</td>
+                  <td className="money">{lakh(baselineBest.netValue.mean)}</td>
+                  <td className="money">
+                    <span className={perfect ? 'zero' : undefined}>
+                      {strat.wins}/{strat.runs}
+                    </span>
+                  </td>
+                </tr>
+              );
+            });
           })}
         </tbody>
       </table>
+      </div>
 
       <p className="note" style={{ marginLeft: 0, marginTop: 18 }}>
         It is not {data.totalRuns} of {data.totalRuns}, and the losses are left in rather than
@@ -110,10 +139,12 @@ export function SensitivitySection({ data }: { data: Sensitivity | null }) {
         point.
       </p>
 
+      <div className="table-scroll">
       <table className="ledger">
         <thead>
           <tr>
             <th>Scenario</th>
+            <th>Strategy</th>
             {first.adaptive.points.map((p) => (
               <th key={p.pricePaise}>{rupees(p.pricePaise)}</th>
             ))}
@@ -121,23 +152,31 @@ export function SensitivitySection({ data }: { data: Sensitivity | null }) {
           </tr>
         </thead>
         <tbody>
-          {data.scenarios.map((s) => (
-            <tr key={s.scenarioId}>
-              <td>{s.scenarioName}</td>
-              {s.adaptive.points.map((p) => (
-                <td key={p.pricePaise} className="money">
-                  {lakh(p.byStrategy['agent-rules'] ?? 0)}
+          {data.scenarios.flatMap((s) =>
+            (['agent-adaptive', 'agent-rules'] as const).map((id) => (
+              <tr key={`${s.scenarioId}-${id}`} className={id === 'agent-adaptive' ? 'lead' : undefined}>
+                <td>{id === 'agent-adaptive' ? s.scenarioName : ''}</td>
+                <td>{CUSTOM_STRATEGY_LABEL[id]}</td>
+                {s.adaptive.points.map((p) => (
+                  <td key={p.pricePaise} className="money">
+                    {lakh(p.byStrategy[id] ?? 0)}
+                  </td>
+                ))}
+                <td className="money">
+                  {id === 'agent-adaptive' ? (
+                    <span className={s.adaptive.flipped ? undefined : 'zero'}>
+                      {s.adaptive.flipped ? 'yes' : 'no'}
+                    </span>
+                  ) : (
+                    ''
+                  )}
                 </td>
-              ))}
-              <td className="money">
-                <span className={s.adaptive.flipped ? undefined : 'zero'}>
-                  {s.adaptive.flipped ? 'yes' : 'no'}
-                </span>
-              </td>
-            </tr>
-          ))}
+              </tr>
+            )),
+          )}
         </tbody>
       </table>
+      </div>
 
       <p className="note" style={{ marginLeft: 0, marginTop: 18 }}>
         {data.adaptiveRankingStable ? (
@@ -150,6 +189,73 @@ export function SensitivitySection({ data }: { data: Sensitivity | null }) {
         ) : (
           <>The winner does change with the price in some scenarios — see the engineering log.</>
         )}
+      </p>
+    </>
+  );
+}
+
+const CATEGORY_LABEL: Record<string, string> = {
+  'unknown reason code': 'Unknown reason code',
+  'malformed/incomplete context': 'Malformed / incomplete context',
+  'contradictory state': 'Contradictory state',
+  'unexpected previous outcome': 'Unexpected previous outcome',
+  'previously-valid action unavailable': 'Previously-valid action unavailable',
+  'unusual amount': 'Unusual amount',
+  'unfamiliar combination of valid attributes': 'Unfamiliar combination of valid attributes',
+};
+
+export function NoveltySection({ data }: { data: Novelty | null }) {
+  if (!data) return <NotRun cmd="npm run eval:novelty" />;
+
+  return (
+    <>
+      <div className="headline">
+        <span className="big" style={{ color: data.unsafe === 0 ? undefined : 'var(--critical)' }}>
+          {data.safe}
+          <span className="of">/{data.totalCases}</span>
+        </span>
+        <p>
+          hand-authored adversarial cases handled safely — unknown reason codes, malformed context,
+          contradictory bookkeeping, amounts and combinations none of the five scenarios above ever
+          produce. This is a{' '}
+          <strong>safety measure, not a revenue measure</strong> — there is no ₹ figure here, on
+          purpose: a genuinely novel case has no ground-truth recovery curve to score against (see{' '}
+          <code>sim/recovery-model.ts</code>), so this checks that the agent stays safe rather than
+          inventing a number for what it can't honestly know.
+        </p>
+      </div>
+
+      <div className="table-scroll">
+      <table className="ledger">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Case</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.results.map((r) => (
+            <tr key={r.id}>
+              <td>{CATEGORY_LABEL[r.category] ?? r.category}</td>
+              <td className="mono">{r.id}</td>
+              <td>
+                <span className={r.safe ? 'zero' : undefined} title={r.detail}>
+                  {r.safe ? 'safe' : 'UNSAFE'}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
+
+      <p className="note" style={{ marginLeft: 0, marginTop: 18 }}>
+        Guardrail-mediated blocks across these adversarial fixtures (a rule catching a proposal is a
+        normal, healthy outcome here, not a failure): <strong>{data.guardrailBlocks}</strong>.
+        Compliance violations — an action executing that a guardrail should have refused, which is
+        structurally impossible; see the boundary test in <code>novelty.test.ts</code>:{' '}
+        <strong>{data.complianceViolations}</strong>.
       </p>
     </>
   );
@@ -169,7 +275,7 @@ export function LiveSection({
       {decline && (
         <>
           <h3 className="sub-h" style={{ marginTop: 0 }}>
-            A genuine decline, straight from the API
+            A genuine decline, straight from the API <span className="live-badge">REAL RAZORPAY API</span>
           </h3>
           <p className="note" style={{ marginLeft: 0 }}>
             A real payment link, paid at Razorpay's hosted checkout with one of their failure test
@@ -222,7 +328,9 @@ export function LiveSection({
 
       {run && (
         <>
-          <h3 className="sub-h">Recovery actions as real API calls</h3>
+          <h3 className="sub-h">
+            Recovery actions as real API calls <span className="live-badge">REAL RAZORPAY API</span>
+          </h3>
           <p className="note" style={{ marginLeft: 0 }}>
             The same agent and the same guardrails the simulation uses, byte for byte — there is
             no <code>if (live)</code> anywhere above the execution layer. Retries create real
@@ -270,10 +378,18 @@ export function LiveSection({
 
           <p className="note" style={{ marginLeft: 0, marginTop: 20 }}>
             <strong>This is not a measurement.</strong> Five hand-driven cases cannot support a
-            recovery rate; the statistics above come from the seeded simulator. What this shows is
-            that the same policy drives real API calls. In this run the initial failure reasons
-            are seeded — driving a browser per case is not automatable — while every recovery{' '}
-            <em>action</em> is a real call. Test mode throughout; no money moved.
+            recovery rate; the statistics come from the seeded simulator. What this shows is that
+            the same policy drives real API calls — initial failure reasons are seeded here since
+            driving a browser per case isn't automatable, but every recovery <em>action</em> is a
+            real call. Test mode throughout; no money moved.
+          </p>
+          <p className="note" style={{ marginLeft: 0, marginTop: 10 }}>
+            <strong>Why voice never appears above:</strong> Razorpay's Payment Links API can notify
+            on email and WhatsApp, so there's a real endpoint to hit — it offers no outbound voice
+            calling at all, so this customer's consent is <code>voice: false</code> for the live
+            path and the agent never proposes it here. Voice stays simulated everywhere in this
+            project (<code>sim/voice-signal-model.ts</code>), not by choice but because there's
+            nothing to build against — and no paid third-party calling service is used either way.
           </p>
         </>
       )}
@@ -281,4 +397,3 @@ export function LiveSection({
   );
 }
 
-export { STRATEGY_ORDER, seriesColor };

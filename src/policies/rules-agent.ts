@@ -258,11 +258,22 @@ export function createRulesAgent(
       // An accounts-payable contact that landed is a commitment, not a
       // recovery. Chasing inside the promise window is rude and ineffective;
       // chasing the moment it lapses is the whole job.
+      //
+      // This used to return STOP, which does not mean "pause" -- it means
+      // "this case is finished," and it ended the case on the spot instead of
+      // coming back once the window lapsed. A real defect, found by comparing
+      // one case against fixed-dunning: fixed-dunning does not know what a
+      // promise is, so it kept blindly retrying and recovered money this
+      // agent had already earned the right to chase, then threw away by
+      // never coming back for it. `wait` fixes that: pause exactly until the
+      // promise is due, then this branch is skipped and the chase proceeds.
       const promise = promiseState(profile, ctx.history, ctx.now);
       if (promise && !promise.broken) {
-        return STOP(
-          `receivable: commitment to pay recorded, honouring the ${profile.promiseWindowMs / DAY}-day window before chasing again`,
-        );
+        return {
+          kind: 'wait',
+          delayMs: Math.max(0, promise.dueBy - ctx.now),
+          rationale: `receivable: commitment to pay recorded, honouring the ${profile.promiseWindowMs / DAY}-day window before chasing again`,
+        };
       }
 
       // ---- 3. A nudge landed: strike while the instrument is fixed. -----

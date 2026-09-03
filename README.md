@@ -38,56 +38,135 @@ Strategy                Recovered     Spent    Net value  Net after annoy.   Rat
   Do nothing                 Rs 0      Rs 0         Rs 0              Rs 0   0.0%           --     0      0
   Naive retry         Rs 2,16,490  Rs 7,713  Rs 2,08,777       Rs 2,08,777  26.6%        10.26     0      0
   Fixed dunning       Rs 2,94,904  Rs 7,151  Rs 2,87,754       Rs 2,82,454  41.2%         5.72   265      0
-* Reason-aware agent  Rs 4,16,533  Rs 3,841  Rs 4,12,692       Rs 3,96,572  49.2%         2.56   806      0
+  Reason-aware agent  Rs 4,10,753  Rs 4,072  Rs 4,06,681       Rs 3,88,921  49.6%         2.50   888      0
+* Adaptive agent      Rs 5,55,601  Rs 3,536  Rs 5,52,066       Rs 5,35,786  59.8%         2.31   814      0
 ```
 
-**+₹1.14 lakh over the best baseline, using 55% fewer retries per recovery, with
-zero compliance violations.**
+Two agents, not one. `agent-rules` classifies the failure and follows a
+per-class playbook — a real improvement over a fixed schedule, but still a
+lookup table underneath. `agent-adaptive` instead assesses the case (known /
+inferred / unknown, with a confidence band — see
+[ADR 0009](docs/adr/0009-unknown-case-handling-and-voice.md)), prices a short
+list of candidate actions in rupees against its own belief curves — including
+voice, priced on the same footing as email/SMS/WhatsApp — and takes whichever
+clears the highest expected value, so amount, elapsed time, attempt count and
+evidence quality all move the answer. Both agents are measured against the
+baselines and against each other on identical cohorts; nothing about the
+comparison is rigged toward either.
+
+**Adaptive agent: +₹2.53 lakh over the best baseline (fixed dunning) — a 90%
+lift — using 60% fewer retries per recovery, with zero compliance
+violations. Efficiency: ₹157.14 recovered per ₹1 spent, against fixed
+dunning's ₹41.24. The trade is explicit, not hidden: fixed dunning is
+quieter per case it recovers (1.29 annoyance points per recovery vs.
+adaptive's 2.72), adaptive is far more money-efficient. Net value after
+annoyance already prices that trade in; it is not free.**
 
 Where the advantage comes from:
 
-| Class | Naive retry | Fixed dunning | **Agent** |
-|---|---|---|---|
-| `TRANSIENT_INFRA` | 45.3% | 81.0% | **78.8%** |
-| `ABANDONMENT` | 33.9% | 21.5% | **31.7%** |
-| `TRANSIENT_FUNDS` | 1.7% | 38.1% | **62.7%** |
-| `HARD_DECLINE` retries spent | 86 | 83 | **0** |
-| `CUSTOMER_ACTION_REQUIRED` retries spent | 66 | 64 | **1** |
+| Class | Naive retry | Fixed dunning | Reason-aware agent | **Adaptive agent** |
+|---|---|---|---|---|
+| `TRANSIENT_INFRA` | 45.3% | 81.0% | 81.8% | **87.6%** |
+| `TRANSIENT_FUNDS` | 1.7% | 38.1% | 61.9% | **79.7%** |
+| `ABANDONMENT` | 33.9% | 21.5% | 30.1% | **40.3%** |
+| `HARD_DECLINE` retries spent | 86 | 83 | 0 | **0** |
+| `CUSTOMER_ACTION_REQUIRED` retries spent | 66 | 64 | 2 | **4** |
 
-The baselines each win one class and lose another, because neither reads why the
-payment failed. The agent is competitive across all of them and spends almost
-nothing on the 150 cases where retrying provably cannot work. (The single
-`CUSTOMER_ACTION_REQUIRED` attempt is deliberate: it follows a nudge that landed,
-so the instrument had been fixed by then.)
+The baselines each win one class and lose another, because neither reads why
+the payment failed. Both agents spend almost nothing on the classes where
+retrying provably cannot work; the adaptive agent additionally out-recovers
+the schedule-based agent on every class where amount and timing actually
+matter, because it is the only one of the four that can see either.
+`CUSTOMER_ACTION_REQUIRED` is a deliberate, small exception: 4 retries
+(never against the dead instrument itself — always a genuine, unlocked
+retry after a nudge landed) is the honest cost of a real fix, made after
+this project's own audit found and fixed a boundary bug where the agent
+priced a nudge's payoff at literal elapsed=0 and gave up on some of these
+cases entirely (see [engineering log, entry 15](docs/ENGINEERING-LOG.md)).
 
 ### Is that just one lucky seed?
 
 No, and this is the question worth pre-empting. `npm run eval:robust` reruns
-every scenario across 50 independently seeded cohorts:
+every scenario across 50 independently seeded cohorts, for both agents at once:
 
-> **The agent posted the highest net value in 244 of 250 independent cohorts
-> (97.6%), with zero compliance violations across every strategy and every run.**
+> **One of our two strategies posted the highest net value in 249 of 250
+> independent cohorts (99.6%) — the adaptive agent alone in 203 (81.2%), the
+> reason-aware agent alone in 46 (18.4%) — with zero compliance violations
+> across every strategy and every run.**
 
 It is not 250 of 250, and that is reported rather than tuned away. An honest
-97.6% is worth more than a suspicious 100%.
+99.6% is worth more than a suspicious 100%; the one loss goes to a baseline in
+a single cohort and stays in the numbers.
 
 ### Does the answer depend on your annoyance price?
 
 The headline metric prices customer annoyance at ₹20 a point, which is a
 judgement call and the most attackable number here. So rather than defend it,
 `npm run eval:sensitivity` sweeps it from ₹0 to ₹100, averaged over 15 seeds per
-point:
+point, for both agents:
 
-> **Told what annoyance costs, the agent posts the highest net value at every
-> price in that range, in all five scenarios.**
+> **Told what annoyance costs, the adaptive agent posts the highest net value
+> at every price from ₹0 to ₹100, in all 5 scenarios — no exceptions.**
 
-The ₹20 figure is an input, not a thumb on the scale. Holding the *shipped*
-policy fixed while raising only the scoring price does flip the winner in the
-harshest scenarios — which says something narrower and true: a policy tuned for
-one price is not automatically right at another.
+The ₹20 figure is an input, not a thumb on the scale: rebuilding the agent at
+each price rather than holding one number fixed is what makes that a clean
+sweep instead of a coincidence. A strategy that wins at every price only
+because the sweep never rebuilds it would be a different, weaker claim.
 
 That sweep also caught itself being wrong once. See
-[the engineering log, entry 9](docs/ENGINEERING-LOG.md).
+[the engineering log, entry 9](docs/ENGINEERING-LOG.md). The full story of how
+the adaptive agent came to exist — a bug that made a fixed schedule look better
+than it should have, and what we built after fixing it — is entry 12. Entry 13
+is a follow-up audit finding and fixing a second, smaller version of the same
+kind of defect in the agent's human-escalation pricing.
+
+## What happens when the case isn't one of the six classes
+
+Every result above assumes a documented Razorpay reason code. Real intake
+eventually won't be: a code added next quarter, a malformed field, a case
+whose own bookkeeping doesn't add up. `agent-adaptive` now assesses every
+case first — `known` / `inferred` / `unknown`, with a `high` / `medium` /
+`low` confidence band, computed only from what the agent can actually see —
+before it prices a single candidate. **The agent becomes more conservative as
+evidence gets thinner, never more reckless**: an unrecognised reason code
+never gets an automatic retry (retrying a misclassified failure risks real
+issuer penalties, the exact harm [entry 8](docs/ENGINEERING-LOG.md) argued
+against), is offered at most one cheap contact channel, and — above a value
+floor — an honestly-labelled "route to human review" escalation rather than
+one dressed up as a recovery channel. A deterministic fuzzy-matcher (token
+overlap against the 34 documented codes) can infer a plausible class at
+medium confidence; an optional LLM can plug into the identical seam and is
+hard-capped at the same medium confidence regardless of what it claims — see
+[ADR 0009](docs/adr/0009-unknown-case-handling-and-voice.md). Neither can
+ever promote a guess to "known."
+
+This is measured separately from the financial benchmark, on purpose: a
+genuinely unknown case has no ground-truth recovery curve to score against
+(`sim/recovery-model.ts` only has entries for the six documented classes), so
+inventing a ₹ figure for it would be dishonest. `npm run eval:novelty` runs
+12 hand-authored adversarial cases — unknown codes, malformed context,
+contradictory bookkeeping, amounts and combinations none of the five real
+scenarios ever produce — and checks safe behaviour instead: zero automatic
+retries on unrecognised failures, zero compliance violations, appropriate
+escalation. Currently 12/12 safe; one of those 12 was a real bug the suite
+itself caught (an inferred, fuzzy-matched class was being retried as freely
+as a documented one — fixed the same day, see engineering log entry 14).
+
+**Voice is now a real, priced recovery channel**, not a demo prop. Its cost
+(₹15), its annoyance price (10 points — five times a WhatsApp message) and
+its believed landing odds were already in the codebase; the only gap was
+that the candidate menu never offered it. It now competes honestly against
+every other channel and only wins the argmax when its higher landing odds
+are worth its higher price. Uniquely among channels, a voice call that
+connects produces a *structured* outcome — a commitment to pay, a fixed
+instrument, a dispute, a refusal, no answer — instead of a plain
+succeeded/failed boolean, and the agent's very next decision reacts to it:
+a commitment defers the case and rechecks once the window lapses (reusing
+the same mechanism already built for receivable promises); a dispute or
+refusal ends the case rather than trying harder; a non-connect changes
+nothing. The dashboard's "Watch the agent work" hero features one real,
+naturally-occurring case showing the full chain — found by searching the
+actual cohort output, not scripted.
 
 ## It also runs against the real Razorpay API
 
@@ -175,7 +254,7 @@ each one is forbidden from doing, and why the separations sit where they do.
 ```
  LossEvent ──> Diagnose ──> Policy ──> Guardrails ──> Execute ──> Ledger
                               │            │                        │
-                        rules or LLM   deterministic           append-only
+                       rules, EV or LLM deterministic         append-only
                                        ├─ stopping rules       audit trail
                                        └─ compliance                │
                                                                Evaluator
@@ -239,7 +318,7 @@ load-bearing is deterministic.
 |---|---|---|
 | Compliance rules | Deterministic | Legal constraints. A system that respects them 99.7% of the time breaks the law twice a week |
 | Stopping rules | Deterministic | Asking the thing being bounded to enforce its own bound is not a control |
-| Failure classification | Lookup table | 21 documented strings → 6 classes is a dictionary, not an inference problem |
+| Failure classification | Lookup table | 34 documented strings → 6 classes is a dictionary, not an inference problem |
 | Retry timing | Fixed per-class schedules | "Why did you retry at 20 hours?" deserves a rule, not a sample |
 | Novel/ambiguous cases | **LLM** | Genuinely open-ended input, where the alternative is giving up |
 
@@ -249,6 +328,17 @@ discarded, invented actions and out-of-range delays rejected. Anything that fail
 validation falls back to the deterministic agent. **The system runs identically
 with the network unplugged.** Full reasoning in
 [ADR 0003](docs/adr/0003-where-we-chose-not-to-use-an-llm.md).
+
+That table's last row (`agent-llm`, an LLM proposing the *action*) is a
+different, narrower thing from the optional LLM interpretation added for
+unknown reason codes (`src/llm/unknown-error.ts`, [ADR
+0009](docs/adr/0009-unknown-case-handling-and-voice.md)). The new one cannot
+select an action, price a candidate, execute anything, or exceed medium
+confidence — it can only feed a class guess into `CaseAssessment`, in the
+exact same seam a deterministic fuzzy-matcher already fills when no LLM is
+configured. The measured finding below (LLM-as-policy loses on every axis)
+is the reason that seam is scoped as narrowly as it is, not a reason to
+avoid it entirely.
 
 ### And we measured it, rather than assuming
 
@@ -326,11 +416,20 @@ short version:
 4. **DND was over-blocking.** TRAI's registry covers telecom, not email. Being
    over-strict on compliance is just a different way of being wrong, and it costs
    the merchant money.
-5. **The agent does not win everywhere.** Fixed dunning beats it on
-   `bank-outage`, where a pure infrastructure failure rewards patience over
-   diagnosis. Documented rather than tuned away — a strategy tuned until it wins
-   all five hand-written scenarios is a strategy overfitted to five hand-written
-   scenarios.
+5. **Neither agent wins everywhere.** Across 250 independently seeded cohorts,
+   one baseline takes a single run outright (249/250, not 250/250), and the
+   annoyance-price sweep hands two of five scenarios to the reason-aware agent
+   at the high end of the price range. Documented rather than tuned away — a
+   strategy that wins every run and every price is a strategy overfitted to
+   the runs and prices you happened to write.
+6. **`STOP` was quietly doing the job of `WAIT`.** A receivable with an
+   unbroken promise-to-pay was being closed forever the moment the promise was
+   made, because the only "pause" primitive available was the same one used
+   for "this case is truly finished." Fixed dunning was beating the agent on
+   exactly these cases. Added a genuine `wait` action, then went further:
+   built a second agent (`agent-adaptive`) that prices candidate actions in
+   rupees instead of consulting a schedule at all. Full story in
+   [engineering log, entry 12](docs/ENGINEERING-LOG.md).
 
 ## Running it
 
@@ -359,8 +458,17 @@ npm run eval:robust
 npm run eval:sensitivity
 ```
 
-Tests (118, including an adversarial policy that cannot breach any limit, the
-kill switch, and the loss-type layer):
+A third, deliberately separate check — safe behaviour on unknown/adversarial
+cases, never blended with the ₹ numbers above:
+
+```bash
+npm run eval:novelty
+```
+
+Tests (219, including an adversarial policy that cannot breach any limit, the
+kill switch, the loss-type layer, and a boundary suite that checks every new
+policy file for a ground-truth import the same way the original two were
+checked):
 
 ```bash
 npm test

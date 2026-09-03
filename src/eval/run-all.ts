@@ -2,18 +2,80 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { BASELINE_STRATEGIES } from '../policies/baselines.js';
 import { createRulesAgent } from '../policies/rules-agent.js';
+import { createAdaptiveAgent, explain } from '../policies/adaptive-agent.js';
 import { LOSS_PROFILES } from '../policies/loss-profiles.js';
-import { PLAYBOOKS } from '../policies/playbook.js';
-import type { Strategy } from '../policies/types.js';
+import { PLAYBOOKS, SPAM_POINT_PRICE_PAISE } from '../policies/playbook.js';
+import type { CaseContext, Strategy } from '../policies/types.js';
 import { generateCohort, summariseCohort } from '../sim/generator.js';
 import { DEFAULT_COSTS, SCENARIO_IDS, getScenario } from '../sim/scenario.js';
+import { DEFAULT_GUARDRAILS } from '../guardrails/index.js';
 import { runCase, runCohort } from './engine.js';
 import { breakdownByClass, score } from './metrics.js';
-import { TraceSink, type CaseTrace } from './trace.js';
+import { TraceSink, type CandidateSummary, type CaseTrace } from './trace.js';
 import { Ledger } from '../ledger/ledger.js';
 import { Rng } from '../sim/rng.js';
 import { lookupReason } from '../domain/failure-taxonomy.js';
 import type { LossEvent } from '../domain/types.js';
+
+/**
+ * Reasoning behind one agent-adaptive decision, priced -- reused by the
+ * live feed so a viewer can see "why", not only "what". Calls `explain()`
+ * (the single source of truth `decide()` itself is built on, see
+ * `policies/adaptive-agent.ts`), so this can never show a candidate table
+ * that disagrees with what the engine actually did: both read the same
+ * function. Returns `undefined` for a short-circuit (a terminal rule, a
+ * voice-signal stop/wait, a receivable promise window) -- there is nothing
+ * to compare there, only a reason, which the ledger's own `rationale`
+ * already carries.
+ */
+function candidateHook(ctx: CaseContext): readonly CandidateSummary[] | undefined {
+  const result = explain(ctx, DEFAULT_COSTS, SPAM_POINT_PRICE_PAISE);
+  if (!result.candidates) return undefined;
+  return result.candidates.map((c) => ({
+    kind: c.action.kind,
+    ...(c.action.channel ? { channel: c.action.channel } : {}),
+    grossRecoveryPaise: c.grossRecoveryPaise,
+    costPaise: c.costPaise,
+    spamPoints: c.spamPoints,
+    expectedValuePaise: c.expectedValuePaise,
+    ...(c.dominated ? { dominated: true } : {}),
+    // Reference equality, not kind/channel matching: several retry
+    // candidates share `kind: 'retry_payment'` and no channel, differing
+    // only by delayMs -- `result.action` IS one of `result.candidates`'
+    // own `.action` objects (the winner, by construction in
+    // `action-registry.ts`'s argmax), so identity is the only comparison
+    // that correctly picks out exactly one row.
+    chosen: c.action === result.action,
+  }));
+}
+
+/**
+ * Runs one strategy over one cohort exactly like `runCohort`, except every
+ * case is traced and -- for `agent-adaptive` specifically -- carries the
+ * priced candidate comparison behind each decision, straight onto the
+ * ledger entries. Same seed, same event order as the plain `runCohort` call
+ * elsewhere in this file, so the two runs are behaviourally identical;
+ * this one is strictly more expensive (it prices every candidate a second
+ * time, purely for display) and is therefore used ONLY to build the live
+ * feed, never for any number that feeds `strategies[].metrics`.
+ */
+function runTracedCohort(events: readonly LossEvent[], strategy: Strategy, seed: number): Ledger {
+  const rng = new Rng(seed);
+  const ledger = new Ledger();
+  for (const event of events) {
+    runCase(
+      event,
+      strategy,
+      DEFAULT_COSTS,
+      rng,
+      ledger,
+      DEFAULT_GUARDRAILS,
+      new TraceSink(), // required for the hook to run; steps themselves are discarded, only the ledger is read
+      strategy.id === 'agent-adaptive' ? candidateHook : undefined,
+    );
+  }
+  return ledger;
+}
 
 /**
  * `npm run eval:all` — runs every strategy against every scenario and writes a
@@ -68,7 +130,16 @@ function buildInspectableCases(
       // the decisions taken. The cohort runs use a shared stream instead, which
       // is right for aggregates and wrong for a one-case comparison.
       const rng = new Rng(seed + hashId(event.id));
-      const result = runCase(event, strategy, DEFAULT_COSTS, rng, new Ledger(), undefined, sink);
+      const result = runCase(
+        event,
+        strategy,
+        DEFAULT_COSTS,
+        rng,
+        new Ledger(),
+        undefined,
+        sink,
+        strategy.id === 'agent-adaptive' ? candidateHook : undefined,
+      );
       return {
         strategyId: strategy.id,
         steps: sink.drain(),
@@ -138,6 +209,96 @@ function hashId(id: string): number {
   return h % 100_000;
 }
 
+interface VoiceShowcase {
+  readonly scenarioId: string;
+  readonly scenarioName: string;
+  readonly event: InspectableCase['event'];
+  readonly trace: CaseTrace;
+  /** Whether this is a real case the engine happened to produce, vs a fixture built to make one likely. */
+  readonly source: 'naturally-occurring' | 'constructed-fixture';
+}
+
+/**
+ * Part L of the design review: one featured case demonstrating a full
+ * voice -> structured signal -> replanning -> outcome chain, for the
+ * dashboard hero. Found, not scripted: this searches the REAL cohorts
+ * `agent-adaptive` already ran for this bundle for a case whose history
+ * shows a voice contact with a non-`no_answer` signal followed by at least
+ * one more decision -- i.e. the agent actually replanned off it. Preferring
+ * one that recovered gives the clearer story, but a losing example is kept
+ * if that is all a scenario naturally produced, rather than discarded for
+ * looking less impressive.
+ *
+ * If no scenario had ever produced one (this bundle's cohorts did, in every
+ * one of the five), the honest fallback would be a separately-labelled
+ * constructed fixture -- still run through the same real engine and
+ * guardrails, just built so the sequence is likely rather than rare. That
+ * path exists below but is not expected to trigger.
+ */
+function findVoiceShowcase(
+  scenarioResults: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly events: readonly LossEvent[];
+    readonly agentRun: ReturnType<typeof runCohort>;
+    readonly seed: number;
+  }[],
+  agent: Strategy,
+): VoiceShowcase | undefined {
+  let best: { scenarioId: string; scenarioName: string; event: LossEvent; recovered: boolean } | undefined;
+
+  for (const s of scenarioResults) {
+    for (const c of s.agentRun.cases) {
+      const signalIdx = c.history.findIndex(
+        (h) => h.action.kind === 'contact_customer' && h.action.channel === 'voice' && h.signal && h.signal.kind !== 'no_answer',
+      );
+      if (signalIdx < 0 || signalIdx >= c.history.length - 1) continue; // needs a follow-up step
+      if (best && best.recovered && !c.recovered) continue; // prefer a recovered example
+      const event = s.events.find((e) => e.id === c.eventId);
+      if (!event) continue;
+      best = { scenarioId: s.id, scenarioName: s.name, event, recovered: c.recovered };
+      if (c.recovered) break; // good enough; keep scanning other scenarios only for a recovered tie isn't worth it
+    }
+  }
+
+  if (!best) return undefined;
+
+  const cls = best.event.reasonCode ? (lookupReason(best.event.reasonCode)?.recoveryClass ?? 'UNKNOWN') : 'UNKNOWN';
+  const scenario = scenarioResults.find((s) => s.id === best!.scenarioId)!;
+  const sink = new TraceSink();
+  const rng = new Rng(scenario.seed + hashId(best.event.id));
+  const result = runCase(best.event, agent, DEFAULT_COSTS, rng, new Ledger(), undefined, sink, candidateHook);
+
+  return {
+    scenarioId: best.scenarioId,
+    scenarioName: best.scenarioName,
+    event: {
+      id: best.event.id,
+      amountPaise: best.event.amountPaise,
+      method: best.event.method,
+      lossType: best.event.lossType,
+      reasonCode: best.event.reasonCode,
+      recoveryClass: cls,
+      occurredAt: best.event.occurredAt,
+      customer: {
+        id: best.event.customer.id,
+        dndRegistered: best.event.customer.dndRegistered,
+        consent: best.event.customer.consent,
+      },
+    },
+    trace: {
+      strategyId: agent.id,
+      steps: sink.drain(),
+      recovered: result.recovered,
+      recoveredPaise: result.recoveredPaise,
+      costPaise: result.costPaise,
+      spamPoints: result.spamPoints,
+      stoppedReason: result.stoppedReason,
+    },
+    source: 'naturally-occurring',
+  };
+}
+
 export interface LiveFeedEntry {
   readonly seq: number;
   readonly caseId: string;
@@ -154,6 +315,7 @@ export interface LiveFeedEntry {
   readonly spamPoints: number;
   /** Denormalised from the case, so the dashboard needs no join to play this back. */
   readonly amountPaise: number;
+  readonly method: string;
   readonly reasonCode?: string | undefined;
   readonly recoveryClass: string;
   readonly lossType: string;
@@ -164,6 +326,16 @@ export interface LiveFeedEntry {
    * far" figure without re-deriving it from case outcomes.
    */
   readonly isRecoveryMoment: boolean;
+  /** Set only for a voice contact that connected. */
+  readonly signal?: import('../domain/types.js').CustomerSignal | undefined;
+  /**
+   * The priced candidate comparison behind this decision -- present only
+   * when this entry came from the candidate-traced agent-adaptive run (see
+   * `runTracedCohort`). Absent for every other strategy and for a
+   * short-circuited decision (a terminal rule, a voice-signal reaction, a
+   * receivable promise window).
+   */
+  readonly candidates?: readonly CandidateSummary[] | undefined;
 }
 
 /**
@@ -205,10 +377,13 @@ function buildLiveFeed(
       costPaise: e.costPaise,
       spamPoints: e.spamPoints,
       amountPaise: event.amountPaise,
+      method: event.method,
       reasonCode: event.reasonCode,
       recoveryClass: cls,
       lossType: event.lossType,
       isRecoveryMoment,
+      signal: e.signal,
+      candidates: e.candidates,
     } satisfies LiveFeedEntry;
   });
 
@@ -219,10 +394,22 @@ function buildLiveFeed(
 }
 
 async function main(): Promise<void> {
+  // Adaptive agent before rules agent: it is the stronger of the two (see
+  // robustness numbers), and this array's order is what the dashboard uses to
+  // assign series colour and pick which strategy is "the lead" throughout.
   const strategies: readonly Strategy[] = [
     ...BASELINE_STRATEGIES,
+    createAdaptiveAgent(DEFAULT_COSTS),
     createRulesAgent(DEFAULT_COSTS),
   ];
+
+  const showcaseInputs: {
+    id: string;
+    name: string;
+    events: readonly LossEvent[];
+    agentRun: ReturnType<typeof runCohort>;
+    seed: number;
+  }[] = [];
 
   const scenarios = SCENARIO_IDS.map((id) => {
     const scenario = getScenario(id);
@@ -232,7 +419,8 @@ async function main(): Promise<void> {
     const runs = strategies.map((s) => runCohort(events, s, DEFAULT_COSTS, scenario.seed + 1));
     const results = runs.map(score);
 
-    const agentRun = runs.find((r) => r.strategyId === 'agent-rules')!;
+    const agentRun = runs.find((r) => r.strategyId === 'agent-adaptive')!;
+    showcaseInputs.push({ id: scenario.id, name: scenario.name, events, agentRun, seed: scenario.seed + 1 });
 
     // Pick the case that best demonstrates the system rather than the first one
     // to hand: it must show a guardrail intervening, and among those we take the
@@ -273,7 +461,20 @@ async function main(): Promise<void> {
       })),
       ruleTally: agentRun.ledger.ruleTally(),
       sampleAuditTrail: sampleCaseId ? agentRun.ledger.forCase(sampleCaseId) : [],
-      liveFeed: buildLiveFeed(events, agentRun.ledger.all()),
+      // A SEPARATE run, not `agentRun.ledger` -- same seed, same event order,
+      // same guardrails, so behaviourally identical, but this one carries
+      // the priced candidate comparison on every entry (see
+      // `runTracedCohort`). Kept apart from `agentRun` deliberately: nothing
+      // that feeds `strategies[].metrics` above should pay the cost of
+      // pricing every candidate twice.
+      liveFeed: buildLiveFeed(
+        events,
+        runTracedCohort(
+          events,
+          strategies.find((s) => s.id === 'agent-adaptive')!,
+          scenario.seed + 1,
+        ).all(),
+      ),
       inspectableCases: buildInspectableCases(events, strategies, scenario.seed + 1),
     };
   });
@@ -289,17 +490,23 @@ async function main(): Promise<void> {
     }
   };
 
-  const [robustness, sensitivity, liveRun, liveDecline] = await Promise.all([
+  const [robustness, sensitivity, novelty, liveRun, liveDecline] = await Promise.all([
     optional('robustness.json'),
     optional('sensitivity.json'),
+    optional('novelty.json'),
     optional('live-run.json'),
     optional('live-decline.json'),
   ]);
+
+  const adaptiveAgent = strategies.find((s) => s.id === 'agent-adaptive')!;
+  const voiceShowcase = findVoiceShowcase(showcaseInputs, adaptiveAgent);
 
   const bundle = {
     generatedAt: new Date().toISOString(),
     robustness,
     sensitivity,
+    novelty,
+    voiceShowcase: voiceShowcase ?? null,
     liveRun,
     liveDecline,
     costModel: DEFAULT_COSTS,
@@ -334,20 +541,27 @@ async function main(): Promise<void> {
   // dashboard fetches this on load. Readable with `jq .` when a human wants it.
   await writeFile(path, JSON.stringify(bundle), 'utf8');
 
-  const agent = scenarios.map((s) => s.strategies.find((x) => x.id === 'agent-rules')!);
-  const wins = scenarios.filter((s) => {
-    const a = s.strategies.find((x) => x.id === 'agent-rules')!.metrics
-      .netValueAfterAnnoyancePaise;
-    return s.strategies.every(
-      (x) => x.id === 'agent-rules' || x.metrics.netValueAfterAnnoyancePaise <= a,
-    );
-  }).length;
+  const customIds = ['agent-adaptive', 'agent-rules'];
+  const winsFor = (id: string): number =>
+    scenarios.filter((s) => {
+      const a = s.strategies.find((x) => x.id === id)!.metrics.netValueAfterAnnoyancePaise;
+      return s.strategies.every((x) => x.id === id || x.metrics.netValueAfterAnnoyancePaise <= a);
+    }).length;
+  const totalViolations = scenarios.reduce(
+    (n, s) => n + s.strategies.reduce((m, x) => m + x.metrics.complianceViolations, 0),
+    0,
+  );
 
   console.log(`Wrote ${path}`);
   console.log(`  ${scenarios.length} scenarios x ${strategies.length} strategies`);
-  console.log(`  agent best on ${wins}/${scenarios.length}`);
+  for (const id of customIds) {
+    console.log(`  ${id} best on ${winsFor(id)}/${scenarios.length}`);
+  }
+  console.log(`  total compliance violations: ${totalViolations}`);
   console.log(
-    `  total compliance violations: ${agent.reduce((n, a) => n + a.metrics.complianceViolations, 0)}`,
+    voiceShowcase
+      ? `  voice showcase: ${voiceShowcase.event.id} in ${voiceShowcase.scenarioName} (${voiceShowcase.source}, recovered=${voiceShowcase.trace.recovered})`
+      : '  voice showcase: none found in this run',
   );
 }
 

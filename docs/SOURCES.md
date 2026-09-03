@@ -110,6 +110,15 @@ These are reasoned, not measured, and no public data covers them:
 Every one of these is a named, tunable constant with a comment explaining the
 reasoning. None is presented as an empirical finding.
 
+5. **Voice call outcomes** — when a simulated voice call connects, what the
+   customer says (a commitment to pay, a dispute, a refusal, and so on) is
+   drawn from a distribution in `src/sim/voice-signal-model.ts`, authored the
+   same way and with the same honesty caveat as the recovery curves above:
+   not measured from real calls (none exist for this project), not tuned to
+   make any policy's numbers look better. The dashboard's "featured case"
+   is a real, naturally-occurring run through this model, never a scripted
+   transcript — see `docs/adr/0009-unknown-case-handling-and-voice.md`.
+
 ## Why we did not try to get real merchant data
 
 Individual merchant transaction records are confidential — protected by

@@ -64,6 +64,34 @@ export const FAILURE_REASONS = [
     recoveryClass: 'TRANSIENT_INFRA',
     description: 'Wrong account selected, or partner bank downtime occurred.',
   },
+  {
+    code: 'bank_not_available',
+    methods: ['card', 'upi'],
+    source: 'bank',
+    recoveryClass: 'TRANSIENT_INFRA',
+    description: 'The issuing bank is unavailable due to downtime or a technical issue.',
+  },
+  {
+    code: 'bank_cutoff_in_progress',
+    methods: ['card', 'upi'],
+    source: 'bank',
+    recoveryClass: 'TRANSIENT_INFRA',
+    description: "The bank's core banking system is in its periodic end-of-day cutoff window.",
+  },
+  {
+    code: 'issuer_technical_error',
+    methods: ['card', 'upi'],
+    source: 'bank',
+    recoveryClass: 'TRANSIENT_INFRA',
+    description: 'A technical error occurred at the card or account issuer.',
+  },
+  {
+    code: 'upi_app_technical_error',
+    methods: ['upi'],
+    source: 'gateway',
+    recoveryClass: 'TRANSIENT_INFRA',
+    description: "A technical error occurred at the customer's UPI app (PSP).",
+  },
 
   // ------------------------------------------------------------- funds
   {
@@ -79,6 +107,20 @@ export const FAILURE_REASONS = [
     source: 'customer',
     recoveryClass: 'TRANSIENT_FUNDS',
     description: 'The customer reached their daily transaction limit on the card.',
+  },
+  {
+    code: 'transaction_daily_limit_exceeded',
+    methods: ['card', 'upi'],
+    source: 'customer',
+    recoveryClass: 'TRANSIENT_FUNDS',
+    description: 'The customer reached their self-set or default daily transaction limit.',
+  },
+  {
+    code: 'transaction_frequency_limit_exceeded',
+    methods: ['upi'],
+    source: 'customer',
+    recoveryClass: 'TRANSIENT_FUNDS',
+    description: "The customer exhausted NPCI's per-day UPI transaction frequency limit.",
   },
 
   // -------------------------------------------------- customer must act
@@ -147,6 +189,13 @@ export const FAILURE_REASONS = [
     recoveryClass: 'ABANDONMENT',
     description: 'The customer did not act on the collect request in time.',
   },
+  {
+    code: 'payment_session_expired',
+    methods: ['card', 'upi'],
+    source: 'customer',
+    recoveryClass: 'ABANDONMENT',
+    description: 'The customer took too long and the payment session expired.',
+  },
 
   // -------------------------------------------------------- auth fumbles
   {
@@ -162,6 +211,48 @@ export const FAILURE_REASONS = [
     source: 'customer',
     recoveryClass: 'AUTH_FAILURE',
     description: 'Incorrect OTP, or the browser was closed during authentication.',
+  },
+  {
+    code: 'incorrect_otp',
+    methods: ['card'],
+    source: 'customer',
+    recoveryClass: 'AUTH_FAILURE',
+    description: 'The customer entered an incorrect OTP.',
+  },
+  {
+    code: 'otp_expired',
+    methods: ['card'],
+    source: 'customer',
+    recoveryClass: 'AUTH_FAILURE',
+    description: 'The OTP expired before the customer entered it.',
+  },
+  {
+    code: 'otp_attempts_exceeded',
+    methods: ['card'],
+    source: 'customer',
+    recoveryClass: 'AUTH_FAILURE',
+    description: 'The customer exceeded the allowed number of OTP attempts.',
+  },
+  {
+    code: 'incorrect_card_details',
+    methods: ['card'],
+    source: 'customer',
+    recoveryClass: 'AUTH_FAILURE',
+    description: 'The customer entered incorrect card details.',
+  },
+  {
+    code: 'incorrect_cardholder_name',
+    methods: ['card'],
+    source: 'customer',
+    recoveryClass: 'AUTH_FAILURE',
+    description: 'The customer entered an incorrect cardholder name.',
+  },
+  {
+    code: 'card_number_invalid',
+    methods: ['card'],
+    source: 'customer',
+    recoveryClass: 'AUTH_FAILURE',
+    description: 'The card number the customer entered is invalid.',
   },
 
   // ------------------------------------------------------- hard decline

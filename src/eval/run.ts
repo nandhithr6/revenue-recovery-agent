@@ -4,6 +4,7 @@ import { formatINR } from '../domain/types.js';
 import { applyEnvFile } from '../live/env.js';
 import { BASELINE_STRATEGIES } from '../policies/baselines.js';
 import { createRulesAgent } from '../policies/rules-agent.js';
+import { createAdaptiveAgent } from '../policies/adaptive-agent.js';
 import type { Strategy } from '../policies/types.js';
 import { generateCohort, summariseCohort } from '../sim/generator.js';
 import { DEFAULT_COSTS, getScenario, SCENARIO_IDS } from '../sim/scenario.js';
@@ -29,6 +30,7 @@ const SIMULATION_START = Date.parse('2026-09-01T00:00:00+05:30');
 const STRATEGIES: readonly Strategy[] = [
   ...BASELINE_STRATEGIES,
   createRulesAgent(DEFAULT_COSTS),
+  createAdaptiveAgent(DEFAULT_COSTS),
 ];
 
 const pct = (v: number): string => `${(v * 100).toFixed(1)}%`;

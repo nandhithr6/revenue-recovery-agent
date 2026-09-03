@@ -21,7 +21,22 @@ export const SERIES_VARS = [
 
 export function seriesColor(index: number): string {
   // Fixed order, never cycled: colour follows the entity, not its rank.
-  return SERIES_VARS[index] ?? 'var(--ink-muted)';
+  return SERIES_VARS[index] ?? 'var(--ink-3)';
+}
+
+/**
+ * Colour for one of the five strategies, by their canonical array position
+ * (do-nothing, naive-retry, fixed-dunning, agent-adaptive, agent-rules).
+ * `do-nothing` recovers nothing in every scenario -- it has no bar worth
+ * distinguishing -- so it gets a neutral grey rather than eating one of the
+ * four validated, colourblind-checked categorical slots meant to tell the
+ * four REAL strategies apart. (Plain `seriesColor` stays as-is: other charts
+ * pass an explicit, unrelated `colorIndex` through it, e.g. the guardrail
+ * rule tally, and must not shift when this offsets.)
+ */
+export function strategyColor(index: number): string {
+  if (index === 0) return 'var(--ink-3)';
+  return SERIES_VARS[index - 1] ?? 'var(--ink-3)';
 }
 
 export interface BarRow {
@@ -190,6 +205,14 @@ export function GroupedBars({
                 const y = top + vi * (barHeight + gap);
                 const w = Math.max((v.value / maxValue) * plotWidth, v.value > 0 ? 2 : 0);
                 const key = `${row.group}-${v.label}`;
+                // `do-nothing` (vi === 0) scores exactly 0% on every class in
+                // every scenario, by construction -- its "0.0%" is the same
+                // uninformative label repeated on every single row, so it's
+                // skipped. A REAL strategy scoring 0% on a class is different:
+                // that's a genuine finding (this approach completely whiffs
+                // here), and hiding it made rows look like data was missing
+                // rather than measured-and-zero -- so those stay.
+                if (vi === 0 && v.value <= 0) return null;
                 return (
                   <g
                     key={key}
@@ -210,7 +233,7 @@ export function GroupedBars({
                       width={w}
                       height={barHeight}
                       rx={3.5}
-                      fill={seriesColor(vi)}
+                      fill={strategyColor(vi)}
                       opacity={hover === null || hover === key ? 1 : 0.4}
                     />
                     <text x={labelWidth + w + 7} y={y + barHeight - 1.5} className="mark-label" fontSize={11}>
@@ -234,7 +257,7 @@ export function Legend({ items }: { items: readonly string[] }) {
     <div className="legend">
       {items.map((label, i) => (
         <span key={label}>
-          <i className="swatch" style={{ background: seriesColor(i) }} aria-hidden />
+          <i className="swatch" style={{ background: strategyColor(i) }} aria-hidden />
           {label}
         </span>
       ))}

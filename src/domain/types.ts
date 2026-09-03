@@ -67,10 +67,21 @@ export type ActionKind =
   | 'retry_payment'
   /** Reach out to the customer on a channel. */
   | 'contact_customer'
-  /** Deliberately do nothing more, for a stated reason. */
+  /** Deliberately do nothing more, for a stated reason. Ends the case. */
   | 'stop'
   /** Hand to a human. */
-  | 'escalate_human';
+  | 'escalate_human'
+  /**
+   * Pause and re-decide later -- for "not yet, but not never." Distinct from
+   * `stop`: a case that stops is done for good, a case that waits comes back.
+   * Costs nothing, touches no customer, never faces a guardrail.
+   *
+   * Exists because `stop` was once used for this and quietly ended cases that
+   * should have resumed: a receivable that landed a promise-to-pay returned
+   * `stop` while honouring the grace window, which terminated the case on the
+   * spot instead of coming back once the promise lapsed. See engineering log.
+   */
+  | 'wait';
 
 export interface Action {
   readonly kind: ActionKind;
@@ -80,6 +91,50 @@ export interface Action {
   readonly delayMs: number;
   /** Why the policy chose this. Written to the ledger verbatim. */
   readonly rationale: string;
+}
+
+/**
+ * A structured outcome from a two-way contact, as opposed to the plain
+ * succeeded/failed boolean every other channel resolves to.
+ *
+ * Only voice produces one of these today (see `sim/voice-signal-model.ts` for
+ * where it's drawn from, and `policies/adaptive-agent.ts` for how a policy
+ * reacts to one). The set is deliberately small: each member exists because a
+ * policy does something DIFFERENT in response to it, not because it sounds
+ * like a plausible thing a customer might say. Anything a policy would treat
+ * identically to `no_answer` isn't worth a separate case.
+ */
+export type CustomerSignal =
+  /** Committed to pay, without giving a specific reason things changed. */
+  | { readonly kind: 'promise_to_pay' }
+  /** The original blocker (funds) is explicitly resolved now. */
+  | { readonly kind: 'funds_available_now' }
+  /** The original blocker (a dead instrument) is explicitly fixed now. */
+  | { readonly kind: 'instrument_fixed' }
+  /** Customer contests the charge. A reason to stop, not to try harder. */
+  | { readonly kind: 'disputes_charge' }
+  /** Customer declines to engage further. */
+  | { readonly kind: 'refused' }
+  /** Call did not connect. No information gained either way. */
+  | { readonly kind: 'no_answer' };
+
+/**
+ * One priced candidate action, flattened for display -- the same numbers
+ * `policies/action-registry.ts:Candidate` computes, minus the full `Action`
+ * object (redundant with the ledger/trace entry for the winner, and not
+ * needed for the ones that weren't chosen). Lives in `domain/` rather than
+ * `eval/trace.ts` or `policies/` specifically so both `ledger/ledger.ts` and
+ * `eval/trace.ts` can depend on it without either depending on the other.
+ */
+export interface CandidateSummary {
+  readonly kind: ActionKind;
+  readonly channel?: Channel;
+  readonly grossRecoveryPaise: Paise;
+  readonly costPaise: Paise;
+  readonly spamPoints: number;
+  readonly expectedValuePaise: Paise;
+  readonly dominated?: boolean;
+  readonly chosen: boolean;
 }
 
 /** Ground-truth diagnosis the simulator knows; the agent must infer it. */

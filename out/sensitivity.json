@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-02T14:33:59.368Z",
+  "generatedAt": "2026-09-03T15:42:48.864Z",
   "shippedPricePaise": 2000,
   "pricesPaise": [
     0,
@@ -26,11 +26,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 31031826.266666666,
-              "agent-rules": 47370680.2
+              "agent-rules": 54264002.53333333,
+              "agent-adaptive": 58885086.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8547472.317014351
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20221938.360195648
           },
           {
             "pricePaise": 500,
@@ -38,11 +39,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 30891226.266666666,
-              "agent-rules": 46834813.53333333
+              "agent-rules": 53699269.2,
+              "agent-adaptive": 58357586.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8548370.404778654
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20245230.537930466
           },
           {
             "pricePaise": 1000,
@@ -50,11 +52,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 30750626.266666666,
-              "agent-rules": 46298946.86666667
+              "agent-rules": 53134535.86666667,
+              "agent-adaptive": 57830086.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8549788.268854514
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20268806.27833807
           },
           {
             "pricePaise": 2000,
@@ -62,11 +65,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 30469426.266666666,
-              "agent-rules": 45227213.53333333
+              "agent-rules": 52005069.2,
+              "agent-adaptive": 56775086.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8554182.197350541
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20313232.04437097
           },
           {
             "pricePaise": 3000,
@@ -74,11 +78,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 30188226.266666666,
-              "agent-rules": 44155480.2
+              "agent-rules": 50875602.53333333,
+              "agent-adaptive": 55720086.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8560650.902811462
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20353779.639844503
           },
           {
             "pricePaise": 5000,
@@ -86,11 +91,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 29625826.266666666,
-              "agent-rules": 42012013.53333333
+              "agent-rules": 48616669.2,
+              "agent-adaptive": 53610086.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8579792.36822288
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20437948.694486436
           },
           {
             "pricePaise": 7500,
@@ -98,11 +104,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 28922826.266666666,
-              "agent-rules": 39332680.2
+              "agent-rules": 45793002.53333333,
+              "agent-adaptive": 50972586.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8615274.968584966
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20548857.99387276
           },
           {
             "pricePaise": 10000,
@@ -110,16 +117,17 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 28219826.266666666,
-              "agent-rules": 36653346.86666667
+              "agent-rules": 42969335.86666667,
+              "agent-adaptive": 48335086.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8663447.404542966
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20666002.9753542
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       },
       "adaptive": {
@@ -130,11 +138,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 31031826.266666666,
-              "agent-rules": 49145342.4
+              "agent-rules": 49261888.666666664,
+              "agent-adaptive": 57742931.53333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8250058.624805617
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 17261876.064838152
           },
           {
             "pricePaise": 500,
@@ -142,11 +151,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 30891226.266666666,
-              "agent-rules": 51800526.06666667
+              "agent-rules": 52240053.86666667,
+              "agent-adaptive": 57674709
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 18231140.520114932
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 17824833.37399487
           },
           {
             "pricePaise": 1000,
@@ -154,11 +164,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 30750626.266666666,
-              "agent-rules": 52413060.93333333
+              "agent-rules": 52268989.93333333,
+              "agent-adaptive": 56919198.333333336
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 18467585.467261255
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 18324221.264943156
           },
           {
             "pricePaise": 2000,
@@ -166,11 +177,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 30469426.266666666,
-              "agent-rules": 45227213.53333333
+              "agent-rules": 52005069.2,
+              "agent-adaptive": 56775086.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8554182.197350541
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 20313232.04437097
           },
           {
             "pricePaise": 3000,
@@ -178,11 +190,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 30188226.266666666,
-              "agent-rules": 42281204.2
+              "agent-rules": 45856268.2,
+              "agent-adaptive": 56258836.8
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 6705470.584926701
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 18968531.414602324
           },
           {
             "pricePaise": 5000,
@@ -190,11 +203,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 29625826.266666666,
-              "agent-rules": 45113930.93333333
+              "agent-rules": 48377746.46666667,
+              "agent-adaptive": 57541450.733333334
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 9229723.611628251
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 17416921.67578332
           },
           {
             "pricePaise": 7500,
@@ -202,11 +216,12 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 28922826.266666666,
-              "agent-rules": 43137030.13333333
+              "agent-rules": 47257637.2,
+              "agent-adaptive": 53658993.6
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 11702144.174947854
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 19187927.67655431
           },
           {
             "pricePaise": 10000,
@@ -214,16 +229,17 @@
               "do-nothing": 0,
               "naive-retry": 18941664.866666667,
               "fixed-dunning": 28219826.266666666,
-              "agent-rules": 43734195.2
+              "agent-rules": 42836480.13333333,
+              "agent-adaptive": 53425011.4
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 11233024.2824679
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11067067.368933076
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       }
     },
@@ -238,11 +254,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 43456218.53333333,
-              "agent-rules": 60838724.266666666
+              "agent-rules": 61042480.266666666,
+              "agent-adaptive": 68092013.46666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12299537.13343758
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14380890.490318345
           },
           {
             "pricePaise": 500,
@@ -250,11 +267,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 43353351.86666667,
-              "agent-rules": 60389124.266666666
+              "agent-rules": 60568680.266666666,
+              "agent-adaptive": 67663080.13333334
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12303683.53661604
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14390069.172982216
           },
           {
             "pricePaise": 1000,
@@ -262,11 +280,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 43250485.2,
-              "agent-rules": 59939524.266666666
+              "agent-rules": 60094880.266666666,
+              "agent-adaptive": 67234146.8
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12307914.80531599
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14399298.176288845
           },
           {
             "pricePaise": 2000,
@@ -274,11 +293,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 43044751.86666667,
-              "agent-rules": 59040324.266666666
+              "agent-rules": 59147280.266666666,
+              "agent-adaptive": 66376280.13333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12316631.587668628
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14417906.757776355
           },
           {
             "pricePaise": 3000,
@@ -286,11 +306,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 42839018.53333333,
-              "agent-rules": 58141124.266666666
+              "agent-rules": 58199680.266666666,
+              "agent-adaptive": 65518413.46666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12325686.761034044
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14436715.45793232
           },
           {
             "pricePaise": 5000,
@@ -298,11 +319,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 42427551.86666667,
-              "agent-rules": 56342724.266666666
+              "agent-rules": 56304480.266666666,
+              "agent-adaptive": 63802680.13333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12344809.274374254
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14474930.085543526
           },
           {
             "pricePaise": 7500,
@@ -310,11 +332,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 41913218.53333333,
-              "agent-rules": 54094724.266666666
+              "agent-rules": 53935480.266666666,
+              "agent-adaptive": 61658013.46666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12370602.054168986
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14523810.037020657
           },
           {
             "pricePaise": 10000,
@@ -322,16 +345,17 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 41398885.2,
-              "agent-rules": 51846724.266666666
+              "agent-rules": 51566480.266666666,
+              "agent-adaptive": 59513346.8
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12398482.152178006
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14573913.559713302
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       },
       "adaptive": {
@@ -342,11 +366,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 43456218.53333333,
-              "agent-rules": 61962502.13333333
+              "agent-rules": 60158101.8,
+              "agent-adaptive": 66442730.666666664
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 11635439.631238291
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10819472.903517064
           },
           {
             "pricePaise": 500,
@@ -354,11 +379,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 43353351.86666667,
-              "agent-rules": 62834237.6
+              "agent-rules": 61358965.46666667,
+              "agent-adaptive": 64238812.733333334
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 13601908.112562379
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10552760.605878528
           },
           {
             "pricePaise": 1000,
@@ -366,11 +392,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 43250485.2,
-              "agent-rules": 61161440.86666667
+              "agent-rules": 60197221,
+              "agent-adaptive": 62776560.6
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 7842512.38995575
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 8996475.471499454
           },
           {
             "pricePaise": 2000,
@@ -378,11 +405,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 43044751.86666667,
-              "agent-rules": 59040324.266666666
+              "agent-rules": 59147280.266666666,
+              "agent-adaptive": 66376280.13333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12316631.587668628
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 14417906.757776355
           },
           {
             "pricePaise": 3000,
@@ -390,11 +418,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 42839018.53333333,
-              "agent-rules": 56802321.13333333
+              "agent-rules": 58644773.06666667,
+              "agent-adaptive": 64627324.46666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12021440.00889864
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 13056207.864261722
           },
           {
             "pricePaise": 5000,
@@ -402,11 +431,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 42427551.86666667,
-              "agent-rules": 52595660.8
+              "agent-rules": 54943538.13333333,
+              "agent-adaptive": 59602340.4
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12769429.822324364
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 13995703.310625156
           },
           {
             "pricePaise": 7500,
@@ -414,11 +444,12 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 41913218.53333333,
-              "agent-rules": 51532944.4
+              "agent-rules": 52880132.06666667,
+              "agent-adaptive": 61649868.53333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 12359618.740297932
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11565081.058939885
           },
           {
             "pricePaise": 10000,
@@ -426,16 +457,17 @@
               "do-nothing": 0,
               "naive-retry": 23877756,
               "fixed-dunning": 41398885.2,
-              "agent-rules": 49099212.93333333
+              "agent-rules": 50175587.4,
+              "agent-adaptive": 59753116.46666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 9540793.506787727
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11648459.927596934
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       }
     },
@@ -450,11 +482,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 30003041.666666668,
-              "agent-rules": 42494692.733333334
+              "agent-rules": 43502569.6,
+              "agent-adaptive": 56604322.13333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8535191.953802714
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11020553.827655988
           },
           {
             "pricePaise": 500,
@@ -462,11 +495,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 29855241.666666668,
-              "agent-rules": 41953759.4
+              "agent-rules": 42922902.93333333,
+              "agent-adaptive": 56137988.8
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8543600.431316005
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11033677.97407136
           },
           {
             "pricePaise": 1000,
@@ -474,11 +508,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 29707441.666666668,
-              "agent-rules": 41412826.06666667
+              "agent-rules": 42343236.266666666,
+              "agent-adaptive": 55671655.46666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8552369.084810277
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11047198.14525519
           },
           {
             "pricePaise": 2000,
@@ -486,11 +521,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 29411841.666666668,
-              "agent-rules": 40330959.4
+              "agent-rules": 41183902.93333333,
+              "agent-adaptive": 54738988.8
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8570982.452544343
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11075420.718144637
           },
           {
             "pricePaise": 3000,
@@ -498,11 +534,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 29116241.666666668,
-              "agent-rules": 39249092.733333334
+              "agent-rules": 40024569.6,
+              "agent-adaptive": 53806322.13333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8591022.721729465
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11105209.513484938
           },
           {
             "pricePaise": 5000,
@@ -510,11 +547,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 28525041.666666668,
-              "agent-rules": 37085359.4
+              "agent-rules": 37705902.93333333,
+              "agent-adaptive": 51940988.8
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8635343.519831914
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11169434.987532157
           },
           {
             "pricePaise": 7500,
@@ -522,11 +560,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 27786041.666666668,
-              "agent-rules": 34380692.733333334
+              "agent-rules": 34807569.6,
+              "agent-adaptive": 49609322.13333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8698580.940635774
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11258292.421304235
           },
           {
             "pricePaise": 10000,
@@ -534,16 +573,17 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 27047041.666666668,
-              "agent-rules": 31676026.066666666
+              "agent-rules": 31909236.266666666,
+              "agent-adaptive": 47277655.46666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8770348.50127739
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11356468.420725243
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       },
       "adaptive": {
@@ -554,11 +594,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 30003041.666666668,
-              "agent-rules": 41733262.93333333
+              "agent-rules": 44731402.93333333,
+              "agent-adaptive": 54100182.733333334
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5372127.044727659
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 7746589.188497275
           },
           {
             "pricePaise": 500,
@@ -566,11 +607,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 29855241.666666668,
-              "agent-rules": 40554378
+              "agent-rules": 41290916.46666667,
+              "agent-adaptive": 55471478.06666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8168944.2931158
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 6963185.725035962
           },
           {
             "pricePaise": 1000,
@@ -578,11 +620,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 29707441.666666668,
-              "agent-rules": 41337118.4
+              "agent-rules": 44261546.6,
+              "agent-adaptive": 55981626.4
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8824099.222661817
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 8054226.856408682
           },
           {
             "pricePaise": 2000,
@@ -590,11 +633,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 29411841.666666668,
-              "agent-rules": 40330959.4
+              "agent-rules": 41183902.93333333,
+              "agent-adaptive": 54738988.8
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8570982.452544343
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11075420.718144637
           },
           {
             "pricePaise": 3000,
@@ -602,11 +646,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 29116241.666666668,
-              "agent-rules": 38630111.266666666
+              "agent-rules": 38144305.4,
+              "agent-adaptive": 52897726.333333336
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5166088.463099814
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 8166908.099215595
           },
           {
             "pricePaise": 5000,
@@ -614,11 +659,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 28525041.666666668,
-              "agent-rules": 39475378.93333333
+              "agent-rules": 40034953.2,
+              "agent-adaptive": 51616210.333333336
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 9950467.68977975
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 8611660.982933214
           },
           {
             "pricePaise": 7500,
@@ -626,11 +672,12 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 27786041.666666668,
-              "agent-rules": 35394141.46666667
+              "agent-rules": 36897448.666666664,
+              "agent-adaptive": 47691226.333333336
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4545867.91042309
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 6180273.912058714
           },
           {
             "pricePaise": 10000,
@@ -638,16 +685,17 @@
               "do-nothing": 0,
               "naive-retry": 9109319.333333334,
               "fixed-dunning": 27047041.666666668,
-              "agent-rules": 33992493.666666664
+              "agent-rules": 35400316.4,
+              "agent-adaptive": 47848340.666666664
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 3530767.676682332
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 9398581.152938493
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       }
     },
@@ -662,11 +710,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 19408807.8,
-              "agent-rules": 29663520.133333333
+              "agent-rules": 29966984.4,
+              "agent-adaptive": 36237107.4
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4768175.671175309
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4506073.136164991
           },
           {
             "pricePaise": 500,
@@ -674,11 +723,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 19237074.466666665,
-              "agent-rules": 29136553.466666665
+              "agent-rules": 29409117.733333334,
+              "agent-adaptive": 35750374.06666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4754885.4632193595
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4512293.75728785
           },
           {
             "pricePaise": 1000,
@@ -686,11 +736,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 19065341.133333333,
-              "agent-rules": 28609586.8
+              "agent-rules": 28851251.066666666,
+              "agent-adaptive": 35263640.733333334
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4741968.5367217725
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4518990.3282438135
           },
           {
             "pricePaise": 2000,
@@ -698,11 +749,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 18721874.466666665,
-              "agent-rules": 27555653.466666665
+              "agent-rules": 27735517.733333334,
+              "agent-adaptive": 34290174.06666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4717266.705036026
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4533802.733853658
           },
           {
             "pricePaise": 3000,
@@ -710,11 +762,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 18378407.8,
-              "agent-rules": 26501720.133333333
+              "agent-rules": 26619784.4,
+              "agent-adaptive": 33316707.4
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4694093.940339795
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4550491.845579017
           },
           {
             "pricePaise": 5000,
@@ -722,11 +775,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 17691474.466666665,
-              "agent-rules": 24393853.466666665
+              "agent-rules": 24388317.733333334,
+              "agent-adaptive": 31369774.066666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4652425.496733374
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4589415.991646312
           },
           {
             "pricePaise": 7500,
@@ -734,11 +788,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 16832807.8,
-              "agent-rules": 21759020.133333333
+              "agent-rules": 21598984.4,
+              "agent-adaptive": 28936107.4
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4609321.376846572
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4635047.523653074
           },
           {
             "pricePaise": 10000,
@@ -746,16 +801,17 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 15974141.133333333,
-              "agent-rules": 19124186.8
+              "agent-rules": 18809651.066666666,
+              "agent-adaptive": 26502440.733333334
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4576456.768276002
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4680963.433438586
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       },
       "adaptive": {
@@ -766,11 +822,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 19408807.8,
-              "agent-rules": 31457154.466666665
+              "agent-rules": 31744826.466666665,
+              "agent-adaptive": 34877811.6
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4766771.26511944
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 5985462.719363618
           },
           {
             "pricePaise": 500,
@@ -778,11 +835,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 19237074.466666665,
-              "agent-rules": 30342662.333333332
+              "agent-rules": 30463470.466666665,
+              "agent-adaptive": 33646517.666666664
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5837080.981431451
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 6552449.615415714
           },
           {
             "pricePaise": 1000,
@@ -790,11 +848,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 19065341.133333333,
-              "agent-rules": 28237534.8
+              "agent-rules": 29943507.866666667,
+              "agent-adaptive": 33935368.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5701837.412449887
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4824403.1457620915
           },
           {
             "pricePaise": 2000,
@@ -802,11 +861,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 18721874.466666665,
-              "agent-rules": 27555653.466666665
+              "agent-rules": 27735517.733333334,
+              "agent-adaptive": 34290174.06666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4717266.705036026
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4533802.733853658
           },
           {
             "pricePaise": 3000,
@@ -814,11 +874,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 18378407.8,
-              "agent-rules": 25009147.466666665
+              "agent-rules": 24475773.266666666,
+              "agent-adaptive": 34909075.06666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4388760.034572755
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4194561.456823863
           },
           {
             "pricePaise": 5000,
@@ -826,11 +887,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 17691474.466666665,
-              "agent-rules": 24554566.066666666
+              "agent-rules": 24732139,
+              "agent-adaptive": 33049054.666666668
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 3913184.607641138
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 5954230.7923025135
           },
           {
             "pricePaise": 7500,
@@ -838,11 +900,12 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 16832807.8,
-              "agent-rules": 23605238.6
+              "agent-rules": 23946250.8,
+              "agent-adaptive": 34190603.333333336
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5849019.853588232
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 4848637.779486048
           },
           {
             "pricePaise": 10000,
@@ -850,16 +913,17 @@
               "do-nothing": 0,
               "naive-retry": 11206285.533333333,
               "fixed-dunning": 15974141.133333333,
-              "agent-rules": 21940587.333333332
+              "agent-rules": 23106148.6,
+              "agent-adaptive": 31482078.2
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 4153869.8916425174
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 3830999.886450583
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       }
     },
@@ -874,11 +938,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 19263498,
-              "agent-rules": 34996710.333333336
+              "agent-rules": 37185793.333333336,
+              "agent-adaptive": 49514364.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5873639.574952163
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10249116.343080457
           },
           {
             "pricePaise": 500,
@@ -886,11 +951,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 19087964.666666668,
-              "agent-rules": 34234510.333333336
+              "agent-rules": 36396593.333333336,
+              "agent-adaptive": 48553964.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5883920.949263132
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10238101.271657044
           },
           {
             "pricePaise": 1000,
@@ -898,11 +964,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 18912431.333333332,
-              "agent-rules": 33472310.333333332
+              "agent-rules": 35607393.333333336,
+              "agent-adaptive": 47593564.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5894550.568497784
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10227636.987163262
           },
           {
             "pricePaise": 2000,
@@ -910,11 +977,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 18561364.666666668,
-              "agent-rules": 31947910.333333332
+              "agent-rules": 34028993.333333336,
+              "agent-adaptive": 45672764.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5916846.972786904
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10208367.464952083
           },
           {
             "pricePaise": 3000,
@@ -922,11 +990,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 18210298,
-              "agent-rules": 30423510.333333332
+              "agent-rules": 32450593.333333332,
+              "agent-adaptive": 43751964.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5940513.188340231
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10191320.311368179
           },
           {
             "pricePaise": 5000,
@@ -934,11 +1003,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 17508164.666666668,
-              "agent-rules": 27374710.333333332
+              "agent-rules": 29293793.333333332,
+              "agent-adaptive": 39910364.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5991889.1898780605
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10163936.381199244
           },
           {
             "pricePaise": 7500,
@@ -946,11 +1016,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 16630498,
-              "agent-rules": 23563710.333333332
+              "agent-rules": 25347793.333333332,
+              "agent-adaptive": 35108364.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 6063510.754294431
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10081926.111214614
           },
           {
             "pricePaise": 10000,
@@ -958,16 +1029,17 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 15752831.333333334,
-              "agent-rules": 19752710.333333332
+              "agent-rules": 21401793.333333332,
+              "agent-adaptive": 30306364.866666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 6143086.271393032
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 9995366.086747505
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       },
       "adaptive": {
@@ -978,11 +1050,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 19263498,
-              "agent-rules": 37778166.53333333
+              "agent-rules": 39727338.8,
+              "agent-adaptive": 47465750.53333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 10439001.15303149
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 11175064.506046552
           },
           {
             "pricePaise": 500,
@@ -990,11 +1063,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 19087964.666666668,
-              "agent-rules": 37980613.13333333
+              "agent-rules": 40774183.4,
+              "agent-adaptive": 45871047.266666666
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 8606733.150673488
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 12192127.680963865
           },
           {
             "pricePaise": 1000,
@@ -1002,11 +1076,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 18912431.333333332,
-              "agent-rules": 37596760.46666667
+              "agent-rules": 38576862.733333334,
+              "agent-adaptive": 50761898.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 9606588.058372809
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 13332910.031377295
           },
           {
             "pricePaise": 2000,
@@ -1014,11 +1089,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 18561364.666666668,
-              "agent-rules": 31947910.333333332
+              "agent-rules": 34028993.333333336,
+              "agent-adaptive": 45672764.86666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 5916846.972786904
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 10208367.464952083
           },
           {
             "pricePaise": 3000,
@@ -1026,11 +1102,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 18210298,
-              "agent-rules": 33350297.266666666
+              "agent-rules": 34944625.86666667,
+              "agent-adaptive": 41673740.93333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 11169207.568334699
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 12998862.844120378
           },
           {
             "pricePaise": 5000,
@@ -1038,11 +1115,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 17508164.666666668,
-              "agent-rules": 28740969.4
+              "agent-rules": 32547277,
+              "agent-adaptive": 38310214.13333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 6335986.4110895395
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 8817302.68857721
           },
           {
             "pricePaise": 7500,
@@ -1050,11 +1128,12 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 16630498,
-              "agent-rules": 31010623.533333335
+              "agent-rules": 30642579.266666666,
+              "agent-adaptive": 34875916.06666667
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 10302713.674531942
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 12055626.037864758
           },
           {
             "pricePaise": 10000,
@@ -1062,16 +1141,17 @@
               "do-nothing": 0,
               "naive-retry": 12329623.466666667,
               "fixed-dunning": 15752831.333333334,
-              "agent-rules": 30528991.2
+              "agent-rules": 31963433.8,
+              "agent-adaptive": 35643232.13333333
             },
-            "winnerId": "agent-rules",
-            "winnerName": "Reason-aware agent",
-            "agentStdDev": 10486087.541105673
+            "winnerId": "agent-adaptive",
+            "winnerName": "Adaptive agent",
+            "agentStdDev": 9395090.98589068
           }
         ],
         "flipped": false,
         "winners": [
-          "agent-rules"
+          "agent-adaptive"
         ]
       }
     }

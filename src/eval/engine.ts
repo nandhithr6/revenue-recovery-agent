@@ -2,6 +2,7 @@ import { lookupReason, type RecoveryClass } from '../domain/failure-taxonomy.js'
 import {
   DAY,
   type Channel,
+  type CustomerSignal,
   type LossEvent,
   type Paise,
   type Timestamp,
@@ -20,7 +21,18 @@ import type { CaseContext, HistoryEntry, Strategy } from '../policies/types.js';
 import { NUDGE_EFFECTIVENESS, recoversViaLink, recoveryOdds } from '../sim/recovery-model.js';
 import { Rng } from '../sim/rng.js';
 import type { CostModel } from '../sim/scenario.js';
-import { captureAction, captureView, type TraceSink } from './trace.js';
+import { drawVoiceSignal } from '../sim/voice-signal-model.js';
+import { captureAction, captureView, type CandidateSummary, type TraceSink } from './trace.js';
+
+/** Which structured voice signals represent real, positive engagement --
+ *  as opposed to a call that connected but yielded nothing (or worse). */
+function isPositiveSignal(signal: CustomerSignal): boolean {
+  return (
+    signal.kind === 'promise_to_pay' ||
+    signal.kind === 'funds_available_now' ||
+    signal.kind === 'instrument_fixed'
+  );
+}
 
 /**
  * Executes a strategy against simulated ground truth, through the guardrails,
@@ -81,6 +93,18 @@ export function runCase(
   guardrails: GuardrailConfig = DEFAULT_GUARDRAILS,
   /** Opt-in. Omitted on hot paths so tracing costs nothing when unused. */
   trace?: TraceSink,
+  /**
+   * Opt-in, and only meaningful alongside `trace`: computes the full priced
+   * candidate comparison for display (see
+   * `policies/adaptive-agent.ts:explain`), called at the SAME point `seen`
+   * is captured -- before `strategy.decide(ctx)` runs, on the identical
+   * `ctx`. Never affects the actual decision; a strategy that ignores this
+   * parameter (every one of them, since `decide()` never receives it)
+   * behaves exactly as it always has. Undefined for every strategy except
+   * where the caller explicitly wants the reasoning shown, e.g. the
+   * dashboard's live feed.
+   */
+  candidateHook?: (ctx: CaseContext) => readonly CandidateSummary[] | undefined,
 ): CaseResult {
   const recoveryClass = classOf(event);
   const history: HistoryEntry[] = [];
@@ -112,7 +136,48 @@ export function runCase(
     // Snapshot BEFORE deciding, so the trace records the inputs the policy
     // actually had rather than the state afterwards.
     const seen = trace ? captureView(ctx) : undefined;
+    const candidates = trace && candidateHook ? candidateHook(ctx) : undefined;
     const action = strategy.decide(ctx);
+
+    if (action.kind === 'wait') {
+      // Pause, not stop: advance the clock and loop back to decide() again,
+      // rather than ending the case. No cost, no customer contact, no
+      // guardrail applies -- there is nothing here for a guardrail to permit
+      // or refuse.
+      now += Math.max(0, action.delayMs);
+      ledger.append({
+        caseId: event.id,
+        at: now,
+        actionKind: 'wait',
+        channel: undefined,
+        outcome: 'executed',
+        succeeded: undefined,
+        rationale: action.rationale,
+        rule: undefined,
+        explanation: undefined,
+        deferredTo: undefined,
+        costPaise: 0,
+        spamPoints: 0,
+        ...(candidates ? { candidates } : {}),
+      });
+      if (trace && seen) {
+        trace.push({
+          at: now,
+          seen,
+          decided: captureAction(action),
+          verdict: { kind: 'allow' },
+          outcome: 'executed',
+          costPaise: 0,
+          spamPoints: 0,
+          ...(candidates ? { candidates } : {}),
+        });
+      }
+      if (now - event.occurredAt > MAX_HORIZON_MS) {
+        stoppedReason = 'recovery horizon exceeded while waiting';
+        break;
+      }
+      continue;
+    }
 
     if (action.kind === 'stop') {
       stoppedReason = action.rationale;
@@ -129,6 +194,7 @@ export function runCase(
         deferredTo: undefined,
         costPaise: 0,
         spamPoints: 0,
+        ...(candidates ? { candidates } : {}),
       });
       if (trace && seen) {
         trace.push({
@@ -139,6 +205,7 @@ export function runCase(
           outcome: 'stopped',
           costPaise: 0,
           spamPoints: 0,
+          ...(candidates ? { candidates } : {}),
         });
       }
       break;
@@ -175,6 +242,7 @@ export function runCase(
         deferredTo: verdict.notBefore,
         costPaise: 0,
         spamPoints: 0,
+        ...(candidates ? { candidates } : {}),
       });
       if (trace && seen) {
         trace.push({
@@ -190,6 +258,7 @@ export function runCase(
           outcome: 'deferred',
           costPaise: 0,
           spamPoints: 0,
+          ...(candidates ? { candidates } : {}),
         });
       }
       deferrals += 1;
@@ -224,6 +293,7 @@ export function runCase(
         deferredTo: undefined,
         costPaise: 0,
         spamPoints: 0,
+        ...(candidates ? { candidates } : {}),
       });
       if (trace && seen) {
         trace.push({
@@ -235,6 +305,7 @@ export function runCase(
           succeeded: false,
           costPaise: 0,
           spamPoints: 0,
+          ...(candidates ? { candidates } : {}),
         });
       }
       // The clock still advances: the agent tried, and time passed.
@@ -253,6 +324,7 @@ export function runCase(
     let succeeded = false;
     let actionCost = 0;
     let actionSpam = 0;
+    let stepSignal: CustomerSignal | undefined;
 
     switch (action.kind) {
       case 'retry_payment': {
@@ -288,20 +360,39 @@ export function runCase(
         actionSpam = SPAM_POINTS[channel];
         if (!channelsUsed.includes(channel)) channelsUsed.push(channel);
 
-        // A nudge may persuade the customer to act. For loss types with an
-        // instrument to fix, that unlocks a later retry; for link-recoverable
-        // ones, acting IS the payment.
-        const effectiveness = NUDGE_EFFECTIVENESS[channel] ?? 0;
-        if (event.customer.respondsToNudge && rng.chance(effectiveness)) {
-          customerActed = true;
-          succeeded = true;
+        if (channel === 'voice' && recoveryClass !== 'UNKNOWN') {
+          // Voice produces a STRUCTURED observation, not a plain landed/not
+          // boolean -- ground truth for which is `sim/voice-signal-model.ts`,
+          // read only here, never by a policy. `succeeded` is derived from
+          // it (see `isPositiveSignal`) purely so every other piece of code
+          // that already reads `succeeded` on any channel keeps working
+          // unchanged for voice too.
+          const signal = drawVoiceSignal(recoveryClass, rng);
+          stepSignal = signal;
+          if (isPositiveSignal(signal)) {
+            customerActed = true;
+            succeeded = true;
+            if (recoversViaLink(event.lossType)) {
+              const odds = recoveryOdds(recoveryClass, now - event.occurredAt, retries, true);
+              if (rng.chance(odds.probability)) recovered = true;
+            }
+          }
+        } else {
+          // A nudge may persuade the customer to act. For loss types with an
+          // instrument to fix, that unlocks a later retry; for link-recoverable
+          // ones, acting IS the payment.
+          const effectiveness = NUDGE_EFFECTIVENESS[channel] ?? 0;
+          if (event.customer.respondsToNudge && rng.chance(effectiveness)) {
+            customerActed = true;
+            succeeded = true;
 
-          // Where there is no charge to re-attempt, acting on the nudge IS the
-          // payment: the customer follows the link and pays. The class curve
-          // still decides whether that payment goes through.
-          if (recoversViaLink(event.lossType) && recoveryClass !== 'UNKNOWN') {
-            const odds = recoveryOdds(recoveryClass, now - event.occurredAt, retries, true);
-            if (rng.chance(odds.probability)) recovered = true;
+            // Where there is no charge to re-attempt, acting on the nudge IS the
+            // payment: the customer follows the link and pays. The class curve
+            // still decides whether that payment goes through.
+            if (recoversViaLink(event.lossType) && recoveryClass !== 'UNKNOWN') {
+              const odds = recoveryOdds(recoveryClass, now - event.occurredAt, retries, true);
+              if (rng.chance(odds.probability)) recovered = true;
+            }
           }
         }
         break;
@@ -321,7 +412,11 @@ export function runCase(
 
     costPaise += actionCost;
     spamPoints += actionSpam;
-    history.push({ at: now, action, succeeded });
+    history.push(
+      stepSignal
+        ? { at: now, action, succeeded, signal: stepSignal }
+        : { at: now, action, succeeded },
+    );
 
     ledger.append({
       caseId: event.id,
@@ -336,6 +431,8 @@ export function runCase(
       deferredTo: undefined,
       costPaise: actionCost,
       spamPoints: actionSpam,
+      ...(stepSignal ? { signal: stepSignal } : {}),
+      ...(candidates ? { candidates } : {}),
     });
 
     if (trace && seen) {
@@ -348,6 +445,8 @@ export function runCase(
         succeeded,
         costPaise: actionCost,
         spamPoints: actionSpam,
+        ...(stepSignal ? { signal: stepSignal } : {}),
+        ...(candidates ? { candidates } : {}),
       });
     }
 

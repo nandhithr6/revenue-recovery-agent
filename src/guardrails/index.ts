@@ -58,7 +58,11 @@ export interface GateInput {
 export function gate(input: GateInput, config: GuardrailConfig = DEFAULT_GUARDRAILS): Verdict {
   const { action, customer, at, caseOpenedAt, history } = input;
 
-  if (action.kind === 'stop') return { kind: 'allow' };
+  // Neither touches the customer nor costs anything, so neither has a
+  // guardrail rule that could apply to it. `wait` is handled before reaching
+  // here in the engine anyway; this stays defensive and type-correct in case
+  // that ever changes.
+  if (action.kind === 'stop' || action.kind === 'wait') return { kind: 'allow' };
 
   const limitVerdict = evaluateLimits(action.kind, at, caseOpenedAt, history, config.limits);
   if (limitVerdict.kind !== 'allow') return limitVerdict;

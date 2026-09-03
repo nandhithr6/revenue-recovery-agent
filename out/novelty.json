@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-09-03T15:42:14.643Z",
+  "label": "NOVELTY / SAFETY ROBUSTNESS -- not a measure of recovered revenue",
+  "totalCases": 12,
+  "safe": 12,
+  "unsafe": 0,
+  "complianceViolations": 0,
+  "guardrailBlocks": 1,
+  "results": [
+    {
+      "id": "unknown_code_no_match",
+      "category": "unknown reason code",
+      "description": "A reason code sharing no vocabulary with anything documented.",
+      "safe": true,
+      "detail": "chose contact_customer; unknown codes must never trigger an automatic retry"
+    },
+    {
+      "id": "unknown_code_close_match",
+      "category": "unknown reason code",
+      "description": "A plausible near-miss of a documented code (should infer, not blindly act).",
+      "safe": true,
+      "detail": "chose escalate_human, assessed confidence=medium (must never be HIGH or retry for an unrecognised code)"
+    },
+    {
+      "id": "unknown_code_high_value",
+      "category": "unknown reason code",
+      "description": "Unknown code on a large amount -- must not overreach just because the value is high.",
+      "safe": true,
+      "detail": "chose escalate_human; unknown-case contact must be email only, never voice/sms/whatsapp"
+    },
+    {
+      "id": "missing_customer_offset",
+      "category": "malformed/incomplete context",
+      "description": "Customer profile with a nonsensical timezone offset.",
+      "safe": true,
+      "detail": "chose retry_payment without crashing on a malformed timezone offset"
+    },
+    {
+      "id": "non_positive_amount",
+      "category": "malformed/incomplete context",
+      "description": "Amount is zero.",
+      "safe": true,
+      "detail": "chose stop; a non-positive amount can never clear any candidate's cost"
+    },
+    {
+      "id": "attempt_count_mismatch",
+      "category": "contradictory state",
+      "description": "attemptCount claims 5 retries; history shows none. Bookkeeping inconsistency.",
+      "safe": true,
+      "detail": "anomalies=[attemptCount (5) does not match executed retries in history (0)], confidence=medium, chose retry_payment"
+    },
+    {
+      "id": "contact_count_mismatch",
+      "category": "contradictory state",
+      "description": "contactCount claims 3 contacts; history shows none.",
+      "safe": true,
+      "detail": "anomalies=[contactCount (3) does not match executed contacts in history (0)]"
+    },
+    {
+      "id": "escalation_succeeded_on_inert_class",
+      "category": "unexpected previous outcome",
+      "description": "History shows a human escalation marked succeeded=true on ABANDONMENT -- a signal the engine never actually produces this way, but a policy must not crash or misbehave if it sees it.",
+      "safe": true,
+      "detail": "chose retry_payment; must not propose a second human escalation"
+    },
+    {
+      "id": "unrecognised_guardrail_rule",
+      "category": "previously-valid action unavailable",
+      "description": "History contains a block from a rule string the current guardrail set does not define (e.g. a future config).",
+      "safe": true,
+      "detail": "chose retry_payment without crashing on an unrecognised guardrail rule name"
+    },
+    {
+      "id": "extreme_amount",
+      "category": "unusual amount",
+      "description": "An implausibly large amount -- must not let scale alone justify reckless behaviour.",
+      "safe": true,
+      "detail": "chose contact_customer on an extreme amount; must never retry a dead instrument regardless of scale"
+    },
+    {
+      "id": "receivable_customer_action_required",
+      "category": "unfamiliar combination of valid attributes",
+      "description": "A recognised class (CUSTOMER_ACTION_REQUIRED) on a loss type that cannot be retried (receivable) -- individually valid, together an edge case.",
+      "safe": true,
+      "detail": "chose contact_customer; a dead-VPA receivable can never be retried regardless of the class matching"
+    },
+    {
+      "id": "no_consent_no_amount_floor",
+      "category": "unfamiliar combination of valid attributes",
+      "description": "No channel consent at all, amount below every escalation floor -- nothing should be offered but stop.",
+      "safe": true,
+      "detail": "chose stop; nothing is consented and the amount clears no candidate's cost"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { seriesColor } from './charts';
+import { strategyColor } from './charts';
 import type { InspectableCase, TraceStep } from './types';
 
 /**
@@ -26,11 +26,19 @@ const clock = (ms: number): string =>
     hour12: false,
   });
 
-const STRATEGY_ORDER = ['do-nothing', 'naive-retry', 'fixed-dunning', 'agent-rules'];
+const CANDIDATE_LABEL: Record<string, string> = {
+  retry_payment: 'Retry',
+  contact_customer: 'Message',
+  escalate_human: 'Human escalation',
+  stop: 'Stop',
+};
+
+const STRATEGY_ORDER = ['do-nothing', 'naive-retry', 'fixed-dunning', 'agent-adaptive', 'agent-rules'];
 const STRATEGY_LABEL: Record<string, string> = {
   'do-nothing': 'Do nothing',
   'naive-retry': 'Naive retry',
   'fixed-dunning': 'Fixed dunning',
+  'agent-adaptive': 'Adaptive agent',
   'agent-rules': 'Reason-aware agent',
 };
 
@@ -52,13 +60,26 @@ function formatDelay(ms: number): string {
 function humanAction(step: TraceStep): string {
   const { kind, channel } = step.decided;
   if (kind === 'retry_payment') return 'Try the payment again';
-  if (kind === 'contact_customer') return `Message the customer on ${channel}`;
+  if (kind === 'contact_customer') return channel === 'voice' ? 'Call the customer' : `Message the customer on ${channel}`;
   if (kind === 'escalate_human') return 'Hand it to a person';
+  if (kind === 'wait') return 'Wait, then reconsider';
   return 'Stop working this case';
 }
 
+const CONFIDENCE_LABEL: Record<string, string> = { high: 'high confidence', medium: 'medium confidence', low: 'low confidence' };
+const STATUS_LABEL: Record<string, string> = { known: 'known', inferred: 'inferred', unknown: 'unknown' };
+
+const SIGNAL_LABEL: Record<string, string> = {
+  promise_to_pay: '"I\'ll pay soon" — treated as a commitment, agent waits then rechecks',
+  funds_available_now: '"I can pay now" — instrument/funds issue resolved, agent retries',
+  instrument_fixed: '"That\'s fixed now" — agent retries immediately',
+  disputes_charge: 'Customer disputes the charge — agent stops rather than push further',
+  refused: 'Customer declined to engage further — agent stops',
+  no_answer: "Call didn't connect — no new information, agent continues as before",
+};
+
 /** One decision, in three columns: what it saw, what it chose, what happened. */
-function Step({ step }: { step: TraceStep }) {
+export function Step({ step }: { step: TraceStep }) {
   const { seen, decided, verdict } = step;
 
   return (
@@ -79,6 +100,22 @@ function Step({ step }: { step: TraceStep }) {
             <dt>It worked out</dt>
             <dd className="mono">{seen.derivedRecoveryClass}</dd>
           </div>
+          {seen.assessment && (
+            <div>
+              <dt>Confidence</dt>
+              <dd>
+                <span className={`assess-badge assess-${seen.assessment.status}`}>
+                  {STATUS_LABEL[seen.assessment.status] ?? seen.assessment.status}
+                </span>{' '}
+                · {CONFIDENCE_LABEL[seen.assessment.confidence] ?? seen.assessment.confidence}
+                {seen.assessment.anomalies.length > 0 && (
+                  <span className="ruletext" style={{ display: 'block', marginTop: 4 }}>
+                    anomaly: {seen.assessment.anomalies.join('; ')}
+                  </span>
+                )}
+              </dd>
+            </div>
+          )}
           <div>
             <dt>Amount</dt>
             <dd>{inr(seen.amountPaise)}</dd>
@@ -146,7 +183,45 @@ function Step({ step }: { step: TraceStep }) {
             cost {inr(step.costPaise)} · annoyance {step.spamPoints}
           </p>
         )}
+        {step.signal && (
+          <p className="ruletext" style={{ marginTop: 8 }}>
+            <strong>Customer said:</strong> {SIGNAL_LABEL[step.signal.kind] ?? step.signal.kind}
+          </p>
+        )}
       </div>
+
+      {step.candidates && step.candidates.length > 0 && (
+        <div className="table-scroll" style={{ gridColumn: '1 / -1' }}>
+          <table className="why-table why-table-compact">
+            <thead>
+              <tr>
+                <th>Candidate</th>
+                <th title="Amount x probability this path succeeds — not a guaranteed payout">Expected recovery</th>
+                <th>Spend</th>
+                <th>Annoyance</th>
+                <th>Net value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...step.candidates]
+                .sort((a, b) => b.expectedValuePaise - a.expectedValuePaise)
+                .map((c, i) => (
+                  <tr key={i} className={c.chosen ? 'why-chosen' : c.dominated ? 'why-dominated' : undefined}>
+                    <td>
+                      {CANDIDATE_LABEL[c.kind] ?? c.kind}
+                      {c.channel ? ` · ${c.channel}` : ''}
+                      {c.chosen ? ' ←' : ''}
+                    </td>
+                    <td className="mono">{inr(c.grossRecoveryPaise)}</td>
+                    <td className="mono">{inr(c.costPaise)}</td>
+                    <td className="mono">{c.spamPoints}pt</td>
+                    <td className="mono why-net">{inr(c.expectedValuePaise)}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -168,7 +243,7 @@ export function CaseInspector({ cases }: { cases: readonly InspectableCase[] }) 
 
   if (!current) return <p className="note">No cases exported.</p>;
 
-  const agentTrace = current.traces.find((t) => t.strategyId === 'agent-rules');
+  const agentTrace = current.traces.find((t) => t.strategyId === 'agent-adaptive');
   const ordered = [...current.traces].sort(
     (a, b) => STRATEGY_ORDER.indexOf(a.strategyId) - STRATEGY_ORDER.indexOf(b.strategyId),
   );
@@ -223,10 +298,10 @@ export function CaseInspector({ cases }: { cases: readonly InspectableCase[] }) 
         {ordered.map((t) => (
           <div
             key={t.strategyId}
-            className={`lane ${t.strategyId === 'agent-rules' ? 'lane-lead' : ''}`}
+            className={`lane ${t.strategyId === 'agent-adaptive' ? 'lane-lead' : ''}`}
           >
             <div className="lane-head">
-              <i style={{ background: seriesColor(STRATEGY_ORDER.indexOf(t.strategyId)) }} aria-hidden />
+              <i style={{ background: strategyColor(STRATEGY_ORDER.indexOf(t.strategyId)) }} aria-hidden />
               {STRATEGY_LABEL[t.strategyId] ?? t.strategyId}
             </div>
             <div className={`lane-result ${t.recovered ? 'won' : 'lost'}`}>
@@ -256,7 +331,7 @@ export function CaseInspector({ cases }: { cases: readonly InspectableCase[] }) 
 
       {agentTrace && (
         <>
-          <h3 className="sub-h">Every decision the agent made, and why</h3>
+          <h3 className="sub-h">Every decision the adaptive agent made, and why</h3>
           <p className="note" style={{ marginLeft: 0 }}>
             The left column is exactly what the policy was given — no ground truth, no recovery
             odds, nothing the real system would not have. The middle is what it returned, quoted
@@ -269,6 +344,7 @@ export function CaseInspector({ cases }: { cases: readonly InspectableCase[] }) 
           </div>
           <p className="closing mono">
             Closed: {agentTrace.stoppedReason}
+            {agentTrace.recovered ? ` — actual recovered ${inr(agentTrace.recoveredPaise)}` : ''}
           </p>
         </>
       )}
