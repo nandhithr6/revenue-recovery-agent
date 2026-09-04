@@ -1,0 +1,78 @@
+<svg viewBox="0 0 1040 300" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8590a8"/>
+    </marker>
+    <style>
+      .box { fill:#ffffff; stroke:#cdd6e8; stroke-width:1.5; }
+      .brain { fill:#e9f0ff; stroke:#1655d1; }
+      .brake { fill:#fff2ea; stroke:#eb6834; }
+      .ledger { fill:#eafaf0; stroke:#0ca30c; }
+      .t { fill:#0d1526; font-size:15px; font-weight:700; }
+      .s { fill:#4c5670; font-size:11px; }
+      .edge { stroke:#8590a8; stroke-width:1.5; fill:none; marker-end:url(#arrow); }
+      .cap { fill:#8590a8; font-size:11px; font-style:italic; }
+    </style>
+  </defs>
+
+  <!-- row of boxes -->
+  <g>
+    <rect class="box" x="10" y="60" width="150" height="64" rx="10"/>
+    <text class="t" x="85" y="87" text-anchor="middle">LossEvent</text>
+    <text class="s" x="85" y="106" text-anchor="middle">real Razorpay reason</text>
+
+    <rect class="box brain" x="205" y="60" width="150" height="64" rx="10"/>
+    <text class="t" x="280" y="87" text-anchor="middle" fill="#0d3ea3">Diagnose</text>
+    <text class="s" x="280" y="106" text-anchor="middle">code → recovery class</text>
+
+    <rect class="box brain" x="400" y="60" width="150" height="64" rx="10"/>
+    <text class="t" x="475" y="87" text-anchor="middle" fill="#0d3ea3">Policy</text>
+    <text class="s" x="475" y="106" text-anchor="middle">rules, EV pricing, or LLM</text>
+
+    <rect class="box brake" x="595" y="60" width="150" height="64" rx="10"/>
+    <text class="t" x="670" y="87" text-anchor="middle" fill="#b3491a">Guardrails</text>
+    <text class="s" x="670" y="106" text-anchor="middle">deterministic gate</text>
+
+    <rect class="box" x="790" y="60" width="120" height="64" rx="10"/>
+    <text class="t" x="850" y="87" text-anchor="middle">Execute</text>
+    <text class="s" x="850" y="106" text-anchor="middle">on allow only</text>
+
+    <rect class="box ledger" x="945" y="60" width="90" height="64" rx="10"/>
+    <text class="t" x="990" y="82" text-anchor="middle" fill="#0a7d0a" font-size="13">Ledger</text>
+    <text class="s" x="990" y="99" text-anchor="middle" font-size="9.5">append-only</text>
+
+    <path class="edge" d="M160,92 H205"/>
+    <path class="edge" d="M355,92 H400"/>
+    <path class="edge" d="M550,92 H595"/>
+    <path class="edge" d="M745,92 H790"/>
+    <path class="edge" d="M910,92 H945"/>
+  </g>
+
+  <!-- brain / brake labels -->
+  <text class="cap" x="280" y="45">the brain proposes an action — it cannot execute anything</text>
+  <text class="cap" x="670" y="45">the brakes decide — allow / defer / block</text>
+
+  <!-- guardrail sub-rules -->
+  <g>
+    <rect class="box" x="595" y="150" width="150" height="46" rx="8" stroke-dasharray="3,3"/>
+    <text class="s" x="670" y="168" text-anchor="middle" font-weight="700" fill="#0d1526">stopping rules</text>
+    <text class="s" x="670" y="184" text-anchor="middle">deterministic</text>
+
+    <rect class="box" x="595" y="205" width="150" height="46" rx="8" stroke-dasharray="3,3"/>
+    <text class="s" x="670" y="223" text-anchor="middle" font-weight="700" fill="#0d1526">compliance</text>
+    <text class="s" x="670" y="239" text-anchor="middle">quiet hours, DND, consent</text>
+
+    <path class="edge" d="M670,124 V150" marker-end="none" stroke-dasharray="3,3"/>
+    <path class="edge" d="M670,196 V205" marker-end="none" stroke-dasharray="3,3"/>
+  </g>
+
+  <!-- ledger feeds evaluator -->
+  <g>
+    <rect class="box" x="905" y="170" width="130" height="50" rx="8"/>
+    <text class="t" x="970" y="192" text-anchor="middle" font-size="13">Evaluator</text>
+    <text class="s" x="970" y="208" text-anchor="middle" font-size="9.5">metrics + dashboard</text>
+    <path class="edge" d="M990,124 V170"/>
+  </g>
+
+  <text class="s" x="10" y="285" fill="#8590a8">Every arrow is a real code boundary — see docs/ARCHITECTURE.md for what each layer is forbidden from doing.</text>
+</svg>
