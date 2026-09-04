@@ -35,7 +35,7 @@ measured against the same three baselines:
 | Naive retry | ₹2,16,490 | ₹7,713 | ₹2,08,777 | 26.6% | 10.26 | 0 |
 | Fixed dunning | ₹2,94,904 | ₹7,151 | ₹2,82,454 | 41.2% | 5.72 | 0 |
 | Reason-aware agent | ₹4,14,163 | ₹2,266 | ₹4,01,317 | 49.2% | 2.59 | 0 |
-| 🏆 **Adaptive agent** | **₹6,08,559** | **₹2,228** | **₹5,96,511** | **59.4%** | **2.37** | 0 |
+| **Adaptive agent** | **₹6,08,559** | **₹2,228** | **₹5,96,511** | **59.4%** | **2.37** | 0 |
 
 Same 500-case cohort, same guardrails, same cost model, only the policy
 changes. **+₹3.14L (+111%) over the best baseline, using 59% fewer retries
@@ -64,11 +64,10 @@ all 203 individually, not just the four buckets.
 The [live dashboard](https://revenue-recovery-agent-beta.vercel.app) replays the
 actual decision log this cohort produced — not a script. Every OBSERVE → ASSESS →
 CANDIDATES → SCORE → GUARDRAIL → ACT step shown is a real ledger entry; nothing is
-staged for the demo. It also carries the full case-by-case audit (why each of the
-40.6% non-recovered cases didn't recover — hard decline, correctly stopped, tried
-and lost the odds, or a genuine miss), the 250-cohort robustness sweep, and one
-naturally-occurring case where a simulated Hinglish voice call changes what the
-agent does next.
+staged for the demo. It also carries the case-by-case audit behind the breakdown
+above (all 203 non-recovered cases, named individually, not just the four
+buckets), the 250-cohort robustness sweep, and one naturally-occurring case
+where a simulated Hinglish voice call changes what the agent does next.
 
 ## Why this beats fixed dunning
 
