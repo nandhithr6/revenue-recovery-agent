@@ -17,8 +17,13 @@
     "decline:create": "tsx src/live/capture-decline.ts create",
     "decline:capture": "tsx src/live/capture-decline.ts capture"
   },
-  "author": "",
+  "author": "Nandhitha",
   "license": "MIT",
+  "homepage": "https://revenue-recovery-agent-beta.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nandhithr6/revenue-recovery-agent.git"
+  },
   "type": "module",
   "devDependencies": {
     "@types/node": "^26.4.1",

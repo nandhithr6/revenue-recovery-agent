@@ -68,50 +68,53 @@ export function RobustnessSection({ data }: { data: Robustness | null }) {
         of the 250 on its own.
       </p>
 
-      <div className="table-scroll">
-      <table className="ledger">
-        <thead>
-          <tr>
-            <th>Scenario</th>
-            <th>Strategy</th>
-            <th>Mean</th>
-            <th>p10</th>
-            <th>p90</th>
-            <th>Std dev</th>
-            <th>Best baseline mean</th>
-            <th>Wins</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.scenarios.flatMap((s) => {
-            const baselineBest = s.strategies
-              .filter((x) => !customIds.includes(x.strategyId))
-              .reduce((a, b) => (b.netValue.mean > a.netValue.mean ? b : a));
-            return customIds.map((id) => {
-              const strat = s.strategies.find((x) => x.strategyId === id);
-              if (!strat) return null;
-              const perfect = strat.wins === strat.runs;
-              return (
-                <tr key={`${s.scenarioId}-${id}`} className={id === 'agent-adaptive' ? 'lead' : undefined}>
-                  <td>{id === customIds[0] ? s.scenarioName : ''}</td>
-                  <td>{CUSTOM_STRATEGY_LABEL[id] ?? id}</td>
-                  <td className="money">{lakh(strat.netValue.mean)}</td>
-                  <td className="money">{lakh(strat.netValue.p10)}</td>
-                  <td className="money">{lakh(strat.netValue.p90)}</td>
-                  <td className="money">±{lakh(strat.netValue.stdDev)}</td>
-                  <td className="money">{lakh(baselineBest.netValue.mean)}</td>
-                  <td className="money">
-                    <span className={perfect ? 'zero' : undefined}>
-                      {strat.wins}/{strat.runs}
-                    </span>
-                  </td>
-                </tr>
-              );
-            });
-          })}
-        </tbody>
-      </table>
-      </div>
+      <details className="why-panel">
+        <summary>Show the per-scenario table — every mean, p10/p90 and win count</summary>
+        <div className="table-scroll">
+        <table className="ledger">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>Strategy</th>
+              <th>Mean</th>
+              <th>p10</th>
+              <th>p90</th>
+              <th>Std dev</th>
+              <th>Best baseline mean</th>
+              <th>Wins</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.scenarios.flatMap((s) => {
+              const baselineBest = s.strategies
+                .filter((x) => !customIds.includes(x.strategyId))
+                .reduce((a, b) => (b.netValue.mean > a.netValue.mean ? b : a));
+              return customIds.map((id) => {
+                const strat = s.strategies.find((x) => x.strategyId === id);
+                if (!strat) return null;
+                const perfect = strat.wins === strat.runs;
+                return (
+                  <tr key={`${s.scenarioId}-${id}`} className={id === 'agent-adaptive' ? 'lead' : undefined}>
+                    <td>{id === customIds[0] ? s.scenarioName : ''}</td>
+                    <td>{CUSTOM_STRATEGY_LABEL[id] ?? id}</td>
+                    <td className="money">{lakh(strat.netValue.mean)}</td>
+                    <td className="money">{lakh(strat.netValue.p10)}</td>
+                    <td className="money">{lakh(strat.netValue.p90)}</td>
+                    <td className="money">±{lakh(strat.netValue.stdDev)}</td>
+                    <td className="money">{lakh(baselineBest.netValue.mean)}</td>
+                    <td className="money">
+                      <span className={perfect ? 'zero' : undefined}>
+                        {strat.wins}/{strat.runs}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              });
+            })}
+          </tbody>
+        </table>
+        </div>
+      </details>
 
       <p className="note" style={{ marginLeft: 0, marginTop: 18 }}>
         It is not {data.totalRuns} of {data.totalRuns}, and the losses are left in rather than
@@ -139,44 +142,47 @@ export function SensitivitySection({ data }: { data: Sensitivity | null }) {
         point.
       </p>
 
-      <div className="table-scroll">
-      <table className="ledger">
-        <thead>
-          <tr>
-            <th>Scenario</th>
-            <th>Strategy</th>
-            {first.adaptive.points.map((p) => (
-              <th key={p.pricePaise}>{rupees(p.pricePaise)}</th>
-            ))}
-            <th>Winner changes?</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.scenarios.flatMap((s) =>
-            (['agent-adaptive', 'agent-rules'] as const).map((id) => (
-              <tr key={`${s.scenarioId}-${id}`} className={id === 'agent-adaptive' ? 'lead' : undefined}>
-                <td>{id === 'agent-adaptive' ? s.scenarioName : ''}</td>
-                <td>{CUSTOM_STRATEGY_LABEL[id]}</td>
-                {s.adaptive.points.map((p) => (
-                  <td key={p.pricePaise} className="money">
-                    {lakh(p.byStrategy[id] ?? 0)}
+      <details className="why-panel">
+        <summary>Show the price sweep — net value at every point from ₹0 to ₹100</summary>
+        <div className="table-scroll">
+        <table className="ledger">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>Strategy</th>
+              {first.adaptive.points.map((p) => (
+                <th key={p.pricePaise}>{rupees(p.pricePaise)}</th>
+              ))}
+              <th>Winner changes?</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.scenarios.flatMap((s) =>
+              (['agent-adaptive', 'agent-rules'] as const).map((id) => (
+                <tr key={`${s.scenarioId}-${id}`} className={id === 'agent-adaptive' ? 'lead' : undefined}>
+                  <td>{id === 'agent-adaptive' ? s.scenarioName : ''}</td>
+                  <td>{CUSTOM_STRATEGY_LABEL[id]}</td>
+                  {s.adaptive.points.map((p) => (
+                    <td key={p.pricePaise} className="money">
+                      {lakh(p.byStrategy[id] ?? 0)}
+                    </td>
+                  ))}
+                  <td className="money">
+                    {id === 'agent-adaptive' ? (
+                      <span className={s.adaptive.flipped ? undefined : 'zero'}>
+                        {s.adaptive.flipped ? 'yes' : 'no'}
+                      </span>
+                    ) : (
+                      ''
+                    )}
                   </td>
-                ))}
-                <td className="money">
-                  {id === 'agent-adaptive' ? (
-                    <span className={s.adaptive.flipped ? undefined : 'zero'}>
-                      {s.adaptive.flipped ? 'yes' : 'no'}
-                    </span>
-                  ) : (
-                    ''
-                  )}
-                </td>
-              </tr>
-            )),
-          )}
-        </tbody>
-      </table>
-      </div>
+                </tr>
+              )),
+            )}
+          </tbody>
+        </table>
+        </div>
+      </details>
 
       <p className="note" style={{ marginLeft: 0, marginTop: 18 }}>
         {data.adaptiveRankingStable ? (
@@ -225,30 +231,33 @@ export function NoveltySection({ data }: { data: Novelty | null }) {
         </p>
       </div>
 
-      <div className="table-scroll">
-      <table className="ledger">
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Case</th>
-            <th>Result</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.results.map((r) => (
-            <tr key={r.id}>
-              <td>{CATEGORY_LABEL[r.category] ?? r.category}</td>
-              <td className="mono">{r.id}</td>
-              <td>
-                <span className={r.safe ? 'zero' : undefined} title={r.detail}>
-                  {r.safe ? 'safe' : 'UNSAFE'}
-                </span>
-              </td>
+      <details className="why-panel">
+        <summary>Show all {data.totalCases} adversarial cases by name</summary>
+        <div className="table-scroll">
+        <table className="ledger">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Case</th>
+              <th>Result</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      </div>
+          </thead>
+          <tbody>
+            {data.results.map((r) => (
+              <tr key={r.id}>
+                <td>{CATEGORY_LABEL[r.category] ?? r.category}</td>
+                <td className="mono">{r.id}</td>
+                <td>
+                  <span className={r.safe ? 'zero' : undefined} title={r.detail}>
+                    {r.safe ? 'safe' : 'UNSAFE'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+      </details>
 
       <p className="note" style={{ marginLeft: 0, marginTop: 18 }}>
         Guardrail-mediated blocks across these adversarial fixtures (a rule catching a proposal is a

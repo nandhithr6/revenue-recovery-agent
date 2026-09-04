@@ -9,6 +9,13 @@ agent reads *why* the payment failed, prices a matched recovery in rupees, and s
 inside hard compliance limits doing it — with every decision written to an append-only
 ledger the dashboard reads and never re-simulates.
 
+**Jump to:** [the numbers](#the-result-on-one-seeded-cohort) ·
+[watch it decide](#watch-the-agent-work) ·
+[is it robust?](#is-594-just-one-lucky-seed) ·
+[how it's bounded](#architecture-the-brain-proposes-the-brakes-decide) ·
+[what it can't claim](#limitations) ·
+[run it yourself](#reproducing-all-of-this)
+
 ---
 
 ## The result, on one seeded cohort
@@ -60,6 +67,8 @@ The [live dashboard](https://revenue-recovery-agent-beta.vercel.app) names
 all 203 individually, not just the four buckets.
 
 ## Watch the agent work
+
+<img src="docs/assets/dashboard-preview.png" alt="The live dashboard mid-replay: masthead metrics, the scenario picker, and the current decision showing a real priced candidate table with expected recovery, spend, annoyance and net value for each option" width="100%">
 
 The [live dashboard](https://revenue-recovery-agent-beta.vercel.app) replays the
 actual decision log this cohort produced — not a script. Every OBSERVE → ASSESS →
