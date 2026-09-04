@@ -1,48 +1,46 @@
 <svg viewBox="0 0 1040 190" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
   <defs>
     <style>
-      .card { fill:#ffffff; stroke:#e3e8f2; stroke-width:1.5; }
-      .bar { fill:#1655d1; }
-      .val { fill:#0d1526; font-size:40px; font-weight:700; }
-      .lbl { fill:#4c5670; font-size:13px; font-weight:600; letter-spacing:0.6px; }
-      .sub { fill:#8590a8; font-size:11.5px; }
+      .val { fill:#0d1526; font-size:38px; font-weight:700; }
+      .lbl { fill:#4c5670; font-size:12.5px; font-weight:600; letter-spacing:0.6px; }
+      .sub { fill:#8590a8; font-size:11px; }
       .note { fill:#8590a8; font-size:10px; font-style:italic; }
+      .rule { stroke:#e3e8f2; stroke-width:1; }
     </style>
   </defs>
-  <rect width="1040" height="190" fill="none"/>
 
-  <g transform="translate(0,0)">
-    <rect class="card" x="0" y="0" width="245" height="180" rx="12"/>
-    <rect class="bar" x="0" y="0" width="5" height="180" rx="2"/>
-    <text class="val" x="26" y="76">₹5.97L</text>
-    <text class="lbl" x="26" y="106">NET RECOVERED</text>
-    <text class="sub" x="26" y="128">baseline week · 500 cases</text>
+  <rect x="0" y="0" width="1040" height="190" rx="14" fill="#ffffff" stroke="#e3e8f2" stroke-width="1.5"/>
+  <line class="rule" x1="260" y1="24" x2="260" y2="166"/>
+  <line class="rule" x1="520" y1="24" x2="520" y2="166"/>
+  <line class="rule" x1="780" y1="24" x2="780" y2="166"/>
+
+  <g transform="translate(28,0)">
+    <text class="val" x="0" y="72">₹5.97L</text>
+    <rect x="2" y="80" width="30" height="3" rx="1.5" fill="#1655d1"/>
+    <text class="lbl" x="0" y="104">NET RECOVERED</text>
+    <text class="sub" x="0" y="124">baseline week · 500 cases</text>
   </g>
 
-  <g transform="translate(265,0)">
-    <rect class="card" x="0" y="0" width="245" height="180" rx="12"/>
-    <rect class="bar" x="0" y="0" width="5" height="180" rx="2"/>
-    <text class="val" x="26" y="76">59.4%</text>
-    <text class="lbl" x="26" y="106">RECOVERY RATE</text>
-    <text class="sub" x="26" y="128">297 of 500 cases</text>
-    <line x1="26" y1="140" x2="219" y2="140" stroke="#e3e8f2" stroke-width="1"/>
-    <text class="note" x="26" y="156">of the other 203, just 3 were</text>
-    <text class="note" x="26" y="169">a genuine miss — see below</text>
+  <g transform="translate(288,0)">
+    <text class="val" x="0" y="72">59.4%</text>
+    <rect x="2" y="80" width="30" height="3" rx="1.5" fill="#1655d1"/>
+    <text class="lbl" x="0" y="104">RECOVERY RATE</text>
+    <text class="sub" x="0" y="124">297 of 500 cases</text>
+    <text class="note" x="0" y="144">of the other 203, just 3 were</text>
+    <text class="note" x="0" y="157">a genuine miss — see below</text>
   </g>
 
-  <g transform="translate(530,0)">
-    <rect class="card" x="0" y="0" width="245" height="180" rx="12"/>
-    <rect x="0" y="0" width="5" height="180" fill="#0ca30c" rx="2"/>
-    <text x="26" y="76" style="fill:#0a7d0a;font-size:40px;font-weight:700">250/250</text>
-    <text class="lbl" x="26" y="106">ROBUSTNESS</text>
-    <text class="sub" x="26" y="128">independent reseeded cohorts</text>
+  <g transform="translate(548,0)">
+    <text class="val" x="0" y="72" fill="#0a7d0a">250/250</text>
+    <rect x="2" y="80" width="30" height="3" rx="1.5" fill="#0ca30c"/>
+    <text class="lbl" x="0" y="104">ROBUSTNESS</text>
+    <text class="sub" x="0" y="124">independent reseeded cohorts</text>
   </g>
 
-  <g transform="translate(795,0)">
-    <rect class="card" x="0" y="0" width="245" height="180" rx="12"/>
-    <rect x="0" y="0" width="5" height="180" fill="#0ca30c" rx="2"/>
-    <text x="26" y="76" style="fill:#0a7d0a;font-size:40px;font-weight:700">0</text>
-    <text class="lbl" x="26" y="106">COMPLIANCE VIOLATIONS</text>
-    <text class="sub" x="26" y="128">every strategy, every run</text>
+  <g transform="translate(808,0)">
+    <text class="val" x="0" y="72" fill="#0a7d0a">0</text>
+    <rect x="2" y="80" width="30" height="3" rx="1.5" fill="#0ca30c"/>
+    <text class="lbl" x="0" y="104">COMPLIANCE VIOLATIONS</text>
+    <text class="sub" x="0" y="124">every strategy, every run</text>
   </g>
 </svg>

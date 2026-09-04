@@ -1,54 +1,50 @@
-<svg viewBox="0 0 1040 300" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+<svg viewBox="0 0 1040 286" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
   <defs>
+    <clipPath id="barclip"><rect x="28" y="76" width="984" height="44" rx="8"/></clipPath>
     <style>
       .h { fill:#0d1526; font-size:16px; font-weight:700; }
       .why { fill:#4c5670; font-size:12px; }
-      .lk { fill:#0d1526; font-size:13px; font-weight:700; }
+      .lk { fill:#0d1526; font-size:12.5px; font-weight:700; }
       .lv { fill:#4c5670; font-size:11px; }
-      .ctrpct { fill:#0a7d0a; font-size:34px; font-weight:700; }
-      .ctrcap { fill:#4c5670; font-size:11.5px; }
+      .pct { fill:#ffffff; font-size:12px; font-weight:700; }
     </style>
   </defs>
 
-  <rect x="0" y="0" width="1040" height="300" rx="14" fill="#ffffff" stroke="#e3e8f2" stroke-width="1.5"/>
+  <rect x="0" y="0" width="1040" height="286" rx="14" fill="#ffffff" stroke="#e3e8f2" stroke-width="1.5"/>
 
-  <text class="h" x="28" y="34">Why 59.4%, and not more?</text>
-  <text class="why" x="28" y="54">A recovery rate grades the world's odds, not just the agent — most of the</text>
-  <text class="why" x="28" y="70">other 203 cases were never really gettable, or were correctly stopped.</text>
+  <text class="h" x="28" y="32">Why 59.4%, and not more?</text>
+  <text class="why" x="28" y="52">A recovery rate grades the world's odds, not just the agent — most of the other 203 cases were never really gettable, or were correctly stopped.</text>
 
-  <!-- donut: 500 cases split into four real outcomes -->
-  <g transform="translate(168,190)">
-    <circle r="90" fill="none" stroke="#eef1f7" stroke-width="34"/>
-    <circle r="90" fill="none" stroke="#0ca30c" stroke-width="34" stroke-dasharray="335.9 229.6" stroke-dashoffset="0" transform="rotate(-90)"/>
-    <circle r="90" fill="none" stroke="#a9b2c6" stroke-width="34" stroke-dasharray="58.8 506.7" stroke-dashoffset="-335.9" transform="rotate(-90)"/>
-    <circle r="90" fill="none" stroke="#1655d1" stroke-width="34" stroke-dasharray="167.4 398.1" stroke-dashoffset="-394.7" transform="rotate(-90)"/>
-    <circle r="90" fill="none" stroke="#d03b3b" stroke-width="34" stroke-dasharray="3.4 562.1" stroke-dashoffset="-562.1" transform="rotate(-90)"/>
-    <text class="ctrpct" x="0" y="10" text-anchor="middle">59.4%</text>
-    <text class="ctrcap" x="0" y="30" text-anchor="middle">recovered</text>
-    <text class="ctrcap" x="0" y="46" text-anchor="middle" fill="#8590a8">of 500 cases</text>
+  <g clip-path="url(#barclip)">
+    <rect x="28"  y="76" width="584.8" height="44" fill="#0ca30c"/>
+    <rect x="612.8" y="76" width="102.4" height="44" fill="#a9b2c6"/>
+    <rect x="715.2" y="76" width="291.5" height="44" fill="#1655d1"/>
+    <rect x="1006.7" y="76" width="5.3"  height="44" fill="#d03b3b"/>
+  </g>
+  <rect x="28" y="76" width="984" height="44" rx="8" fill="none" stroke="#cdd6e8" stroke-width="1"/>
+  <text class="pct" x="320" y="102" text-anchor="middle">59.4% recovered</text>
+
+  <path d="M1009,120 V138 H840 V152" stroke="#8590a8" stroke-width="1.2" fill="none"/>
+  <text class="lv" x="836" y="163" text-anchor="end" font-style="italic">3 cases (0.6%) — the only real misses</text>
+
+  <g transform="translate(28,182)">
+    <rect x="0" y="0" width="15" height="15" rx="4" fill="#0ca30c"/>
+    <text class="lk" x="24" y="12">Recovered — 297 cases (59.4%)</text>
+
+    <rect x="0" y="26" width="15" height="15" rx="4" fill="#a9b2c6"/>
+    <text class="lk" x="24" y="38">Never realistically recoverable — 52 cases · ₹2.89L at risk</text>
+    <text class="lv" x="24" y="54">hard declines, no consented channel ever available, or unsafe to verify further</text>
   </g>
 
-  <!-- legend: one row per real outcome, ground-truth reclassified -->
-  <g transform="translate(360,96)">
-    <rect x="0" y="0" width="16" height="16" rx="4" fill="#0ca30c"/>
-    <text class="lk" x="26" y="13">Recovered</text>
-    <text class="lv" x="650" y="13" text-anchor="end">297 cases · 59.4%</text>
+  <g transform="translate(548,182)">
+    <rect x="0" y="0" width="15" height="15" rx="4" fill="#1655d1"/>
+    <text class="lk" x="24" y="12">Correctly handled, real odds didn't land — 148 · ₹5.82L</text>
+    <text class="lv" x="24" y="28">stopped once true expected value hit zero, or tried and simply lost the odds</text>
 
-    <rect x="0" y="36" width="16" height="16" rx="4" fill="#a9b2c6"/>
-    <text class="lk" x="26" y="49">Never realistically recoverable</text>
-    <text class="lv" x="650" y="49" text-anchor="end">52 cases · ₹2.89L at risk</text>
-    <text class="lv" x="26" y="66">hard declines, no consented channel ever available, or unsafe to verify further</text>
-
-    <rect x="0" y="90" width="16" height="16" rx="4" fill="#1655d1"/>
-    <text class="lk" x="26" y="103">Correctly handled, real odds didn't land</text>
-    <text class="lv" x="650" y="103" text-anchor="end">148 cases · ₹5.82L</text>
-    <text class="lv" x="26" y="120">stopped once true expected value hit zero, or tried and simply lost the odds</text>
-
-    <rect x="0" y="144" width="16" height="16" rx="4" fill="#d03b3b"/>
-    <text class="lk" x="26" y="157">Genuine miss</text>
-    <text class="lv" x="650" y="157" text-anchor="end">3 cases · ₹7,372</text>
-    <text class="lv" x="26" y="174">ground truth shows a rejected candidate actually had real positive value</text>
+    <rect x="0" y="46" width="15" height="15" rx="4" fill="#d03b3b"/>
+    <text class="lk" x="24" y="58">Genuine miss — 3 cases · ₹7,372 at risk</text>
+    <text class="lv" x="24" y="74">ground truth shows a rejected candidate actually had real positive value</text>
   </g>
 
-  <text class="lv" x="28" y="284" fill="#8590a8">Every case reclassified against ground truth, not the agent's own belief — the live dashboard names all 203 individually.</text>
+  <text class="lv" x="28" y="274" fill="#8590a8">Every case reclassified against ground truth, not the agent's own belief — the live dashboard names all 203 individually.</text>
 </svg>
