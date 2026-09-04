@@ -123,6 +123,7 @@ export interface InspectableCase {
     reasonCode?: string;
     recoveryClass: string;
     occurredAt: number;
+    debitStatus: string;
     customer: { id: string; dndRegistered: boolean; consent: Record<string, boolean> };
   };
   traces: CaseTrace[];

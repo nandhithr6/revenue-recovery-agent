@@ -101,6 +101,12 @@ interface InspectableCase {
     readonly reasonCode: string | undefined;
     readonly recoveryClass: string;
     readonly occurredAt: number;
+    /** Whether the customer's money actually left their account for this
+     *  attempt -- see `domain/types.ts:DebitStatus`. Surfaced in the
+     *  dashboard specifically for non-recovered cases: "nothing recovered"
+     *  reads very differently against "and the customer was never charged"
+     *  than against an unresolved original authorisation. */
+    readonly debitStatus: string;
     readonly customer: {
       readonly id: string;
       readonly dndRegistered: boolean;
@@ -189,6 +195,7 @@ function buildInspectableCases(
             reasonCode: row.event.reasonCode,
             recoveryClass: cls,
             occurredAt: row.event.occurredAt,
+            debitStatus: row.event.debitStatus,
             customer: {
               id: row.event.customer.id,
               dndRegistered: row.event.customer.dndRegistered,
@@ -281,6 +288,7 @@ function findVoiceShowcase(
       reasonCode: best.event.reasonCode,
       recoveryClass: cls,
       occurredAt: best.event.occurredAt,
+      debitStatus: best.event.debitStatus,
       customer: {
         id: best.event.customer.id,
         dndRegistered: best.event.customer.dndRegistered,

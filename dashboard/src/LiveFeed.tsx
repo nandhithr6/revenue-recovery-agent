@@ -182,6 +182,7 @@ function DecisionPipeline({ entry }: { entry: LiveFeedEntry | undefined }) {
             ref={i === highlightIdx ? activeRef : undefined}
             className={`pipeline-stage pipeline-${s.status}`}
           >
+            {s.status === 'done' && <span aria-hidden="true">✓ </span>}
             {s.label}
           </span>
           {i < stages.length - 1 && <span className={`pipeline-connector pipeline-connector-${s.status}`} />}
@@ -252,7 +253,9 @@ function CurrentDecision({
     <div className="decision-panel">
       <DecisionPipeline entry={entry} />
       <div className="decision-head">
-        <span className={`state-badge state-${state.key}`}>{state.label}</span>
+        <span key={entry.seq} className={`state-badge state-${state.key}`}>
+          {state.label}
+        </span>
         <span className="decision-case mono">{entry.caseId}</span>
         <span className="decision-meta">
           {inr(entry.amountPaise)} · {entry.method.toUpperCase()} ·{' '}
@@ -364,6 +367,20 @@ export function LiveFeed({
     setPlaying(false);
   }, [entries]);
 
+  // Auto-start playback once, on first mount only -- a viewer should not
+  // have to know to press play before the agent looks like it's doing
+  // anything. Only the FIRST view autoplays; switching scenarios afterward
+  // resets to idle rather than re-triggering it, so it never fights a
+  // viewer who is deliberately browsing. Respects prefers-reduced-motion,
+  // per the same "restrained, fintech" rule the rest of this page follows.
+  useEffect(() => {
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+    const t = setTimeout(() => setPlaying(true), 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (!playing) return;
     const speed = SPEEDS[speedIdx]!;
@@ -415,9 +432,11 @@ export function LiveFeed({
   return (
     <div className="live-feed">
       <div className="live-feed-status">
-        <span className={`agent-status ${playing ? 'agent-status-active' : done ? 'agent-status-done' : 'agent-status-idle'}`}>
+        <span
+          className={`agent-status ${playing ? 'agent-status-active' : done ? 'agent-status-done' : shown > 0 ? 'agent-status-paused' : 'agent-status-idle'}`}
+        >
           <span className="agent-status-dot" aria-hidden="true" />
-          {playing ? 'AGENT ACTIVE' : done ? 'RUN COMPLETE' : 'IDLE'}
+          {playing ? 'AGENT ACTIVE' : done ? 'RUN COMPLETE' : shown > 0 ? 'PAUSED' : 'IDLE'}
         </span>
         <span className="agent-case-counter">
           Case <b>{stats.casesSeen.toLocaleString('en-IN')}</b>
@@ -440,7 +459,7 @@ export function LiveFeed({
           <span className="lf-k">Recovered so far</span>
           <span className="lf-v accent">{lakh(stats.recoveredPaise)}</span>
         </div>
-        <div className="lf-stat">
+        <div className="lf-stat" title="Times the guardrail layer deferred or blocked a decision the agent wanted to make — not a failure count, see section 04.">
           <span className="lf-k">Guardrail interventions</span>
           <span className="lf-v">{stats.interventions.toLocaleString('en-IN')}</span>
         </div>
@@ -482,7 +501,8 @@ export function LiveFeed({
             <span>ACTIVITY STREAM</span>
             <span className="activity-stream-sub">
               every decision so far · {shown.toLocaleString('en-IN')} of{' '}
-              {entries.length.toLocaleString('en-IN')} · scroll for earlier
+              {entries.length.toLocaleString('en-IN')} · scroll for earlier — the same case can
+              reappear (a cooldown, then the retry it was waiting on)
             </span>
           </div>
           <div className="live-feed-panel" ref={feedRef}>

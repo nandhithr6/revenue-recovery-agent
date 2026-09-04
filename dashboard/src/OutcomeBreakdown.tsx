@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react';
 import { HorizontalBars, type BarRow } from './charts';
+import { Tip } from './Tip';
 import type { OutcomeAudit } from './types';
 
 /**
@@ -40,6 +41,21 @@ const CATEGORY_SHORT: Record<string, string> = {
   simulator_model_limitation: 'Taxonomy/data gap',
 };
 
+// A quick, restrained glyph per category so the table reads at a glance
+// before a viewer parses any words -- deliberately not colour-only (colour
+// alone would fail a colourblind reader), matching this project's own
+// data-viz rule elsewhere (see charts.tsx's direct-label requirement).
+const CATEGORY_ICON: Record<string, string> = {
+  genuinely_unrecoverable: '○',
+  customer_never_acted: '○',
+  hard_permanent_failure: '✕',
+  uncertain_verification_unsafe: '△',
+  correctly_stopped_non_positive_ev: '✓',
+  correctly_waited_bad_luck: '✓',
+  wrong_action_missed_opportunity: '!',
+  simulator_model_limitation: '△',
+};
+
 export function OutcomeBreakdown({ audit }: { audit: OutcomeAudit }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -62,15 +78,18 @@ export function OutcomeBreakdown({ audit }: { audit: OutcomeAudit }) {
           <span className="of"> recovered</span>
         </span>
         <p>
-          of {audit.totalCases} cases ({inr(audit.recoveredCases === audit.totalCases ? 0 : audit.nonRecoveredAtRiskPaise)}{' '}
-          of the {inr(audit.nonRecoveredAtRiskPaise)} left on the table breaks down below). Recovery rate is not a
-          success rate for the agent's decisions -- most of what's left was never realistically getable, or was
-          correctly declined once the real odds went to zero. <strong>{genuineMisses?.count ?? 0}</strong> case
-          {genuineMisses?.count === 1 ? '' : 's'} out of {audit.totalCases} show a genuine missed opportunity.
+          of {audit.totalCases} cases — not a success rate for the agent's decisions. Most of the
+          rest was never realistically getable or was correctly declined. Only{' '}
+          <strong>{genuineMisses?.count ?? 0}</strong> case{genuineMisses?.count === 1 ? '' : 's'} show
+          a genuine missed opportunity.
         </p>
       </div>
 
       <HorizontalBars rows={rows} labelWidth={220} />
+
+      <Tip>
+        <b>Click any row below</b> to expand it into the actual case IDs behind that number.
+      </Tip>
 
       <div className="table-scroll" style={{ marginTop: 16 }}>
         <table className="ledger">
@@ -90,7 +109,12 @@ export function OutcomeBreakdown({ audit }: { audit: OutcomeAudit }) {
                   onClick={() => setExpanded(expanded === c.category ? null : c.category)}
                   style={{ cursor: c.examples.length > 0 ? 'pointer' : undefined }}
                 >
-                  <td>{c.label}</td>
+                  <td>
+                    <span className={`outcome-icon outcome-icon-${CATEGORY_COLOR[c.category] ?? 0}`} aria-hidden="true">
+                      {CATEGORY_ICON[c.category] ?? '·'}
+                    </span>
+                    {c.label}
+                  </td>
                   <td className="money">{c.count}</td>
                   <td className="money">{c.count > 0 ? inr(c.atRiskPaise) : '--'}</td>
                   <td>
@@ -98,6 +122,11 @@ export function OutcomeBreakdown({ audit }: { audit: OutcomeAudit }) {
                       .sort((a, b) => b[1] - a[1])
                       .map(([k, n]) => `${k}: ${n}`)
                       .join(', ') || '--'}
+                    {c.examples.length > 0 && (
+                      <span className={`outcome-chevron ${expanded === c.category ? 'outcome-chevron-open' : ''}`} aria-hidden="true">
+                        ›
+                      </span>
+                    )}
                   </td>
                 </tr>
                 {expanded === c.category && c.examples.length > 0 && (

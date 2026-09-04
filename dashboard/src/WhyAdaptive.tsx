@@ -128,6 +128,26 @@ export function WhyAdaptive({ cases }: { cases: readonly InspectableCase[] }) {
         </div>
       </div>
 
+      <div className="why-adaptive-deltas">
+        <div className="why-adaptive-delta">
+          <span className="why-adaptive-delta-v">+{inr(adaptive.recoveredPaise - fixed.recoveredPaise)}</span>
+          <span className="why-adaptive-delta-k">more recovered</span>
+        </div>
+        <div className="why-adaptive-delta">
+          <span className="why-adaptive-delta-v">
+            {adaptive.costPaise <= fixed.costPaise ? '−' : '+'}
+            {inr(Math.abs(adaptive.costPaise - fixed.costPaise))}
+          </span>
+          <span className="why-adaptive-delta-k">{adaptive.costPaise <= fixed.costPaise ? 'less' : 'more'} spent</span>
+        </div>
+        <div className="why-adaptive-delta">
+          <span className="why-adaptive-delta-v">{fixed.spamPoints - adaptive.spamPoints >= 0 ? '−' : '+'}
+            {Math.abs(fixed.spamPoints - adaptive.spamPoints)}pt
+          </span>
+          <span className="why-adaptive-delta-k">annoyance vs fixed dunning</span>
+        </div>
+      </div>
+
       {chosenCandidate && rejectedCandidate ? (
         <p className="why-adaptive-econ">
           <b>Why it was economically better:</b> priced at{' '}

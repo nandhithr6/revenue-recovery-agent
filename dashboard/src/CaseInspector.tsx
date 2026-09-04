@@ -51,6 +51,21 @@ const CLASS_PLAIN: Record<string, string> = {
   HARD_DECLINE: 'the bank refused outright',
 };
 
+/**
+ * Plain-English reading of `DebitStatus` (`domain/types.ts`) -- most useful
+ * exactly when a case recovered nothing: "recovered nothing" reads very
+ * differently once it's clear the customer was never actually charged for
+ * the failed attempt, versus a genuinely unresolved original authorisation.
+ * `debited` is listed for completeness but never occurs in this simulator
+ * (see `sim/generator.ts:deriveDebitStatus`'s own honesty note) -- every
+ * loss type here is a payment that never captured.
+ */
+const DEBIT_STATUS_NOTE: Record<string, string> = {
+  no_debit: 'No money was ever taken from the customer for this attempt — the bank/network gave a definitive refusal, or the customer never reached authorisation at all.',
+  uncertain: 'Whether the original attempt actually debited the customer is unconfirmed — the agent holds the first retry back for a verification window before trying again, specifically to avoid a duplicate charge.',
+  debited: 'Money was taken and this concerns a reversal, not a fresh charge attempt.',
+};
+
 function formatDelay(ms: number): string {
   if (ms < 3_600_000) return `${Math.round(ms / 60_000)} min`;
   if (ms < 86_400_000) return `${(ms / 3_600_000).toFixed(1)} h`;
@@ -69,7 +84,7 @@ function humanAction(step: TraceStep): string {
 const CONFIDENCE_LABEL: Record<string, string> = { high: 'high confidence', medium: 'medium confidence', low: 'low confidence' };
 const STATUS_LABEL: Record<string, string> = { known: 'known', inferred: 'inferred', unknown: 'unknown' };
 
-const SIGNAL_LABEL: Record<string, string> = {
+export const SIGNAL_LABEL: Record<string, string> = {
   promise_to_pay: '"I\'ll pay soon" — treated as a commitment, agent waits then rechecks',
   funds_available_now: '"I can pay now" — instrument/funds issue resolved, agent retries',
   instrument_fixed: '"That\'s fixed now" — agent retries immediately',
@@ -93,12 +108,12 @@ const SIGNAL_LABEL: Record<string, string> = {
  * boundary every other dictionary in this file (`SIGNAL_LABEL`,
  * `CLASS_LABEL`, `CLASS_PLAIN`, ...) already keeps.
  */
-const HINGLISH_OPENING = {
+export const HINGLISH_OPENING = {
   hinglish: 'Namaste! Aapka payment complete nahi ho paya tha, main isi baare mein call kar rahi/raha hoon.',
   english: "Hello! Your payment didn't go through, I'm calling about that.",
 };
 
-const HINGLISH_CUSTOMER_LINE: Record<string, { hinglish: string; english: string }> = {
+export const HINGLISH_CUSTOMER_LINE: Record<string, { hinglish: string; english: string }> = {
   promise_to_pay: {
     hinglish: 'Haan haan, main jaldi hi pay kar dunga, thoda time dijiye.',
     english: "Yes yes, I'll pay soon, just give me some time.",
@@ -125,7 +140,7 @@ const HINGLISH_CUSTOMER_LINE: Record<string, { hinglish: string; english: string
   },
 };
 
-const INTENT_LABEL_HINGLISH: Record<string, string> = {
+export const INTENT_LABEL_HINGLISH: Record<string, string> = {
   promise_to_pay: 'Vaada kiya hai (promise to pay)',
   funds_available_now: 'Paisa ab available hai (funds available now)',
   instrument_fixed: 'Instrument theek ho gaya (instrument fixed)',
@@ -366,6 +381,7 @@ export function CaseInspector({ cases }: { cases: readonly InspectableCase[] }) 
             .join(', ') || 'nothing'}
           {current.event.customer.dndRegistered ? ', and is on the DND registry' : ''}.
         </p>
+        <p className="case-debit-note">{DEBIT_STATUS_NOTE[current.event.debitStatus] ?? DEBIT_STATUS_NOTE.no_debit}</p>
       </div>
 
       <h3 className="sub-h">What each strategy did with it</h3>

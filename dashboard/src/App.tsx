@@ -5,6 +5,8 @@ import { LiveFeed } from './LiveFeed';
 import { LiveSection, NoveltySection, RobustnessSection, SensitivitySection } from './Evidence';
 import { OutcomeBreakdown } from './OutcomeBreakdown';
 import { WhyAdaptive } from './WhyAdaptive';
+import { Tip } from './Tip';
+import { SectionNav } from './SectionNav';
 import { VoiceShowcase } from './VoiceShowcase';
 import { TimingRibbon, type ClassTrack } from './TimingRibbon';
 import type { Bundle, ScenarioResult } from './types';
@@ -175,6 +177,7 @@ export default function App() {
 
   return (
     <div className="sheet">
+      <SectionNav />
       <div className="masthead">
         <div>
           <p className="eyebrow">Razorpay AI Buildathon · Revenue Recovery</p>
@@ -183,6 +186,28 @@ export default function App() {
             An agent that reads why each payment failed, picks a recovery matched to that reason,
             and stays inside hard compliance limits — with every decision written down.
           </p>
+        </div>
+        <div className="masthead-metrics">
+          <div className="mm-item">
+            <span className="mm-v">{lakh(agent.metrics.netValueAfterAnnoyancePaise)}</span>
+            <span className="mm-k">net recovered</span>
+          </div>
+          <div className="mm-item">
+            <span className="mm-v">{pct(agent.metrics.recoveryRate)}</span>
+            <span className="mm-k">recovery rate</span>
+          </div>
+          {bundle.robustness && (
+            <div className="mm-item">
+              <span className="mm-v">
+                {bundle.robustness.combinedCustomWins}/{bundle.robustness.totalRuns}
+              </span>
+              <span className="mm-k">robustness</span>
+            </div>
+          )}
+          <div className="mm-item">
+            <span className="mm-v mm-good">{agent.metrics.complianceViolations}</span>
+            <span className="mm-k">compliance violations</span>
+          </div>
         </div>
       </div>
 
@@ -205,23 +230,16 @@ export default function App() {
           <h2>Watch the agent work through {scenario.name.toLowerCase()}</h2>
         </div>
         <p className="note">
-          Not a script written for this page — the full, real, chronologically-ordered decision
-          log the engine produced for this entire cohort. Press play to see it process failed
-          payments one at a time: what it saw, what it decided, and whether a guardrail stepped
-          in.
+          Not a script — the full, real decision log the engine produced for this cohort, playing
+          automatically. The <b>←</b> marks which priced candidate actually won.
         </p>
+        <Tip>
+          <b>Speed it up</b> with 4x/15x/60x below, or <b>pause and scroll</b> the activity stream
+          for any earlier decision — every one of the {scenario.liveFeed.length.toLocaleString('en-IN')} entries stays available.
+        </Tip>
         <LiveFeed entries={scenario.liveFeed} cohortSize={scenario.cohort.count} />
 
         <VoiceShowcase data={bundle.voiceShowcase} />
-
-        <nav className="railnav" aria-label="Jump to a section">
-          <a href="#problem">01 The problem</a>
-          <a href="#results">02 Results</a>
-          <a href="#inspect">03 Inspect a case</a>
-          <a href="#guardrails">04 Guardrails</a>
-          <a href="#rigor">05 Is that real?</a>
-          <a href="#live">06 Live Razorpay</a>
-        </nav>
       </section>
 
       {/* ---------------------------------------------------------- 01 */}
@@ -320,6 +338,13 @@ export default function App() {
           at ₹20 a point — one figure rather than two columns, so the trade between revenue and
           goodwill is made explicit rather than picked to taste.
         </p>
+        <Tip>
+          <b>Two custom strategies, not one:</b> the <b>reason-aware agent</b> classifies each
+          failure and follows a fixed playbook per class (fast on abandonment, patient on funds,
+          zero retries where nothing can work). The <b>adaptive agent</b> instead prices every
+          candidate action in rupees and takes whichever wins — same inputs, a genuinely different
+          kind of decision. Hover any strategy name below for its own one-line description.
+        </Tip>
 
         <div className="table-scroll">
         <table className="ledger">
@@ -338,7 +363,7 @@ export default function App() {
             {scenario.strategies.map((s, i) => (
               <tr key={s.id} className={s.id === 'agent-adaptive' ? 'lead' : undefined}>
                 <td>
-                  <span className="name">
+                  <span className="name" title={s.description}>
                     <i style={{ background: strategyColor(i) }} aria-hidden />
                     <span>
                       {s.name}
@@ -428,6 +453,10 @@ export default function App() {
           reads why the payment failed.
         </p>
         <Legend items={names} />
+        <Tip>
+          <b>Hover any bar</b> below for the exact strategy and class it belongs to — every chart
+          on this page responds the same way.
+        </Tip>
         <GroupedBars rows={rateRows} maxValue={1} />
 
         <h3 className="sub-h" style={{ marginTop: 30 }}>
@@ -448,11 +477,11 @@ export default function App() {
           <span className="sec-num">03</span>
           <h2>Prove the decision</h2>
         </div>
-        <p className="note">
-          Pick any case and see exactly what the agent saw, what it considered, what it chose, and
-          what the guardrails allowed — then see what the other four strategies did with the same
-          case, on the same randomness.
-        </p>
+        <Tip>
+          <b>Click a failure class above, or pick a different case</b> from the dropdown — every
+          button here re-runs the real comparison. Scroll past the strategy race below for the
+          adaptive agent's full step-by-step reasoning, priced candidate by candidate.
+        </Tip>
         <CaseInspector cases={scenario.inspectableCases} />
       </section>
 

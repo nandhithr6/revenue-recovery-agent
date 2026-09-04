@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Step } from './CaseInspector';
+import {
+  HINGLISH_CUSTOMER_LINE,
+  HINGLISH_OPENING,
+  INTENT_LABEL_HINGLISH,
+  SIGNAL_LABEL,
+  Step,
+} from './CaseInspector';
 import type { VoiceShowcase as VoiceShowcaseData } from './types';
 
 /**
@@ -16,13 +22,27 @@ import type { VoiceShowcase as VoiceShowcaseData } from './types';
  * `eval/run-all.ts:findVoiceShowcase` fresh on every `eval:all` run, so the
  * description below stays generic rather than asserting specifics that
  * might not match whichever real case was found this time.
+ *
+ * The "call summary" card up top is a product-shaped READING of the exact
+ * same `signal` the full step trace below already carries -- same
+ * dictionaries `CaseInspector.tsx:Step` uses for its own "Customer said"
+ * line, imported rather than duplicated, so the two can never drift apart.
+ * It exists because a technical step-by-step trace and "here's what the
+ * call actually sounded like" are different readerships, and a voice
+ * feature should be legible to the second one without losing the first.
  */
 const inr = (paise: number): string => `₹${Math.round(paise / 100).toLocaleString('en-IN')}`;
 
 export function VoiceShowcase({ data }: { data: VoiceShowcaseData | null }) {
-  const [open, setOpen] = useState(true);
+  // Collapsed by default: the call-summary card below is always visible
+  // (a compact, glanceable "nice case") -- this toggle is only for the
+  // full technical step-by-step audit trail underneath it.
+  const [open, setOpen] = useState(false);
   if (!data) return null;
 
+  // The FIRST time voice was decided -- highlighted below, even if it was
+  // deferred (e.g. CONTACT_COOLDOWN) rather than landing immediately; that
+  // deferral is itself real and part of the story.
   const voiceStepIndex = data.trace.steps.findIndex(
     (s) => s.decided.kind === 'contact_customer' && s.decided.channel === 'voice',
   );
@@ -32,34 +52,76 @@ export function VoiceShowcase({ data }: { data: VoiceShowcaseData | null }) {
   const runnerUp = voiceCandidates?.find((c) => !c.chosen);
   const margin = chosenVoice && runnerUp ? chosenVoice.expectedValuePaise - runnerUp.expectedValuePaise : undefined;
 
+  // The call summary needs the voice attempt that actually EXECUTED and
+  // produced a signal -- not necessarily the first one decided, since a
+  // guardrail can defer an earlier attempt (see `voiceStepIndex` above).
+  // `signal` is only ever set on an executed contact_customer step, so
+  // this always lands on the real, landed call, wherever it is in the
+  // trace.
+  const landedVoiceStepIndex = data.trace.steps.findIndex(
+    (s) => s.decided.kind === 'contact_customer' && s.decided.channel === 'voice' && s.signal,
+  );
+  const landedVoiceStep = landedVoiceStepIndex >= 0 ? data.trace.steps[landedVoiceStepIndex] : undefined;
+  const signal = landedVoiceStep?.signal;
+  const resultingStep = landedVoiceStepIndex >= 0 ? data.trace.steps[landedVoiceStepIndex + 1] : undefined;
+
   // `receivable` and `checkout_abandonment` have no underlying charge to
   // retry -- the customer acting on the nudge IS the payment (see
   // `sim/recovery-model.ts:recoversViaLink`), so a positive voice signal can
   // close the case in the SAME step, with no separate "retry" row after it.
-  // Worth saying explicitly: without it, a recovery that appears one step
-  // after "customer said X" with no visible retry in between reads as a gap
-  // in the trace rather than what it is -- a different loss type's own
-  // recovery mechanic.
   const recoversViaLink = data.event.lossType === 'receivable' || data.event.lossType === 'checkout_abandonment';
 
   return (
-    <div className="showcase-card">
-      <button className="showcase-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+    <div className="showcase-card" id="voice">
+      <div className="showcase-head">
         <span className="showcase-badge">{data.source === 'naturally-occurring' ? 'Real case' : 'Constructed fixture'}</span>
-        <span className="showcase-badge showcase-badge-sim">Simulated voice</span>
+        <span className="showcase-badge showcase-badge-sim">◐ SIMULATED VOICE</span>
         <span className="showcase-title">
-          VOICE → REPLAN · {data.event.id} · {inr(data.event.amountPaise)} ·{' '}
+          {data.event.id} · {inr(data.event.amountPaise)} ·{' '}
           {data.trace.recovered ? 'recovered' : 'not recovered'}
         </span>
-        <span className="showcase-chevron">{open ? '−' : '+'}</span>
-      </button>
-      {!open && (
-        <p className="showcase-collapsed-line">
-          {margin !== undefined && margin > 0
-            ? `Voice chosen — ${inr(margin)} higher expected value than the next-best channel.`
-            : 'Voice chosen because its incremental recovery value justified its higher customer cost.'}
-        </p>
+      </div>
+
+      {signal && (
+        <div className="call-summary">
+          <div className="call-summary-transcript">
+            <div className="call-bubble call-bubble-agent">
+              <span className="call-bubble-role">Agent</span>
+              <p>{HINGLISH_OPENING.hinglish}</p>
+              <p className="call-bubble-en">{HINGLISH_OPENING.english}</p>
+            </div>
+            <div className="call-bubble call-bubble-customer">
+              <span className="call-bubble-role">Customer</span>
+              <p>{(HINGLISH_CUSTOMER_LINE[signal.kind] ?? HINGLISH_CUSTOMER_LINE.no_answer)!.hinglish}</p>
+              <p className="call-bubble-en">
+                {(HINGLISH_CUSTOMER_LINE[signal.kind] ?? HINGLISH_CUSTOMER_LINE.no_answer)!.english}
+              </p>
+            </div>
+          </div>
+          <div className="call-summary-meta">
+            <div className="call-summary-row">
+              <span className="call-summary-k">Detected intent</span>
+              <span className="call-summary-v">{INTENT_LABEL_HINGLISH[signal.kind] ?? signal.kind}</span>
+            </div>
+            <div className="call-summary-row">
+              <span className="call-summary-k">Structured signal</span>
+              <span className="call-summary-v mono">{signal.kind}</span>
+            </div>
+            <div className="call-summary-row">
+              <span className="call-summary-k">Resulting action</span>
+              <span className="call-summary-v">
+                {resultingStep
+                  ? resultingStep.decided.kind.replace(/_/g, ' ')
+                  : SIGNAL_LABEL[signal.kind]?.split(' — ')[1] ?? 'case closed'}
+              </span>
+            </div>
+          </div>
+        </div>
       )}
+
+      <button className="showcase-toggle showcase-toggle-inline" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        {open ? '− Hide' : '+ Show'} the full audit trail (every step, guardrail, and priced candidate)
+      </button>
 
       {open && (
         <div className="showcase-body">
@@ -70,12 +132,11 @@ export function VoiceShowcase({ data }: { data: VoiceShowcaseData | null }) {
             {margin !== undefined && margin > 0
               ? `Voice cleared the bar by ${inr(margin)} of expected value over the next-best channel — watch the highlighted row below.`
               : 'Watch the highlighted row for why voice cleared the bar here.'}{' '}
-            "Customer said" — including the simulated Hinglish transcript and detected-intent line
-            below it — is generated from the case's structured outcome for readability. The engine
-            itself only ever sees the structured signal (<code>promise_to_pay</code>,{' '}
-            <code>refused</code>, …), never a sentence in any language, and neither transcript can
-            change what the agent decides — see the candidate table on the highlighted step, priced
-            off the same signal before either sentence exists.
+            The bilingual transcript above and "Customer said" below are both generated from the
+            case's structured outcome for readability — every field reads off the SAME signal the
+            trace below prices and reacts to. The engine itself only ever sees the structured
+            signal (<code>promise_to_pay</code>, <code>refused</code>, …), never a sentence in any
+            language, and neither transcript can change what the agent decides.
           </p>
           {data.trace.recovered && recoversViaLink && (
             <p className="note" style={{ marginLeft: 0, marginTop: 8 }}>
@@ -86,7 +147,8 @@ export function VoiceShowcase({ data }: { data: VoiceShowcaseData | null }) {
               there rather than after a follow-up retry.
             </p>
           )}
-          <div className="steps">
+
+          <div className="steps" style={{ marginTop: 14 }}>
             {data.trace.steps.map((s, i) => (
               <div key={s.step} className={i === voiceStepIndex ? 'showcase-voice-step' : undefined}>
                 <Step step={s} />
