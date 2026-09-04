@@ -1,0 +1,42 @@
+<svg viewBox="0 0 1200 260" xmlns="http://www.w3.org/2000/svg" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <style>
+      .sans { font-family: Arial, Helvetica, sans-serif; }
+      .eyebrow { fill:#1655d1; font-size:13px; font-weight:700; letter-spacing:2px; }
+      .title { fill:#0d1526; font-size:48px; font-weight:700; }
+      .sub { fill:#4c5670; font-size:15.5px; }
+      .foot { fill:#8590a8; font-size:11.5px; letter-spacing:0.4px; }
+      .gaugeval { fill:#0d1526; font-size:32px; font-weight:700; }
+      .gaugecap { fill:#4c5670; font-size:11px; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="260" fill="#f5f7fb"/>
+  <rect x="0" y="0" width="6" height="260" fill="#1655d1"/>
+
+  <text class="eyebrow sans" x="44" y="46">RAZORPAY AI BUILDATHON · AI REVENUE RECOVERY TRACK</text>
+  <text class="title" x="42" y="104">Revenue Recovery Agent</text>
+  <text class="sub sans" x="44" y="140">A reason-aware, bounded AI agent that recovers failed payment</text>
+  <text class="sub sans" x="44" y="163">revenue from real Razorpay failure codes — and can prove it.</text>
+
+  <!-- six small dots: the OBSERVE -> OUTCOME pipeline, unlabelled rhythm -->
+  <g fill="#1655d1">
+    <circle cx="46" cy="200" r="4"/>
+    <circle cx="70" cy="200" r="4" opacity="0.85"/>
+    <circle cx="94" cy="200" r="4" opacity="0.7"/>
+    <circle cx="118" cy="200" r="4" opacity="0.55"/>
+    <circle cx="142" cy="200" r="4" opacity="0.4"/>
+    <circle cx="166" cy="200" r="4" fill="#0ca30c" opacity="0.9"/>
+  </g>
+  <text class="foot sans" x="44" y="222">every one of those six steps, logged for every decision</text>
+
+  <!-- right-hand gauge: the headline number, not decoration -->
+  <g transform="translate(1010,130)">
+    <circle r="72" fill="none" stroke="#e3e8f2" stroke-width="16"/>
+    <circle r="72" fill="none" stroke="#1655d1" stroke-width="16" stroke-linecap="round"
+      stroke-dasharray="261.4 439.8" transform="rotate(-90)"/>
+    <text class="gaugeval sans" x="0" y="8" text-anchor="middle">59.4%</text>
+    <text class="gaugecap sans" x="0" y="28" text-anchor="middle">recovered, one</text>
+    <text class="gaugecap sans" x="0" y="42" text-anchor="middle">seeded cohort</text>
+  </g>
+</svg>

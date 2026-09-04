@@ -1,7 +1,4 @@
-# Revenue Recovery Agent
-
-**A reason-aware, bounded AI agent that recovers failed payment revenue — and can prove it.**
-Built for the Razorpay AI Buildathon, AI Revenue Recovery track.
+<img src="docs/assets/masthead.svg" alt="Revenue Recovery Agent — Razorpay AI Buildathon, AI Revenue Recovery track. A reason-aware, bounded AI agent that recovers failed payment revenue from real Razorpay failure codes, and can prove it: 59.4% recovered across one seeded 500-case cohort." width="100%">
 
 [**Live dashboard**](https://revenue-recovery-agent-beta.vercel.app) · [Architecture](docs/ARCHITECTURE.md) · [Engineering log](docs/ENGINEERING-LOG.md) · [ADRs](docs/adr) · [Sources](docs/SOURCES.md)
 
@@ -34,6 +31,22 @@ per-class playbook; `agent-adaptive` instead prices every candidate action in
 rupees against its own belief curves and takes whichever wins — see
 [the class-by-class breakdown](#why-this-beats-fixed-dunning) below for a real
 case where that difference decides the outcome.
+
+### Why 59.4%, and not more
+
+<img src="docs/assets/why-59-recovered.svg" alt="Of 500 simulated failures: 297 recovered (59.4%), 52 never realistically recoverable, 148 correctly handled but the real odds simply did not land, and only 3 genuine misses" width="100%">
+
+A recovery rate is not a grade on the agent's decisions — most of the other
+40.6% was never realistically gettable, or was correctly stopped once the
+*true* expected value (checked against ground truth, not the agent's own
+belief) went to zero. Reclassifying every one of the 203 non-recovered
+cases this way is what the number above is: 52 had no real path to begin
+with (a hard decline, no consented channel, or unsafe to keep pushing);
+148 were engaged correctly and simply lost the odds, or were correctly
+told to stop; and only **3 of 500 (0.6%)** are a genuine miss — a case
+where ground truth shows a rejected candidate actually had positive value.
+The [live dashboard](https://revenue-recovery-agent-beta.vercel.app) names
+all 203 individually, not just the four buckets.
 
 ## Watch the agent work
 
