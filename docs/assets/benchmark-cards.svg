@@ -6,6 +6,7 @@
       .val { fill:#0d1526; font-size:40px; font-weight:700; }
       .lbl { fill:#4c5670; font-size:13px; font-weight:600; letter-spacing:0.6px; }
       .sub { fill:#8590a8; font-size:11.5px; }
+      .note { fill:#8590a8; font-size:10px; font-style:italic; }
     </style>
   </defs>
   <rect width="1040" height="190" fill="none"/>
@@ -24,6 +25,9 @@
     <text class="val" x="26" y="76">59.4%</text>
     <text class="lbl" x="26" y="106">RECOVERY RATE</text>
     <text class="sub" x="26" y="128">297 of 500 cases</text>
+    <line x1="26" y1="140" x2="219" y2="140" stroke="#e3e8f2" stroke-width="1"/>
+    <text class="note" x="26" y="156">of the other 203, just 3 were</text>
+    <text class="note" x="26" y="169">a genuine miss — see below</text>
   </g>
 
   <g transform="translate(530,0)">
