@@ -1,4 +1,4 @@
-<img src="docs/assets/masthead.svg" alt="Revenue Recovery Agent — Razorpay AI Buildathon, AI Revenue Recovery track. A reason-aware, bounded AI agent that recovers failed payment revenue from real Razorpay failure codes, and can prove it: 59.4% recovered across one seeded 500-case cohort." width="100%">
+<img src="docs/assets/masthead.svg" alt="Revenue Recovery Agent — Razorpay AI Buildathon, AI Revenue Recovery track. A reason-aware, bounded AI agent that recovers failed payment revenue from real Razorpay failure codes, and can prove it: +111% net recovered versus the best baseline (fixed dunning), on one seeded 500-case cohort." width="100%">
 
 [**Live dashboard**](https://revenue-recovery-agent-beta.vercel.app) · [Architecture](docs/ARCHITECTURE.md) · [Engineering log](docs/ENGINEERING-LOG.md) · [ADRs](docs/adr) · [Sources](docs/SOURCES.md)
 
@@ -15,22 +15,33 @@ ledger the dashboard reads and never re-simulates.
 
 <img src="docs/assets/benchmark-cards.svg" alt="Net recovered ₹5.97L, recovery rate 59.4%, robustness 250/250, compliance violations 0" width="100%">
 
+Two agents built for this, not one — genuinely different reasoning, both
+measured against the same three baselines:
+
+- **Reason-aware agent** (`agent-rules`) classifies each failure into one of
+  six recovery classes, then follows a fixed, hand-written playbook per
+  class — fast on abandonment, patient on funds, zero retries where nothing
+  can work. A real improvement over a fixed schedule, but still a lookup
+  table underneath.
+- **Adaptive agent** (`agent-adaptive`) — **the agent this project ships** —
+  skips the lookup table entirely: it prices every candidate action (retry,
+  email, SMS, WhatsApp, voice, escalate, stop) in rupees against its own
+  belief curves for amount, elapsed time, attempt count and evidence
+  quality, and takes whichever clears the highest expected value.
+
 | Strategy | Recovered | Spent | Net after annoyance | Rate | Retries/recovery | Violations |
 |---|---:|---:|---:|---:|---:|---:|
 | Do nothing | ₹0 | ₹0 | ₹0 | 0.0% | — | 0 |
 | Naive retry | ₹2,16,490 | ₹7,713 | ₹2,08,777 | 26.6% | 10.26 | 0 |
 | Fixed dunning | ₹2,94,904 | ₹7,151 | ₹2,82,454 | 41.2% | 5.72 | 0 |
 | Reason-aware agent | ₹4,14,163 | ₹2,266 | ₹4,01,317 | 49.2% | 2.59 | 0 |
-| **Adaptive agent** | **₹6,08,559** | **₹2,228** | **₹5,96,511** | **59.4%** | **2.37** | 0 |
+| 🏆 **Adaptive agent** | **₹6,08,559** | **₹2,228** | **₹5,96,511** | **59.4%** | **2.37** | 0 |
 
-Same 500-case cohort, same guardrails, same cost model, only the policy changes.
-**+₹3.14L (+111%) over the best baseline, using 59% fewer retries per recovery,
-zero compliance violations, ₹273 recovered per ₹1 spent** (fixed dunning: ₹41).
-Two agents, not one: `agent-rules` classifies the failure and runs a fixed
-per-class playbook; `agent-adaptive` instead prices every candidate action in
-rupees against its own belief curves and takes whichever wins — see
-[the class-by-class breakdown](#why-this-beats-fixed-dunning) below for a real
-case where that difference decides the outcome.
+Same 500-case cohort, same guardrails, same cost model, only the policy
+changes. **+₹3.14L (+111%) over the best baseline, using 59% fewer retries
+per recovery, zero compliance violations, ₹273 recovered per ₹1 spent**
+(fixed dunning: ₹41) — see [a real case](#why-this-beats-fixed-dunning)
+below where the two agents' different reasoning decides the outcome.
 
 ### Why 59.4%, and not more
 
