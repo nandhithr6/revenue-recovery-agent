@@ -68,7 +68,10 @@ all 203 individually, not just the four buckets.
 
 ## Watch the agent work
 
-<video src="docs/assets/dashboard-walkthrough.mp4" width="100%" autoplay muted loop playsinline></video>
+[<img src="docs/assets/dashboard-walkthrough-thumb.jpg" width="100%" alt="Click to watch: the live-agent replay hero, actually advancing through real decisions">](docs/assets/dashboard-walkthrough.mp4)
+
+*Click the image above to watch the live-agent replay (video file, plays in-browser or downloads depending on your browser).*
+
 The [live dashboard](https://revenue-recovery-agent-beta.vercel.app) replays the
 actual decision log this cohort produced — not a script. Every OBSERVE → ASSESS →
 CANDIDATES → SCORE → GUARDRAIL → ACT step shown is a real ledger entry; nothing is
