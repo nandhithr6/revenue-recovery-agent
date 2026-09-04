@@ -68,8 +68,7 @@ all 203 individually, not just the four buckets.
 
 ## Watch the agent work
 
-<img src="docs/assets/dashboard-preview.png" alt="The live dashboard mid-replay: masthead metrics, the scenario picker, and the current decision showing a real priced candidate table with expected recovery, spend, annoyance and net value for each option" width="100%">
-
+<video src="docs/assets/dashboard-walkthrough.mp4" width="100%" autoplay muted loop playsinline></video>
 The [live dashboard](https://revenue-recovery-agent-beta.vercel.app) replays the
 actual decision log this cohort produced — not a script. Every OBSERVE → ASSESS →
 CANDIDATES → SCORE → GUARDRAIL → ACT step shown is a real ledger entry; nothing is
