@@ -8,6 +8,10 @@
       .brain { fill:#e9f0ff; stroke:#1655d1; }
       .brake { fill:#fff2ea; stroke:#eb6834; }
       .ledger { fill:#eafaf0; stroke:#0ca30c; }
+      .chip { fill:#1655d1; }
+      .chip-orange { fill:#eb6834; }
+      .chip-green { fill:#0ca30c; }
+      .n { fill:#ffffff; font-size:10.5px; font-weight:700; }
       .t { fill:#0d1526; font-size:15px; font-weight:700; }
       .s { fill:#4c5670; font-size:11px; }
       .edge { stroke:#8590a8; stroke-width:1.5; fill:none; marker-end:url(#arrow); }
@@ -15,63 +19,75 @@
     </style>
   </defs>
 
-  <!-- row of boxes -->
+  <!-- main pipeline, six numbered stages -->
   <g>
-    <rect class="box" x="10" y="60" width="150" height="64" rx="10"/>
-    <text class="t" x="85" y="87" text-anchor="middle">LossEvent</text>
-    <text class="s" x="85" y="106" text-anchor="middle">real Razorpay reason</text>
+    <rect class="box" x="10" y="64" width="150" height="64" rx="10"/>
+    <circle class="chip" cx="26" cy="64" r="11"/>
+    <text class="n" x="26" y="68" text-anchor="middle">1</text>
+    <text class="t" x="90" y="91" text-anchor="middle">LossEvent</text>
+    <text class="s" x="90" y="110" text-anchor="middle">real Razorpay reason</text>
 
-    <rect class="box brain" x="205" y="60" width="150" height="64" rx="10"/>
-    <text class="t" x="280" y="87" text-anchor="middle" fill="#0d3ea3">Diagnose</text>
-    <text class="s" x="280" y="106" text-anchor="middle">code → recovery class</text>
+    <rect class="box brain" x="205" y="64" width="150" height="64" rx="10"/>
+    <circle class="chip" cx="221" cy="64" r="11"/>
+    <text class="n" x="221" y="68" text-anchor="middle">2</text>
+    <text class="t" x="285" y="91" text-anchor="middle" fill="#0d3ea3">Diagnose</text>
+    <text class="s" x="285" y="110" text-anchor="middle">code to recovery class</text>
 
-    <rect class="box brain" x="400" y="60" width="150" height="64" rx="10"/>
-    <text class="t" x="475" y="87" text-anchor="middle" fill="#0d3ea3">Policy</text>
-    <text class="s" x="475" y="106" text-anchor="middle">rules, EV pricing, or LLM</text>
+    <rect class="box brain" x="400" y="64" width="150" height="64" rx="10"/>
+    <circle class="chip" cx="416" cy="64" r="11"/>
+    <text class="n" x="416" y="68" text-anchor="middle">3</text>
+    <text class="t" x="480" y="91" text-anchor="middle" fill="#0d3ea3">Policy</text>
+    <text class="s" x="480" y="110" text-anchor="middle">rules, EV pricing, or LLM</text>
 
-    <rect class="box brake" x="595" y="60" width="150" height="64" rx="10"/>
-    <text class="t" x="670" y="87" text-anchor="middle" fill="#b3491a">Guardrails</text>
-    <text class="s" x="670" y="106" text-anchor="middle">deterministic gate</text>
+    <rect class="box brake" x="595" y="64" width="150" height="64" rx="10"/>
+    <circle class="chip-orange" cx="611" cy="64" r="11"/>
+    <text class="n" x="611" y="68" text-anchor="middle">4</text>
+    <text class="t" x="675" y="91" text-anchor="middle" fill="#b3491a">Guardrails</text>
+    <text class="s" x="675" y="110" text-anchor="middle">deterministic gate</text>
 
-    <rect class="box" x="790" y="60" width="120" height="64" rx="10"/>
-    <text class="t" x="850" y="87" text-anchor="middle">Execute</text>
-    <text class="s" x="850" y="106" text-anchor="middle">on allow only</text>
+    <rect class="box" x="790" y="64" width="120" height="64" rx="10"/>
+    <circle class="chip" cx="806" cy="64" r="11"/>
+    <text class="n" x="806" y="68" text-anchor="middle">5</text>
+    <text class="t" x="855" y="91" text-anchor="middle">Execute</text>
+    <text class="s" x="855" y="110" text-anchor="middle">on allow only</text>
 
-    <rect class="box ledger" x="945" y="60" width="90" height="64" rx="10"/>
-    <text class="t" x="990" y="82" text-anchor="middle" fill="#0a7d0a" font-size="13">Ledger</text>
-    <text class="s" x="990" y="99" text-anchor="middle" font-size="9.5">append-only</text>
+    <rect class="box ledger" x="945" y="64" width="90" height="64" rx="10"/>
+    <circle class="chip-green" cx="961" cy="64" r="11"/>
+    <text class="n" x="961" y="68" text-anchor="middle">6</text>
+    <text class="t" x="990" y="88" text-anchor="middle" fill="#0a7d0a" font-size="13">Ledger</text>
+    <text class="s" x="990" y="105" text-anchor="middle" font-size="9.5">append-only</text>
 
-    <path class="edge" d="M160,92 H205"/>
-    <path class="edge" d="M355,92 H400"/>
-    <path class="edge" d="M550,92 H595"/>
-    <path class="edge" d="M745,92 H790"/>
-    <path class="edge" d="M910,92 H945"/>
+    <path class="edge" d="M160,96 H205"/>
+    <path class="edge" d="M355,96 H400"/>
+    <path class="edge" d="M550,96 H595"/>
+    <path class="edge" d="M745,96 H790"/>
+    <path class="edge" d="M910,96 H945"/>
   </g>
 
   <!-- brain / brake labels -->
-  <text class="cap" x="280" y="45">the brain proposes an action — it cannot execute anything</text>
-  <text class="cap" x="670" y="45">the brakes decide — allow / defer / block</text>
+  <text class="cap" x="285" y="50">the brain proposes an action — it cannot execute anything</text>
+  <text class="cap" x="675" y="50">the brakes decide — allow / defer / block</text>
 
   <!-- guardrail sub-rules -->
   <g>
-    <rect class="box" x="595" y="150" width="150" height="46" rx="8" stroke-dasharray="3,3"/>
-    <text class="s" x="670" y="168" text-anchor="middle" font-weight="700" fill="#0d1526">stopping rules</text>
-    <text class="s" x="670" y="184" text-anchor="middle">deterministic</text>
+    <rect class="box" x="595" y="154" width="150" height="46" rx="8" stroke-dasharray="3,3"/>
+    <text class="s" x="670" y="172" text-anchor="middle" font-weight="700" fill="#0d1526">stopping rules</text>
+    <text class="s" x="670" y="188" text-anchor="middle">deterministic</text>
 
-    <rect class="box" x="595" y="205" width="150" height="46" rx="8" stroke-dasharray="3,3"/>
-    <text class="s" x="670" y="223" text-anchor="middle" font-weight="700" fill="#0d1526">compliance</text>
-    <text class="s" x="670" y="239" text-anchor="middle">quiet hours, DND, consent</text>
+    <rect class="box" x="595" y="209" width="150" height="46" rx="8" stroke-dasharray="3,3"/>
+    <text class="s" x="670" y="227" text-anchor="middle" font-weight="700" fill="#0d1526">compliance</text>
+    <text class="s" x="670" y="243" text-anchor="middle">quiet hours, DND, consent</text>
 
-    <path class="edge" d="M670,124 V150" marker-end="none" stroke-dasharray="3,3"/>
-    <path class="edge" d="M670,196 V205" marker-end="none" stroke-dasharray="3,3"/>
+    <path class="edge" d="M670,128 V154" marker-end="none" stroke-dasharray="3,3"/>
+    <path class="edge" d="M670,200 V209" marker-end="none" stroke-dasharray="3,3"/>
   </g>
 
   <!-- ledger feeds evaluator -->
   <g>
-    <rect class="box" x="905" y="170" width="130" height="50" rx="8"/>
-    <text class="t" x="970" y="192" text-anchor="middle" font-size="13">Evaluator</text>
-    <text class="s" x="970" y="208" text-anchor="middle" font-size="9.5">metrics + dashboard</text>
-    <path class="edge" d="M990,124 V170"/>
+    <rect class="box" x="900" y="174" width="135" height="50" rx="8"/>
+    <text class="t" x="967" y="196" text-anchor="middle" font-size="13">Evaluator</text>
+    <text class="s" x="967" y="212" text-anchor="middle" font-size="9.5">metrics + dashboard</text>
+    <path class="edge" d="M990,128 V174"/>
   </g>
 
   <text class="s" x="10" y="285" fill="#8590a8">Every arrow is a real code boundary — see docs/ARCHITECTURE.md for what each layer is forbidden from doing.</text>

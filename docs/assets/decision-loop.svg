@@ -5,7 +5,9 @@
     </marker>
     <style>
       .stage { fill:#ffffff; stroke:#cdd6e8; stroke-width:1.5; }
-      .n { fill:#1655d1; font-size:11px; font-weight:700; }
+      .chip { fill:#1655d1; }
+      .chip-orange { fill:#eb6834; }
+      .n { fill:#ffffff; font-size:10.5px; font-weight:700; }
       .t { fill:#0d1526; font-size:13.5px; font-weight:700; }
       .s { fill:#4c5670; font-size:10px; }
       .edge { stroke:#8590a8; stroke-width:1.5; fill:none; marker-end:url(#arrow2); }
@@ -13,42 +15,47 @@
     </style>
   </defs>
 
-  <!-- five pipeline stages -->
-  <rect class="stage" x="10" y="20" width="140" height="60" rx="10"/>
-  <text class="n" x="26" y="40">1</text>
-  <text class="t" x="80" y="48" text-anchor="middle">OBSERVE</text>
-  <text class="s" x="80" y="65" text-anchor="middle">read the loss event</text>
+  <!-- five pipeline stages, each with a numbered chip -->
+  <rect class="stage" x="10" y="24" width="140" height="60" rx="10"/>
+  <circle class="chip" cx="26" cy="24" r="11"/>
+  <text class="n" x="26" y="28" text-anchor="middle">1</text>
+  <text class="t" x="86" y="52" text-anchor="middle">OBSERVE</text>
+  <text class="s" x="86" y="69" text-anchor="middle">read the loss event</text>
 
-  <rect class="stage" x="190" y="20" width="140" height="60" rx="10"/>
-  <text class="n" x="206" y="40">2</text>
-  <text class="t" x="260" y="48" text-anchor="middle">ASSESS</text>
-  <text class="s" x="260" y="65" text-anchor="middle">known / inferred / unknown</text>
+  <rect class="stage" x="190" y="24" width="140" height="60" rx="10"/>
+  <circle class="chip" cx="206" cy="24" r="11"/>
+  <text class="n" x="206" y="28" text-anchor="middle">2</text>
+  <text class="t" x="266" y="52" text-anchor="middle">ASSESS</text>
+  <text class="s" x="266" y="69" text-anchor="middle">known / inferred / unknown</text>
 
-  <rect class="stage" x="370" y="20" width="150" height="60" rx="10"/>
-  <text class="n" x="386" y="40">3</text>
-  <text class="t" x="445" y="48" text-anchor="middle">CANDIDATES</text>
-  <text class="s" x="445" y="65" text-anchor="middle">generate priced options</text>
+  <rect class="stage" x="370" y="24" width="150" height="60" rx="10"/>
+  <circle class="chip" cx="386" cy="24" r="11"/>
+  <text class="n" x="386" y="28" text-anchor="middle">3</text>
+  <text class="t" x="451" y="52" text-anchor="middle">CANDIDATES</text>
+  <text class="s" x="451" y="69" text-anchor="middle">generate priced options</text>
 
-  <rect class="stage" x="560" y="20" width="130" height="60" rx="10"/>
-  <text class="n" x="576" y="40">4</text>
-  <text class="t" x="625" y="48" text-anchor="middle">SCORE</text>
-  <text class="s" x="625" y="65" text-anchor="middle">expected value, argmax</text>
+  <rect class="stage" x="560" y="24" width="130" height="60" rx="10"/>
+  <circle class="chip" cx="576" cy="24" r="11"/>
+  <text class="n" x="576" y="28" text-anchor="middle">4</text>
+  <text class="t" x="631" y="52" text-anchor="middle">SCORE</text>
+  <text class="s" x="631" y="69" text-anchor="middle">expected value, argmax</text>
 
-  <rect class="stage" x="730" y="20" width="150" height="60" rx="10" stroke="#eb6834"/>
-  <text class="n" x="746" y="40" fill="#b3491a">5</text>
-  <text class="t" x="805" y="48" text-anchor="middle" fill="#b3491a">GUARDRAIL</text>
-  <text class="s" x="805" y="65" text-anchor="middle">allow / defer / block</text>
+  <rect class="stage" x="730" y="24" width="150" height="60" rx="10" stroke="#eb6834"/>
+  <circle class="chip-orange" cx="746" cy="24" r="11"/>
+  <text class="n" x="746" y="28" text-anchor="middle">5</text>
+  <text class="t" x="811" y="52" text-anchor="middle" fill="#b3491a">GUARDRAIL</text>
+  <text class="s" x="811" y="69" text-anchor="middle">allow / defer / block</text>
 
-  <path class="edge" d="M150,50 H190"/>
-  <path class="edge" d="M330,50 H370"/>
-  <path class="edge" d="M520,50 H560"/>
-  <path class="edge" d="M690,50 H730"/>
+  <path class="edge" d="M150,54 H190"/>
+  <path class="edge" d="M330,54 H370"/>
+  <path class="edge" d="M520,54 H560"/>
+  <path class="edge" d="M690,54 H730"/>
 
   <!-- fan out to three terminal states -->
-  <path class="edge" d="M805,80 V115 H265 V150" stroke-dasharray="0"/>
-  <path class="edge" d="M805,115 H805 V150" />
-  <path class="edge" d="M805,115 H545 V150" />
-  <text class="s" x="805" y="110" text-anchor="middle" fill="#8590a8">one of three, by guardrail verdict</text>
+  <path class="edge" d="M805,84 V119 H265 V150"/>
+  <path class="edge" d="M805,119 V150"/>
+  <path class="edge" d="M805,119 H545 V150"/>
+  <text class="s" x="805" y="113" text-anchor="middle" fill="#8590a8">one of three, by guardrail verdict</text>
 
   <rect class="outbox" x="190" y="150" width="150" height="56" rx="10" fill="#e9f0ff" stroke="#1655d1"/>
   <text class="t" x="265" y="173" text-anchor="middle" fill="#0d3ea3">ACT</text>
@@ -63,19 +70,19 @@
   <text class="s" x="805" y="190" text-anchor="middle">real EV is non-positive</text>
 
   <!-- merge into OUTCOME -->
-  <path class="edge" d="M265,206 V240 H445 V240" marker-end="none"/>
-  <path class="edge" d="M545,206 V240" marker-end="none"/>
-  <path class="edge" d="M805,206 V240 H465" marker-end="none"/>
+  <path d="M265,206 V240 H445" stroke="#8590a8" stroke-width="1.5" fill="none"/>
+  <path d="M545,206 V240" stroke="#8590a8" stroke-width="1.5" fill="none"/>
+  <path d="M805,206 V240 H445" stroke="#8590a8" stroke-width="1.5" fill="none"/>
   <path class="edge" d="M445,240 V255"/>
 
   <rect class="stage" x="370" y="255" width="150" height="56" rx="10"/>
   <text class="t" x="445" y="278" text-anchor="middle">OUTCOME</text>
   <text class="s" x="445" y="295" text-anchor="middle">written to the ledger</text>
 
-  <!-- replan loop, routed clear of every box -->
-  <path class="edge" d="M370,283 H60 V50 H10" stroke-dasharray="4,3"/>
-  <text class="s" x="10" y="222" fill="#4c5670" font-style="italic">replan — a landed signal (promise, fixed instrument, dispute)</text>
-  <text class="s" x="10" y="236" fill="#4c5670" font-style="italic">re-enters at OBSERVE, re-priced with the new evidence</text>
+  <!-- replan loop: OUTCOME back into the bottom of OBSERVE, routed clear of every box and every chip -->
+  <path class="edge" d="M370,283 H50 V100 H86 V84" stroke-dasharray="4,3"/>
+  <text class="s" x="14" y="222" fill="#4c5670" font-style="italic">replan — a landed signal (promise, fixed instrument, dispute)</text>
+  <text class="s" x="14" y="236" fill="#4c5670" font-style="italic">re-enters at OBSERVE, re-priced with the new evidence</text>
 
   <text class="s" x="10" y="325" fill="#8590a8">Deterministic for known/inferred cases. An optional LLM can only replace step 3's candidate proposal — never step 5 or the write to the ledger.</text>
 </svg>
