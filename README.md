@@ -148,8 +148,10 @@ writes the policy — a prompt-injected or simply wrong model still cannot
 breach a limit. Full write-up: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 **Compliance defers, it does not drop.** A message that would land at 21:30
-isn't discarded, it's queued for 09:00 the next morning — straight from the
-ledger:
+isn't discarded, it's queued for 09:00 the next morning.
+
+<details>
+<summary>Show the raw ledger entry</summary>
 
 ```json
 {
@@ -160,6 +162,8 @@ ledger:
   "deferredTo": 1788233400000
 }
 ```
+
+</details>
 
 Timing rules (quiet hours, cooldowns, caps) defer, because waiting fixes
 them. Permission rules (DND, missing consent) block, because waiting never
@@ -219,7 +223,11 @@ The benchmark above runs on a simulator, because measuring policy quality
 needs cohorts nobody can pay for by hand. Separately, the identical agent and
 guardrails also drive **real Razorpay test-mode API calls** — real orders,
 real payment links, one genuine decline captured by actually paying a test
-card and reading Razorpay's own error response back:
+card and reading Razorpay's own error response back — `payment_failed` mapped
+to `HARD_DECLINE`, agent said stop.
+
+<details>
+<summary>Show what Razorpay actually returned</summary>
 
 ```
 error_code    BAD_REQUEST_ERROR       error_reason  payment_failed
@@ -229,6 +237,8 @@ error_step    payment_authorization   → agent says  stop — retrying cannot
                                                       attempts risk the
                                                       merchant's auth rates
 ```
+
+</details>
 
 Five hand-driven live cases cannot support a recovery rate, and claiming
 otherwise would be the fastest way to lose a technical panel — the statistics
@@ -249,7 +259,10 @@ any language, and no transcript can change what the agent decides.
 ## What broke (the short version)
 
 Six real defects, each found by a test or an audit before it shipped rather
-than after — full account in [docs/ENGINEERING-LOG.md](docs/ENGINEERING-LOG.md):
+than after — full account in [docs/ENGINEERING-LOG.md](docs/ENGINEERING-LOG.md).
+
+<details>
+<summary>Show all six</summary>
 
 1. A guardrail accidentally doubled the naive-retry baseline's score — kept
    it and raised our own bar instead of exempting the baseline.
@@ -266,6 +279,8 @@ than after — full account in [docs/ENGINEERING-LOG.md](docs/ENGINEERING-LOG.md
 6. A boundary bug priced a post-nudge retry's payoff at literal elapsed=0,
    discarding real recoveries — found by this project's own audit, not an
    external review.
+
+</details>
 
 ## Limitations
 
