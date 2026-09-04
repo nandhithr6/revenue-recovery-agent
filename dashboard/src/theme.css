@@ -1234,6 +1234,57 @@ footer code {
   border-top: 1px solid var(--rule);
 }
 
+.step-details {
+  border-bottom: 1px solid var(--rule);
+}
+.step-details > .step {
+  border-bottom: none;
+  padding-top: 2px;
+}
+
+.step-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+}
+.step-summary::-webkit-details-marker {
+  display: none;
+}
+.step-summary::before {
+  content: '▸';
+  display: inline-block;
+  color: var(--ink-3);
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.step-details[open] > .step-summary::before {
+  transform: rotate(90deg);
+}
+.step-summary-n {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  width: 18px;
+  flex-shrink: 0;
+}
+.step-summary-t {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+  width: 78px;
+  flex-shrink: 0;
+}
+.step-summary-action {
+  flex: 1 1 auto;
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
 .step {
   display: grid;
   grid-template-columns: 74px 1fr 1fr 1fr;

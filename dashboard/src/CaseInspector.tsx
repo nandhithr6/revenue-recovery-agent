@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { strategyColor } from './charts';
+import { Tip } from './Tip';
 import type { InspectableCase, TraceStep } from './types';
 
 /**
@@ -150,11 +151,18 @@ export const INTENT_LABEL_HINGLISH: Record<string, string> = {
 };
 
 /** One decision, in three columns: what it saw, what it chose, what happened. */
-export function Step({ step }: { step: TraceStep }) {
+export function Step({ step, defaultOpen = false }: { step: TraceStep; defaultOpen?: boolean }) {
   const { seen, decided, verdict } = step;
 
   return (
-    <div className="step">
+    <details className="step-details" open={defaultOpen}>
+      <summary className="step-summary">
+        <span className="step-summary-n">{String(step.step + 1).padStart(2, '0')}</span>
+        <time className="step-summary-t">{clock(step.at)}</time>
+        <span className="step-summary-action">{humanAction(step)}</span>
+        <span className={`tag ${step.outcome}`}>{step.outcome}</span>
+      </summary>
+      <div className="step">
       <div className="step-n">
         <span>{String(step.step + 1).padStart(2, '0')}</span>
         <time>{clock(step.at)}</time>
@@ -312,7 +320,8 @@ export function Step({ step }: { step: TraceStep }) {
           </table>
         </div>
       )}
-    </div>
+      </div>
+    </details>
   );
 }
 
@@ -428,9 +437,18 @@ export function CaseInspector({ cases }: { cases: readonly InspectableCase[] }) 
             odds, nothing the real system would not have. The middle is what it returned, quoted
             verbatim. The right is the guardrail ruling on it.
           </p>
+          <Tip>
+            <b>Click any step</b> to open its full reasoning — the first and last are open below
+            to start; every one of the {agentTrace.steps.length} decisions for this case is here,
+            not just the highlights.
+          </Tip>
           <div className="steps">
-            {agentTrace.steps.map((s) => (
-              <Step key={s.step} step={s} />
+            {agentTrace.steps.map((s, i) => (
+              <Step
+                key={s.step}
+                step={s}
+                defaultOpen={i === 0 || i === agentTrace.steps.length - 1}
+              />
             ))}
           </div>
           <p className="closing mono">

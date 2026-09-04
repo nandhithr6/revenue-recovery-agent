@@ -151,7 +151,7 @@ export function VoiceShowcase({ data }: { data: VoiceShowcaseData | null }) {
           <div className="steps" style={{ marginTop: 14 }}>
             {data.trace.steps.map((s, i) => (
               <div key={s.step} className={i === voiceStepIndex ? 'showcase-voice-step' : undefined}>
-                <Step step={s} />
+                <Step step={s} defaultOpen />
               </div>
             ))}
           </div>
